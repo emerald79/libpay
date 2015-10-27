@@ -171,12 +171,9 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 	return TLV_RC_OK;
 }
 
-int tlv_free(struct tlv *tlv)
+void tlv_free(struct tlv *tlv)
 {
 	struct tlv *current, *next;
-
-	if (!tlv)
-		return TLV_RC_OK;
 
 	for (current = tlv; current; current = next) {
 		if (current->value)
@@ -188,8 +185,6 @@ int tlv_free(struct tlv *tlv)
 		next = current->next;
 		free(current);
 	}
-
-	return TLV_RC_OK;
 }
 
 int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
