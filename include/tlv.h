@@ -16,25 +16,10 @@
 #define TLV_TAG_CLASS_CONTEXT_SPECIFIC	0x80u
 #define TLV_TAG_CLASS_PRIVATE		0xC0u
 
-#define TLV_TAG_CLASS_MASK		0xC0u
-#define TLV_TAG_P_C_MASK		0x20u
-#define TLV_TAG_NUMBER_MASK		0x1Fu
-
-struct tlv {
-	uint8_t		class_of_tag;
-	uint8_t		constructed;
-	uint32_t	tag_number;
-	size_t		length;
-	uint8_t		*value;
-	
-	struct tlv	*next;
-	struct tlv	*parent;
-	struct tlv	*child;
-};
+struct tlv;
 
 int tlv_parse(const void *buffer, size_t length, struct tlv **tlv);
-void tlv_encode(struct tlv *tlv, void *buffer);
-size_t tlv_get_encoded_size(struct tlv *tlv);
+int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
 int tlv_free(struct tlv **tlv);
 void tlv_print(struct tlv *tlv);
 

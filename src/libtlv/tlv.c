@@ -4,6 +4,23 @@
 
 #include <tlv.h>
 
+#define TLV_TAG_CLASS_MASK		0xC0u
+#define TLV_TAG_P_C_MASK		0x20u
+#define TLV_TAG_NUMBER_MASK		0x1Fu
+
+struct tlv {
+	uint8_t		class_of_tag;
+	uint8_t		constructed;
+	uint32_t	tag_number;
+	size_t		length;
+	uint8_t		*value;
+
+	struct tlv	*next;
+	struct tlv	*prev;
+	struct tlv	*parent;
+	struct tlv	*child;
+};
+
 static int tlv_parse_identifier(const void **buffer, size_t length,
 								struct tlv *tlv)
 {
@@ -92,7 +109,7 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 }
 
 static int tlv_parse_recursive(const void **buffer, size_t length,
-					   struct tlv **tlv, struct tlv *parent)
+			 struct tlv **tlv, struct tlv *prev, struct tlv *parent)
 {
 	const void *start = *buffer;
 	int rc;
@@ -105,7 +122,8 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 		return TLV_RC_OUT_OF_MEMORY;
 
 	memset(*tlv, 0, sizeof(struct tlv));
-	(*tlv)->parent = parent;
+	(*tlv)->parent	= parent;
+	(*tlv)->prev	= prev;
 
 	rc = tlv_parse_identifier(buffer, length - (*buffer - start), *tlv);
 	if (rc != TLV_RC_OK) {
@@ -123,7 +141,7 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 
 	if ((*tlv)->constructed) {
 		rc = tlv_parse_recursive(buffer, (*tlv)->length, &(*tlv)->child,
-									  *tlv);
+								    NULL, *tlv);
 		if (rc != TLV_RC_OK) {
 			free(*tlv);
 			*tlv = NULL;
@@ -142,7 +160,7 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 
 	if (length - (*buffer - start) > 0) {
 		rc = tlv_parse_recursive(buffer, length - (*buffer - start),
-							 &(*tlv)->next, parent);
+						   &(*tlv)->next, *tlv, parent);
 		if (rc != TLV_RC_OK) {
 			free(*tlv);
 			*tlv = NULL;
@@ -153,7 +171,8 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 	return TLV_RC_OK;
 }
 
-int tlv_free(struct tlv **tlv) {
+int tlv_free(struct tlv **tlv)
+{
 	struct tlv *current, *next;
 
 	if (!tlv)
@@ -179,7 +198,7 @@ int tlv_free(struct tlv **tlv) {
 
 int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 {
-	return tlv_parse_recursive(&buffer, length, tlv, NULL);
+	return tlv_parse_recursive(&buffer, length, tlv, NULL, NULL);
 }
 
 static void tlv_print_recursive(struct tlv *tlv, int depth)
@@ -207,7 +226,8 @@ static void tlv_print_recursive(struct tlv *tlv, int depth)
 	}
 }
 
-void tlv_print(struct tlv *tlv) {
+void tlv_print(struct tlv *tlv)
+{
 	tlv_print_recursive(tlv, 0);
 }
 
@@ -237,6 +257,24 @@ static size_t tlv_get_encoded_length_size(size_t length)
 	if (length < 0x1000000u)
 		return 4;
 	return 5;
+}
+
+static size_t tlv_get_encoded_size(struct tlv *tlv)
+{
+	size_t size;
+
+	size = tlv_get_encoded_identifier_size(tlv->tag_number);
+	size += tlv_get_encoded_length_size(tlv->length);
+
+	if (tlv->constructed)
+		size += tlv_get_encoded_size(tlv->child);
+	else
+		size += tlv->length;
+
+	if (tlv->next)
+		size += tlv_get_encoded_size(tlv->next);
+
+	return size;
 }
 
 static void tlv_encode_identifier(uint8_t class, uint8_t p_c,
@@ -352,26 +390,18 @@ static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
 		tlv_encode_recursive(tlv->next, buffer);
 }
 
-void tlv_encode(struct tlv *tlv, void *buffer)
+int tlv_encode(struct tlv *tlv, void *buffer, size_t *size)
 {
-	tlv_encode_recursive(tlv, &buffer);
-}
+	size_t encoded_size = tlv_get_encoded_size(tlv);
 
-size_t tlv_get_encoded_size(struct tlv *tlv)
-{
-	size_t size;
-
-	size = tlv_get_encoded_identifier_size(tlv->tag_number);
-	size += tlv_get_encoded_length_size(tlv->length);
-
-	if (tlv->constructed) {
-		size += tlv_get_encoded_size(tlv->child);
-	} else {
-		size += tlv->length;
+	if (encoded_size > *size) {
+		*size = encoded_size;
+		return TLV_RC_BUFFER_OVERFLOW;
 	}
-	
-	if (tlv->next)
-		size += tlv_get_encoded_size(tlv->next);
 
-	return size;
+	*size = encoded_size;
+
+	tlv_encode_recursive(tlv, &buffer);
+
+	return TLV_RC_OK;
 }
