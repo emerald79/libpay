@@ -1,3 +1,8 @@
+/**
+ * @file
+ * TLV Parser Library
+ */
+
 #ifndef __TLV_H__
 #define __TLV_H__
 
@@ -18,9 +23,17 @@
 
 struct tlv;
 
-int tlv_parse(const void *buffer, size_t length, struct tlv **tlv);
+/**
+ * Parse DER-TLV encoded data into a TLV data structure
+ *
+ * @param[in]  buffer  The DER-TLV encoded data to parse.
+ * @param[in]  size    Length of the DER-TLV encoded data.
+ * @param[out] tlv     The corresponding TLV data structure.
+ *
+ * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
+ */
+int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
 int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
-int tlv_free(struct tlv **tlv);
-void tlv_print(struct tlv *tlv);
+int tlv_free(struct tlv *tlv);
 
 #endif /* ndef __TLV_H__ */

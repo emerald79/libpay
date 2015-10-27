@@ -52,11 +52,11 @@ START_TEST(test_tlv_primitive_encoding)
 
 	rc = tlv_parse(mueller, sizeof(mueller), &tlv);
 	ck_assert_msg(rc == TLV_RC_OK, "rc %d\n", rc);
-	tlv_free(&tlv);
+	tlv_free(tlv);
 
 	rc = tlv_parse(four_encodings, sizeof(four_encodings), &tlv);
 	ck_assert(rc == TLV_RC_OK);
-	tlv_free(&tlv);
+	tlv_free(tlv);
 }
 END_TEST
 
@@ -74,7 +74,7 @@ START_TEST(test_tlv_constructed_encoding)
 
 	rc = tlv_parse(constructed, sizeof(constructed), &tlv);
 	ck_assert_msg(rc == TLV_RC_OK, "rc %d\n", rc);
-	tlv_free(&tlv);
+	tlv_free(tlv);
 }
 END_TEST
 
@@ -148,7 +148,7 @@ START_TEST(test_tlv_verisign_x509)
 	rc = tlv_parse(verisign_x509, sizeof(verisign_x509), &tlv);
 	ck_assert_msg(rc == TLV_RC_OK, "rc %d\n", rc);
 	tlv_encode(tlv, encoded, &size);
-	tlv_free(&tlv);
+	tlv_free(tlv);
 	ck_assert(size == sizeof(verisign_x509));
 	ck_assert(!memcmp(encoded, verisign_x509, size));
 }
