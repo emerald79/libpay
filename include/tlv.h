@@ -54,4 +54,9 @@ int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
  */
 void tlv_free(struct tlv *tlv);
 
+int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size);
+int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size);
+
+struct tlv *tlv_get_next(struct tlv *tlv);
+
 #endif /* ndef __TLV_H__ */

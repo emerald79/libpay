@@ -268,7 +268,7 @@ static size_t tlv_get_encoded_size(struct tlv *tlv)
 	return size;
 }
 
-static void tlv_encode_identifier(uint8_t class, uint8_t p_c,
+static void __tlv_encode_identifier(uint8_t class, uint8_t p_c,
 					     uint32_t tag_number, void **buffer)
 {
 	uint8_t *p = (uint8_t *)*buffer;
@@ -321,7 +321,7 @@ static void tlv_encode_identifier(uint8_t class, uint8_t p_c,
 	*buffer = (void *)&p[2];
 }
 
-static void tlv_encode_length(size_t length, void **buffer)
+static void __tlv_encode_length(size_t length, void **buffer)
 {
 	uint8_t *p = (uint8_t *)*buffer;
 
@@ -365,14 +365,14 @@ static void tlv_encode_length(size_t length, void **buffer)
 
 static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
 {
-	tlv_encode_identifier(tlv->class_of_tag, tlv->constructed,
+	__tlv_encode_identifier(tlv->class_of_tag, tlv->constructed,
 						       tlv->tag_number, buffer);
 
 	if (tlv->constructed) {
-		tlv_encode_length(tlv_get_encoded_size(tlv->child), buffer);
+		__tlv_encode_length(tlv_get_encoded_size(tlv->child), buffer);
 		tlv_encode_recursive(tlv->child, buffer);
 	} else {
-		tlv_encode_length(tlv->length, buffer);
+		__tlv_encode_length(tlv->length, buffer);
 		memcpy(*buffer, tlv->value, tlv->length);
 		*buffer = (void *)(((uint8_t *)*buffer) + tlv->length);
 	}
@@ -383,7 +383,12 @@ static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
 
 int tlv_encode(struct tlv *tlv, void *buffer, size_t *size)
 {
-	size_t encoded_size = tlv_get_encoded_size(tlv);
+	size_t encoded_size = 0;
+
+	if (!tlv || !size)
+		return TLV_RC_INVALID_ARG;
+
+	encoded_size = tlv_get_encoded_size(tlv);
 
 	if (encoded_size > *size) {
 		*size = encoded_size;
@@ -392,7 +397,84 @@ int tlv_encode(struct tlv *tlv, void *buffer, size_t *size)
 
 	*size = encoded_size;
 
+	if (!buffer)
+		return TLV_RC_INVALID_ARG;
+
 	tlv_encode_recursive(tlv, &buffer);
 
 	return TLV_RC_OK;
+}
+
+int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size)
+{
+	size_t encoded_size = 0;
+
+	if (!tlv || !size)
+		return TLV_RC_INVALID_ARG;
+
+	encoded_size = tlv_get_encoded_identifier_size(tlv->tag_number);
+
+	if (encoded_size > *size) {
+		*size = encoded_size;
+		return TLV_RC_BUFFER_OVERFLOW;
+	}
+
+	*size = encoded_size;
+
+	if (!buffer)
+		return TLV_RC_INVALID_ARG;
+
+	__tlv_encode_identifier(tlv->class_of_tag, tlv->constructed,
+						      tlv->tag_number, &buffer);
+
+	return TLV_RC_OK;
+}
+
+int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size)
+{
+	size_t encoded_size = 0, length = 0;
+
+	if (!tlv || !size)
+		return TLV_RC_INVALID_ARG;
+
+	if (tlv->constructed)
+		length = tlv_get_encoded_size(tlv->child);
+	else
+		length = tlv->length;
+
+	encoded_size = tlv_get_encoded_length_size(length);
+
+	if (encoded_size > *size) {
+		*size = encoded_size;
+		return TLV_RC_BUFFER_OVERFLOW;
+	}
+
+	*size = encoded_size;
+
+	if (!buffer)
+		return TLV_RC_INVALID_ARG;
+
+	__tlv_encode_length(length, &buffer);
+
+	return TLV_RC_OK;
+}
+
+struct tlv *tlv_get_next(struct tlv *tlv)
+{
+	if (!tlv)
+		return NULL;
+
+	if (tlv->constructed)
+		return tlv->child;
+
+	if (tlv->next)
+		return tlv->next;
+
+	while (tlv->parent) {
+		if (tlv->parent->next)
+			return tlv->parent->next;
+		tlv = tlv->parent;
+	}
+
+	return NULL;
 }
