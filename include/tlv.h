@@ -7,6 +7,7 @@
 #define __TLV_H__
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #define TLV_RC_OK				0
 #define TLV_RC_INVALID_ARG			1
@@ -56,6 +57,7 @@ void tlv_free(struct tlv *tlv);
 
 int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size);
 int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size);
+int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size);
 
 struct tlv *tlv_get_next(struct tlv *tlv);
 

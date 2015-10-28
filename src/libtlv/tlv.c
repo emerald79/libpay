@@ -459,6 +459,27 @@ int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size)
 	return TLV_RC_OK;
 }
 
+int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size)
+{
+	if (!tlv || !size)
+		return TLV_RC_INVALID_ARG;
+
+	if (tlv->constructed) {
+		*size = 0;
+		return TLV_RC_OK;
+	}
+
+	if (tlv->length > *size) {
+		*size = tlv->length;
+		return TLV_RC_BUFFER_OVERFLOW;
+	}
+
+	*size = tlv->length;
+	memcpy(buffer, tlv->value, tlv->length);
+
+	return TLV_RC_OK;
+}
+
 struct tlv *tlv_get_next(struct tlv *tlv)
 {
 	if (!tlv)
