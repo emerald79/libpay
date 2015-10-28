@@ -2,6 +2,27 @@
 #include <stdio.h>
 #include <tlv.h>
 
+struct tag_desc {
+	const uint8_t 	*tag;
+	size_t		length;
+	const char	*name;
+};
+
+struct tag_desc tag_desc[] = {
+	{ "\x70",	1,	"READ RECORD Response Message Template"	   },
+	{ "\x5A",	1,	"Application Primary Account Number (PAN)" },
+	{ "\x5F\x24",	2,	"Application Expiration Date"		   },
+	{ "\x5F\x25",	2,	"Application Effective Date"		   },
+	{ "\x5F\x34",	2,	"Application Primary Account Number (PAN) "
+						   "Sequence Number (PSN)" },
+	{ "\x9F\x07",	2,	"Application Usage Control (AUC)"	   },
+	{ "\x9F\x0D",	2,	"Issuer Action Code - Default"		   },
+	{ "\x9F\x0E",	2,	"Issuer Action Code - Denial"		   },
+	{ "\x9F\x0F",	2,	"Issuer Action Code - Online"		   }
+};
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
+
 int main(void)
 {
 	struct tlv *tlv;
@@ -20,6 +41,7 @@ int main(void)
 		return EXIT_FAILURE;
 
 	for (; tlv; tlv = tlv_get_next(tlv)) {
+		struct tag_desc *desc = NULL;
 		uint8_t buffer[256];
 		size_t size;
 		int i;
@@ -28,6 +50,10 @@ int main(void)
 		for (i = 0; i < (int)size; i++)
 			printf("%02X", buffer[i]);
 		printf(" ");
+		for (i = 0; i < ARRAY_SIZE(tag_desc); i++)
+			if ((tag_desc[i].length == size) &&
+					 !memcmp(tag_desc[i].tag, buffer, size))
+				desc = &tag_desc[i];
 		size = sizeof(buffer);
 		tlv_encode_length(tlv, buffer, &size);
 		for (i = 0; i < (int)size; i++)
@@ -37,6 +63,8 @@ int main(void)
 		tlv_encode_value(tlv, buffer, &size);
 		for (i = 0; i < (int)size; i++)
 			printf("%02X", buffer[i]);
+		if (desc)
+			printf(" '%s'", desc->name);
 		printf("\n");
 	}
 
