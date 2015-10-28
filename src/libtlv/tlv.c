@@ -238,14 +238,14 @@ static size_t tlv_get_encoded_identifier_size(struct tlv *tlv)
 	return 6;
 }
 
-static size_t tlv_get_encoded_size(struct tlv *tlv);
+static size_t tlv_get_encoded_length(struct tlv *tlv);
 
 static size_t tlv_get_encoded_length_size(struct tlv *tlv)
 {
 	size_t length;
 
 	if (tlv_is_constructed(tlv))
-		length = tlv_get_encoded_size(tlv->child);
+		length = tlv_get_encoded_length(tlv->child);
 	else
 		length = tlv->length;
 
@@ -260,7 +260,7 @@ static size_t tlv_get_encoded_length_size(struct tlv *tlv)
 	return 5;
 }
 
-static size_t tlv_get_encoded_size(struct tlv *tlv)
+static size_t tlv_get_encoded_length(struct tlv *tlv)
 {
 	size_t size;
 
@@ -268,12 +268,12 @@ static size_t tlv_get_encoded_size(struct tlv *tlv)
 	size += tlv_get_encoded_length_size(tlv);
 
 	if (tlv_is_constructed(tlv))
-		size += tlv_get_encoded_size(tlv->child);
+		size += tlv_get_encoded_length(tlv->child);
 	else
 		size += tlv->length;
 
 	if (tlv->next)
-		size += tlv_get_encoded_size(tlv->next);
+		size += tlv_get_encoded_length(tlv->next);
 
 	return size;
 }
@@ -375,7 +375,7 @@ static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
 	__tlv_encode_identifier(tlv->leading_octet, tlv->tag_number, buffer);
 
 	if (tlv_is_constructed(tlv)) {
-		__tlv_encode_length(tlv_get_encoded_size(tlv->child), buffer);
+		__tlv_encode_length(tlv_get_encoded_length(tlv->child), buffer);
 		tlv_encode_recursive(tlv->child, buffer);
 	} else {
 		__tlv_encode_length(tlv->length, buffer);
@@ -394,7 +394,7 @@ int tlv_encode(struct tlv *tlv, void *buffer, size_t *size)
 	if (!tlv || !size)
 		return TLV_RC_INVALID_ARG;
 
-	encoded_size = tlv_get_encoded_size(tlv);
+	encoded_size = tlv_get_encoded_length(tlv);
 
 	if (encoded_size > *size) {
 		*size = encoded_size;
@@ -453,6 +453,11 @@ int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size)
 
 	if (!buffer)
 		return TLV_RC_INVALID_ARG;
+
+	if (tlv_is_constructed(tlv))
+		length = tlv_get_encoded_length(tlv->child);
+	else
+		length = tlv->length;
 
 	__tlv_encode_length(length, &buffer);
 
