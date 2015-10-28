@@ -9,8 +9,7 @@
 #define TLV_TAG_NUMBER_MASK		0x1Fu
 
 struct tlv {
-	uint8_t		class_of_tag;
-	uint8_t		constructed;
+	uint8_t		leading_octet;
 	uint32_t	tag_number;
 	size_t		length;
 	uint8_t		*value;
@@ -20,6 +19,11 @@ struct tlv {
 	struct tlv	*parent;
 	struct tlv	*child;
 };
+
+static int tlv_is_constructed(struct tlv *tlv)
+{
+	return tlv->leading_octet & TLV_TAG_P_C_MASK;
+}
 
 static int tlv_parse_identifier(const void **buffer, size_t length,
 								struct tlv *tlv)
@@ -35,16 +39,14 @@ static int tlv_parse_identifier(const void **buffer, size_t length,
 
 	p = (uint8_t *)*buffer;
 
-	tlv->class_of_tag	= *p & TLV_TAG_CLASS_MASK;
-	tlv->constructed	= *p & TLV_TAG_P_C_MASK;
-	tlv->tag_number		= (uint32_t)(*p & TLV_TAG_NUMBER_MASK);
+	tlv->leading_octet	= p[0];
+	tlv->tag_number		= 0;
 
-	if (tlv->tag_number != 0x1Fu) {
+	if ((tlv->leading_octet & TLV_TAG_NUMBER_MASK) != 0x1Fu) {
 		*buffer = (const void *)&p[1];
 		return TLV_RC_OK;
 	}
 
-	tlv->tag_number = 0;
 	for (i = 1; (i < 6) & (i < length); i++) {
 		tlv->tag_number <<= 7;
 		tlv->tag_number |= p[i] & 0x7Fu;
@@ -94,7 +96,6 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 	value_length = (int)(p[0] & 0x7fu);
 
 	if (value_length > (int)sizeof(size_t)) {
-		printf("p[0]: 0x%02x\n", (unsigned)p[0]);
 		*buffer = (const void *)&p[1];
 		return TLV_RC_VALUE_LENGTH_TOO_LARGE;
 	}
@@ -139,7 +140,7 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 		return rc;
 	}
 
-	if ((*tlv)->constructed) {
+	if ((*tlv)->leading_octet & TLV_TAG_P_C_MASK) {
 		rc = tlv_parse_recursive(buffer, (*tlv)->length, &(*tlv)->child,
 								    NULL, *tlv);
 		if (rc != TLV_RC_OK) {
@@ -222,23 +223,32 @@ void tlv_print(struct tlv *tlv)
 	tlv_print_recursive(tlv, 0);
 }
 
-static size_t tlv_get_encoded_identifier_size(uint32_t tag_number)
+static size_t tlv_get_encoded_identifier_size(struct tlv *tlv)
 {
-	if (tag_number < 31)
+	if ((tlv->leading_octet & TLV_TAG_NUMBER_MASK) != 0x1fu)
 		return 1;
-	if (tag_number < 0x80u)
+	if (tlv->tag_number < 0x80u)
 		return 2;
-	if (tag_number < 0x4000u)
+	if (tlv->tag_number < 0x4000u)
 		return 3;
-	if (tag_number < 0x200000u)
+	if (tlv->tag_number < 0x200000u)
 		return 4;
-	if (tag_number < 0x10000000u)
+	if (tlv->tag_number < 0x10000000u)
 		return 5;
 	return 6;
 }
 
-static size_t tlv_get_encoded_length_size(size_t length)
+static size_t tlv_get_encoded_size(struct tlv *tlv);
+
+static size_t tlv_get_encoded_length_size(struct tlv *tlv)
 {
+	size_t length;
+
+	if (tlv_is_constructed(tlv))
+		length = tlv_get_encoded_size(tlv->child);
+	else
+		length = tlv->length;
+
 	if (length < 0x80u)
 		return 1;
 	if (length < 0x100u)
@@ -254,10 +264,10 @@ static size_t tlv_get_encoded_size(struct tlv *tlv)
 {
 	size_t size;
 
-	size = tlv_get_encoded_identifier_size(tlv->tag_number);
-	size += tlv_get_encoded_length_size(tlv->length);
+	size = tlv_get_encoded_identifier_size(tlv);
+	size += tlv_get_encoded_length_size(tlv);
 
-	if (tlv->constructed)
+	if (tlv_is_constructed(tlv))
 		size += tlv_get_encoded_size(tlv->child);
 	else
 		size += tlv->length;
@@ -268,20 +278,17 @@ static size_t tlv_get_encoded_size(struct tlv *tlv)
 	return size;
 }
 
-static void __tlv_encode_identifier(uint8_t class, uint8_t p_c,
+static void __tlv_encode_identifier(uint8_t leading_octet,
 					     uint32_t tag_number, void **buffer)
 {
 	uint8_t *p = (uint8_t *)*buffer;
 
-	p[0] = class | p_c;
+	p[0] = leading_octet;
 
-	if (tag_number < 0x1fu) {
-		p[0] |= (uint8_t)tag_number;
+	if ((leading_octet & TLV_TAG_NUMBER_MASK) != 0x1fu) {
 		*buffer = (void *)&p[1];
 		return;
 	}
-
-	p[0] |= 0x1fu;
 
 	if (tag_number & 0xf0000000u) {
 		p[1] = 0x80 | (uint8_t)(tag_number >> 28);
@@ -365,10 +372,9 @@ static void __tlv_encode_length(size_t length, void **buffer)
 
 static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
 {
-	__tlv_encode_identifier(tlv->class_of_tag, tlv->constructed,
-						       tlv->tag_number, buffer);
+	__tlv_encode_identifier(tlv->leading_octet, tlv->tag_number, buffer);
 
-	if (tlv->constructed) {
+	if (tlv_is_constructed(tlv)) {
 		__tlv_encode_length(tlv_get_encoded_size(tlv->child), buffer);
 		tlv_encode_recursive(tlv->child, buffer);
 	} else {
@@ -412,7 +418,7 @@ int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size)
 	if (!tlv || !size)
 		return TLV_RC_INVALID_ARG;
 
-	encoded_size = tlv_get_encoded_identifier_size(tlv->tag_number);
+	encoded_size = tlv_get_encoded_identifier_size(tlv);
 
 	if (encoded_size > *size) {
 		*size = encoded_size;
@@ -424,8 +430,7 @@ int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size)
 	if (!buffer)
 		return TLV_RC_INVALID_ARG;
 
-	__tlv_encode_identifier(tlv->class_of_tag, tlv->constructed,
-						      tlv->tag_number, &buffer);
+	__tlv_encode_identifier(tlv->leading_octet, tlv->tag_number, &buffer);
 
 	return TLV_RC_OK;
 }
@@ -437,12 +442,7 @@ int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size)
 	if (!tlv || !size)
 		return TLV_RC_INVALID_ARG;
 
-	if (tlv->constructed)
-		length = tlv_get_encoded_size(tlv->child);
-	else
-		length = tlv->length;
-
-	encoded_size = tlv_get_encoded_length_size(length);
+	encoded_size = tlv_get_encoded_length_size(tlv);
 
 	if (encoded_size > *size) {
 		*size = encoded_size;
@@ -464,7 +464,7 @@ int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size)
 	if (!tlv || !size)
 		return TLV_RC_INVALID_ARG;
 
-	if (tlv->constructed) {
+	if (tlv_is_constructed(tlv)) {
 		*size = 0;
 		return TLV_RC_OK;
 	}
@@ -485,7 +485,7 @@ struct tlv *tlv_get_next(struct tlv *tlv)
 	if (!tlv)
 		return NULL;
 
-	if (tlv->constructed)
+	if (tlv_is_constructed(tlv))
 		return tlv->child;
 
 	if (tlv->next)

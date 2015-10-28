@@ -149,24 +149,9 @@ START_TEST(test_tlv_verisign_x509)
 	rc = tlv_parse(verisign_x509, sizeof(verisign_x509), &tlv);
 	ck_assert_msg(rc == TLV_RC_OK, "rc %d\n", rc);
 	tlv_encode(tlv, encoded, &size);
+	tlv_free(tlv);
 	ck_assert(size == sizeof(verisign_x509));
 	ck_assert(!memcmp(encoded, verisign_x509, size));
-
-	for (; tlv; tlv = tlv_get_next(tlv)) {
-		int i;
-		size = sizeof(encoded);
-		tlv_encode_identifier(tlv, encoded, &size);
-		for (i = 0; i < (int)size; i++)
-			printf("%02X", encoded[i]);
-		printf(" ");
-		size = sizeof(encoded);
-		tlv_encode_length(tlv, encoded, &size);
-		for (i = 0; i < (int)size; i++)
-			printf("%02X", encoded[i]);
-		printf("\n");
-	}
-
-	tlv_free(tlv);
 }
 END_TEST
 
