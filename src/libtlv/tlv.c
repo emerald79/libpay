@@ -20,9 +20,29 @@ struct tlv {
 	struct tlv	*child;
 };
 
-static int tlv_is_constructed(struct tlv *tlv)
+int tlv_is_constructed(struct tlv *tlv)
 {
-	return tlv->leading_octet & TLV_TAG_P_C_MASK;
+	return !!(tlv->leading_octet & TLV_TAG_P_C_MASK);
+}
+
+struct tlv *tlv_get_next(struct tlv *tlv)
+{
+	return tlv->next;
+}
+
+struct tlv *tlv_get_prev(struct tlv *tlv)
+{
+	return tlv->prev;
+}
+
+struct tlv *tlv_get_parent(struct tlv *tlv)
+{
+	return tlv->parent;
+}
+
+struct tlv *tlv_get_child(struct tlv *tlv)
+{
+	return tlv->child;
 }
 
 static int tlv_parse_identifier(const void **buffer, size_t length,
@@ -420,6 +440,11 @@ int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size)
 
 	encoded_size = tlv_get_encoded_identifier_size(tlv);
 
+	if (!buffer) {
+		*size = encoded_size;
+		return TLV_RC_OK;
+	}
+
 	if (encoded_size > *size) {
 		*size = encoded_size;
 		return TLV_RC_BUFFER_OVERFLOW;
@@ -443,6 +468,11 @@ int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size)
 		return TLV_RC_INVALID_ARG;
 
 	encoded_size = tlv_get_encoded_length_size(tlv);
+
+	if (!buffer) {
+		*size = encoded_size;
+		return TLV_RC_OK;
+	}
 
 	if (encoded_size > *size) {
 		*size = encoded_size;
@@ -474,6 +504,11 @@ int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size)
 		return TLV_RC_OK;
 	}
 
+	if (!buffer) {
+		*size = tlv->length;
+		return TLV_RC_OK;
+	}
+
 	if (tlv->length > *size) {
 		*size = tlv->length;
 		return TLV_RC_BUFFER_OVERFLOW;
@@ -483,24 +518,4 @@ int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size)
 	memcpy(buffer, tlv->value, tlv->length);
 
 	return TLV_RC_OK;
-}
-
-struct tlv *tlv_get_next(struct tlv *tlv)
-{
-	if (!tlv)
-		return NULL;
-
-	if (tlv_is_constructed(tlv))
-		return tlv->child;
-
-	if (tlv->next)
-		return tlv->next;
-
-	while (tlv->parent) {
-		if (tlv->parent->next)
-			return tlv->parent->next;
-		tlv = tlv->parent;
-	}
-
-	return NULL;
 }

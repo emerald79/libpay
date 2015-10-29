@@ -1,9 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <tlv.h>
 
 struct tag_desc {
-	const uint8_t 	*tag;
+	const char	*tag;
 	size_t		length;
 	const char	*name;
 };
@@ -23,6 +24,29 @@ struct tag_desc tag_desc[] = {
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
 
+static struct tlv *tlv_iterate(struct tlv *tlv, int *depth)
+{
+	if (!tlv)
+		return NULL;
+
+	if (tlv_is_constructed(tlv)) {
+		(*depth)++;
+		return tlv_get_child(tlv);
+	}
+
+	if (tlv_get_next(tlv))
+		return tlv_get_next(tlv);
+
+	while (tlv_get_parent(tlv)) {
+		(*depth)--;
+		if (tlv_get_next(tlv_get_parent(tlv)))
+			return tlv_get_next(tlv_get_parent(tlv));
+		tlv = tlv_get_parent(tlv);
+	}
+
+	return NULL;
+}
+
 int main(void)
 {
 	struct tlv *tlv;
@@ -34,17 +58,19 @@ int main(void)
 		0xA0, 0x00, 0x00, 0x9F, 0x0E, 0x05, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x9F, 0x0F, 0x05, 0xF8, 0x70, 0xA4, 0x98, 0x00
 	};
-	int rc;
+	int rc, depth;
 
 	rc = tlv_parse(read_record_rsp, sizeof(read_record_rsp), &tlv);
 	if (rc != TLV_RC_OK)
 		return EXIT_FAILURE;
 
-	for (; tlv; tlv = tlv_get_next(tlv)) {
+	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
 		struct tag_desc *desc = NULL;
 		uint8_t buffer[256];
 		size_t size;
 		int i;
+		for (i = 0; i < depth; i++)
+			printf("  ");
 		size = sizeof(buffer);
 		tlv_encode_identifier(tlv, buffer, &size);
 		for (i = 0; i < (int)size; i++)

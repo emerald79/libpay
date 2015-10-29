@@ -55,10 +55,87 @@ int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
  */
 void tlv_free(struct tlv *tlv);
 
+/**
+ * Returns the DER encoded identifier (tag) octets of the TLV node.
+ *
+ * If the buffer parameter is NULL then only the size of the encoded tag will
+ * be computed and returned in the size output parameter.
+ *
+ * @param[in]    tlv     TLV node whose identifier (tag) shall be DER encoded.
+ * @param[in]    buffer  Buffer to put the encoded identifier in.
+ * @param[inout] size    Size of buffer on input, size of encoded tag on output.
+ *
+ * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
+ */
 int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size);
+
+/**
+ * Returns the DER encoded length octets of the TLV node.
+ *
+ * If the buffer parameter is NULL then only the size of the encoded length will
+ * be computed and returned in the size output parameter.
+ *
+ * @param[in]    tlv     TLV node whose length shall be DER encoded.
+ * @param[in]    buffer  Buffer to put the encoded length in.
+ * @param[inout] size    Size of buffer on input, size of encoding on output.
+ *
+ * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
+ */
 int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size);
+
+/**
+ * Returns the value octets of the TLV node.
+ *
+ * For constructed TLV nodes no value is returned (I.e. the value of the size
+ * paramter will be set to zero).
+ *
+ * If the buffer parameter is NULL then only the size of the value will
+ * be computed and returned in the size output parameter.
+ *
+ * @param[in]    tlv     TLV node whose value shall be returned.
+ * @param[in]    buffer  Buffer to put the value in.
+ * @param[inout] size    Size of buffer on input, size of value on output.
+ *
+ * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
+ */
 int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size);
 
+/**
+ * Returns whether a TLV node is constructed or primitive.
+ *
+ * @param[in]  tlv  TLV node to determine whether its constructed or primitive.
+ *
+ * @returns 1 if TLV node is contructed, 0 if TLV node is primitive.
+ */
+int tlv_is_constructed(struct tlv *tlv);
+
+/**
+ * Get the TLV node after the current TLV node. Elements of constructed TLV
+ * nodes skipped.
+ *
+ * @param[in]  tlv  The current TLV node.
+ *
+ * @returns The TLV node after the current TLV node or NULL if there is none.
+ */
 struct tlv *tlv_get_next(struct tlv *tlv);
+
+/**
+ * Get the constructed TLV node which the current TLV node is an element of.
+ *
+ * @param[in]  tlv  The current TLV node.
+ *
+ * @returns The constructed TLV node or NULL if there is none.
+ */
+struct tlv *tlv_get_parent(struct tlv *tlv);
+
+/**
+ * Get the first element of a constructed TLV node.
+ *
+ * @param[in]  tlv  The constructed TLV node.
+ *
+ * @returns The first element of the constructed TLV node or NULL if there is
+ *            none.
+ */
+struct tlv *tlv_get_child(struct tlv *tlv);
 
 #endif /* ndef __TLV_H__ */

@@ -4,4 +4,7 @@ tlv_free
 tlv_encode_identifier
 tlv_encode_length
 tlv_encode_value
+tlv_is_constructed
 tlv_get_next
+tlv_get_parent
+tlv_get_child
