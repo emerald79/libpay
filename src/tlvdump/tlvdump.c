@@ -67,7 +67,7 @@ static struct tlv *tlv_iterate(struct tlv *tlv, int *depth)
 
 int main(void)
 {
-	struct tlv *tlv;
+	struct tlv *tlv, *tlv2;
 	uint8_t read_record_rsp[] = {
 		0x70, 0x39, 0x5A, 0x0A, 0x67, 0x99, 0x99, 0x89, 0x00, 0x00,
 		0x02, 0x00, 0x06, 0x9F, 0x5F, 0x24, 0x03, 0x25, 0x12, 0x31,
@@ -79,6 +79,14 @@ int main(void)
 	int rc, depth;
 
 	rc = tlv_parse(read_record_rsp, sizeof(read_record_rsp), &tlv);
+	if (rc != TLV_RC_OK)
+		return EXIT_FAILURE;
+
+	rc = tlv_parse(read_record_rsp, sizeof(read_record_rsp), &tlv2);
+	if (rc != TLV_RC_OK)
+		return EXIT_FAILURE;
+
+	rc = tlv_insert_after(tlv_get_child(tlv), tlv2);
 	if (rc != TLV_RC_OK)
 		return EXIT_FAILURE;
 

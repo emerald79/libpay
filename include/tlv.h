@@ -156,4 +156,14 @@ struct tlv *tlv_get_parent(struct tlv *tlv);
  */
 struct tlv *tlv_get_child(struct tlv *tlv);
 
+/**
+ * Insert one TLV structure after a TLV node
+ *
+ * @param[in]  tlv1  TLV node behind which the TLV structure shall be inserted.
+ * @param[in]  tlv2  The TLV structure to be inserted.
+ *
+ * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
+ */
+int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
+
 #endif /* ndef __TLV_H__ */

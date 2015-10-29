@@ -8,3 +8,4 @@ tlv_is_constructed
 tlv_get_next
 tlv_get_parent
 tlv_get_child
+tlv_insert_after

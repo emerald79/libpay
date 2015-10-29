@@ -537,3 +537,23 @@ int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size)
 
 	return TLV_RC_OK;
 }
+
+int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
+{
+	struct tlv *tail_of_tlv2 = NULL;
+
+	if (!tlv1 || !tlv2 || tlv2->prev)
+		return TLV_RC_INVALID_ARG;
+
+	for (tail_of_tlv2 = tlv2; tail_of_tlv2->next; )
+		tail_of_tlv2 = tail_of_tlv2->next;
+
+	tail_of_tlv2->next = tlv1->next;
+	if (tail_of_tlv2->next)
+		tail_of_tlv2->next->prev = tail_of_tlv2;
+
+	tlv1->next = tlv2;
+	tlv2->prev = tlv1;
+
+	return TLV_RC_OK;
+}
