@@ -1,0 +1,11 @@
+70 819E                                          # READ RECORD Response Message Template
+  9F6C 02 0001                                   # Card Transaction Qualifiers (CTQ)
+  9F62 06 0000000001C0                           # PCVC3(Track1)
+  9F63 06 000000007E00                           # PUNATC(Track1)
+  56 4C 4235323637353034FFFFFFFFFFFFFFFFFF5E535550504C4945442F4E4F5420202020202020202020202020205E31333034323231303030303030303030303030303030303030303030303030 # Track 1 Data
+  9F64 01 03                                     # NATC(Track1)
+  9F65 02 000E                                   # PCVC3(Track2)
+  9F66 02 03F0                                   # PUNATC(Track2)
+  9F6B 13 52675041FFFFFFFFD13042210000000000000F # Track 2 Data
+  9F67 01 03                                     # NATC(Track2)
+  9F68 0E 0000000000000000000000001F03           # Card Additional Processes

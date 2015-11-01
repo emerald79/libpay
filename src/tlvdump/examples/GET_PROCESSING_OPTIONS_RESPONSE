@@ -1,0 +1,3 @@
+77 0A                                            # Response Message Template Format 2
+  82 02 0000                                     # Application Interchange Profile
+  94 04 08010100                                 # Application File Locator (AFL)

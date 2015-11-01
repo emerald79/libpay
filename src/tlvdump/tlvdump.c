@@ -21,6 +21,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <tlv.h>
 
@@ -31,26 +32,42 @@ struct tag_desc {
 };
 
 struct tag_desc tag_desc[] = {
-	{ "\x4F",	1,	"Application Identifier (AID) – card"      },
-	{ "\x50",	1,	"Application Label"			   },
-	{ "\x5A",	1,	"Application Primary Account Number (PAN)" },
-	{ "\x5F\x24",	2,	"Application Expiration Date"		   },
-	{ "\x5F\x25",	2,	"Application Effective Date"		   },
+	{ "\x4F",	1,	"Application Identifier (AID) - card"         },
+	{ "\x50",	1,	"Application Label"			      },
+	{ "\x56",	1,	"Track 1 Data"				      },
+	{ "\x5A",	1,	"Application Primary Account Number (PAN)"    },
+	{ "\x5F\x24",	2,	"Application Expiration Date"		      },
+	{ "\x5F\x25",	2,	"Application Effective Date"		      },
 	{ "\x5F\x34",	2,	"Application Primary Account Number (PAN) "
-						   "Sequence Number (PSN)" },
-	{ "\x61",	1,	"Application Template"			   },
-	{ "\x6F",	1,	"File Control Information (FCI) Template"  },
-	{ "\x70",	1,	"READ RECORD Response Message Template"	   },
-	{ "\x84",	1,	"Dedicated File (DF) Name"		   },
-	{ "\x87",	1,	"Application Priority Indicator"	   },
-	{ "\x9F\x07",	2,	"Application Usage Control (AUC)"	   },
-	{ "\x9F\x0D",	2,	"Issuer Action Code - Default"		   },
-	{ "\x9F\x0E",	2,	"Issuer Action Code - Denial"		   },
-	{ "\x9F\x0F",	2,	"Issuer Action Code - Online"		   },
+						      "Sequence Number (PSN)" },
+	{ "\x61",	1,	"Application Template"			      },
+	{ "\x6F",	1,	"File Control Information (FCI) Template"     },
+	{ "\x70",	1,	"READ RECORD Response Message Template"	      },
+	{ "\x77",	1,	"Response Message Template Format 2"	      },
+	{ "\x82",	1,	"Application Interchange Profile"	      },
+	{ "\x84",	1,	"Dedicated File (DF) Name"		      },
+	{ "\x87",	1,	"Application Priority Indicator"	      },
+	{ "\x94",	1,	"Application File Locator (AFL)"	      },
+	{ "\x9F\x07",	2,	"Application Usage Control (AUC)"	      },
+	{ "\x9F\x0D",	2,	"Issuer Action Code - Default"		      },
+	{ "\x9F\x0E",	2,	"Issuer Action Code - Denial"		      },
+	{ "\x9F\x0F",	2,	"Issuer Action Code - Online"		      },
+	{ "\x9F\x36",	2,	"Application Transaction Counter (ATC)"	      },
+	{ "\x9F\x60",	2,	"CVC3 (Track1)"				      },
+	{ "\x9F\x61",	2,	"CVC3 (Track2)"				      },
+	{ "\x9F\x62",	2,	"PCVC3 (Track1)"			      },
+	{ "\x9F\x63",	2,	"PUNATC (Track1)"			      },
+	{ "\x9F\x64",	2,	"NATC (Track1)"				      },
+	{ "\x9F\x65",	2,	"PCVC3 (Track2)"			      },
+	{ "\x9F\x66",	2,	"PUNATC (Track2)"			      },
+	{ "\x9F\x67",	2,	"NATC (Track2)"				      },
+	{ "\x9F\x68",	2,	"Card Additional Processes"		      },
+	{ "\x9F\x6B",	2,	"Track 2 Data"				      },
+	{ "\x9F\x6C",	2,	"Card Transaction Qualifiers (CTQ)"	      },
 	{ "\xA5",	1,	"File Control Information (FCI) "
-						    "Proprietary Template" },
+						    "Proprietary Template"    },
 	{ "\xBF\x0C",	2,	"File Control Information (FCI) Issuer"
-						      "Discretionary Data" },
+						      "Discretionary Data"    },
 };
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
@@ -183,13 +200,22 @@ int main(int argc, char **argv)
 	size_t der_tlv_size = 0;
 	int rc = 0, depth = 0;
 
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s input-file\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+
 	der_tlv = read_ascii_coded_der(argv[1], &der_tlv_size);
 	if (!der_tlv)
 		return EXIT_FAILURE;
 
 	rc = tlv_parse(der_tlv, der_tlv_size, &tlv);
-	if (rc != TLV_RC_OK)
+	if (rc != TLV_RC_OK) {
+		free(der_tlv);
 		return EXIT_FAILURE;
+	}
+
+	free(der_tlv);
 
 	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
 		struct tag_desc *desc = NULL;
@@ -217,9 +243,9 @@ int main(int argc, char **argv)
 		for (i = 0; i < (int)size; i++, j += 2)
 			printf("%02X", buffer[i]);
 		if (desc) {
-			for (; j < 40; j++)
+			for (; j < 46; j++)
 				printf(" ");
-			printf("# %s", desc->name);
+			printf(" # %s", desc->name);
 		}
 		printf("\n");
 	}

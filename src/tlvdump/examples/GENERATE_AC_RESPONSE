@@ -1,0 +1,4 @@
+77 0F                                            # Response Message Template Format 2
+  9F61 02 3CE3                                   # CVC3 (Track2)
+  9F60 02 A418                                   # CVC3 (Track1)
+  9F36 02 00C4                                   # Application Transaction Counter (ATC)
