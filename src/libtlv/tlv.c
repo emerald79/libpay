@@ -19,8 +19,11 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <tlv.h>
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
 
 #define TLV_TAG_CLASS_MASK		0xC0u
 #define TLV_TAG_P_C_MASK		0x20u
@@ -36,6 +39,51 @@ struct tlv {
 	struct tlv	*prev;
 	struct tlv	*parent;
 	struct tlv	*child;
+};
+
+struct tag_desc {
+	const char	*tag;
+	size_t		length;
+	const char	*name;
+};
+
+struct tag_desc tag_desc[] = {
+	{ "\x4F",	1,	"Application Identifier (AID) - card"         },
+	{ "\x50",	1,	"Application Label"			      },
+	{ "\x56",	1,	"Track 1 Data"				      },
+	{ "\x5A",	1,	"Application Primary Account Number (PAN)"    },
+	{ "\x5F\x24",	2,	"Application Expiration Date"		      },
+	{ "\x5F\x25",	2,	"Application Effective Date"		      },
+	{ "\x5F\x34",	2,	"Application Primary Account Number (PAN) "
+						      "Sequence Number (PSN)" },
+	{ "\x61",	1,	"Application Template"			      },
+	{ "\x6F",	1,	"File Control Information (FCI) Template"     },
+	{ "\x70",	1,	"READ RECORD Response Message Template"	      },
+	{ "\x77",	1,	"Response Message Template Format 2"	      },
+	{ "\x82",	1,	"Application Interchange Profile"	      },
+	{ "\x84",	1,	"Dedicated File (DF) Name"		      },
+	{ "\x87",	1,	"Application Priority Indicator"	      },
+	{ "\x94",	1,	"Application File Locator (AFL)"	      },
+	{ "\x9F\x07",	2,	"Application Usage Control (AUC)"	      },
+	{ "\x9F\x0D",	2,	"Issuer Action Code - Default"		      },
+	{ "\x9F\x0E",	2,	"Issuer Action Code - Denial"		      },
+	{ "\x9F\x0F",	2,	"Issuer Action Code - Online"		      },
+	{ "\x9F\x36",	2,	"Application Transaction Counter (ATC)"	      },
+	{ "\x9F\x60",	2,	"CVC3 (Track1)"				      },
+	{ "\x9F\x61",	2,	"CVC3 (Track2)"				      },
+	{ "\x9F\x62",	2,	"PCVC3 (Track1)"			      },
+	{ "\x9F\x63",	2,	"PUNATC (Track1)"			      },
+	{ "\x9F\x64",	2,	"NATC (Track1)"				      },
+	{ "\x9F\x65",	2,	"PCVC3 (Track2)"			      },
+	{ "\x9F\x66",	2,	"PUNATC (Track2)"			      },
+	{ "\x9F\x67",	2,	"NATC (Track2)"				      },
+	{ "\x9F\x68",	2,	"Card Additional Processes"		      },
+	{ "\x9F\x6B",	2,	"Track 2 Data"				      },
+	{ "\x9F\x6C",	2,	"Card Transaction Qualifiers (CTQ)"	      },
+	{ "\xA5",	1,	"File Control Information (FCI) "
+						    "Proprietary Template"    },
+	{ "\xBF\x0C",	2,	"File Control Information (FCI) Issuer "
+						      "Discretionary Data"    },
 };
 
 int tlv_is_constructed(struct tlv *tlv)
@@ -554,6 +602,182 @@ int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
 
 	tlv1->next = tlv2;
 	tlv2->prev = tlv1;
+
+	return TLV_RC_OK;
+}
+
+int tlv_parse_file(int fd, struct tlv **tlv)
+{
+	ssize_t rc = 0;
+	size_t der_size;
+	uint8_t buffer[1024], *der = NULL;
+	int i, nibbles = 0, comment = 0, tlv_rc = TLV_RC_OK;
+
+	rc = (size_t)lseek(fd, SEEK_SET, 0);
+	if (rc < 0) {
+		tlv_rc = TLV_RC_IO_ERROR;
+		goto done;
+	}
+
+	do {
+		rc = read(fd, buffer, sizeof(buffer));
+		if (rc < 0) {
+			tlv_rc = TLV_RC_IO_ERROR;
+			goto done;
+		}
+
+		for (i = 0; i < (int)rc; i++) {
+			if (!comment &&
+				     ((buffer[i] >= '0' && buffer[i] <= '9') ||
+				      (buffer[i] >= 'a' && buffer[i] <= 'f') ||
+				      (buffer[i] >= 'A' && buffer[i] <= 'F')))
+				nibbles++;
+			if (!comment && (buffer[i] == '#'))
+				comment = 1;
+			if (comment && buffer[i] == '\n')
+				comment = 0;
+		}
+	} while (rc > 0);
+
+	rc = (size_t)lseek(fd, SEEK_SET, 0);
+	if (rc < 0) {
+		tlv_rc = TLV_RC_IO_ERROR;
+		goto done;
+	}
+
+	if (nibbles & 0x1) {
+		tlv_rc = TLV_RC_IO_ERROR;
+		goto done;
+	}
+
+	der = (uint8_t *)malloc(nibbles >> 1);
+	if (!der) {
+		tlv_rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	memset(der, 0, nibbles >> 1);
+	nibbles = 0;
+
+	do {
+		rc = read(fd, buffer, sizeof(buffer));
+		if (rc < 0) {
+			tlv_rc = TLV_RC_IO_ERROR;
+			goto done;
+		}
+
+		for (i = 0; i < (int)rc; i++) {
+			if (!comment) {
+				if (buffer[i] >= '0' && buffer[i] <= '9') {
+					der[nibbles >> 1] <<= 4;
+					der[nibbles >> 1] |= buffer[i] - '0';
+					nibbles++;
+				}
+				if (buffer[i] >= 'a' && buffer[i] <= 'f') {
+					der[nibbles >> 1] <<= 4;
+					der[nibbles >> 1] |= buffer[i] - 'a'
+									   + 10;
+					nibbles++;
+				}
+				if (buffer[i] >= 'A' && buffer[i] <= 'F') {
+					der[nibbles >> 1] <<= 4;
+					der[nibbles >> 1] |= buffer[i] - 'A'
+									   + 10;
+					nibbles++;
+				}
+				if (buffer[i] == '#')
+					comment = 1;
+			} else
+				if (buffer[i] == '\n')
+					comment = 0;
+		}
+	} while (rc > 0);
+
+	der_size = (size_t)(nibbles >> 1);
+
+	tlv_rc = tlv_parse(der, der_size, tlv);
+
+done:
+	if (der)
+		free(der);
+	return tlv_rc;
+}
+
+static struct tlv *tlv_iterate(struct tlv *tlv, int *depth)
+{
+	if (!tlv)
+		return NULL;
+
+	if (tlv_is_constructed(tlv)) {
+		(*depth)++;
+		return tlv_get_child(tlv);
+	}
+
+	if (tlv_get_next(tlv))
+		return tlv_get_next(tlv);
+
+	while (tlv_get_parent(tlv)) {
+		(*depth)--;
+		if (tlv_get_next(tlv_get_parent(tlv)))
+			return tlv_get_next(tlv_get_parent(tlv));
+		tlv = tlv_get_parent(tlv);
+	}
+
+	return NULL;
+}
+
+int tlv_encode_file(int fd, struct tlv *tlv)
+{
+	int depth = 0;
+
+	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
+		struct tag_desc *desc = NULL;
+		uint8_t buffer[256];
+		char line[256];
+		size_t size;
+		ssize_t rc = 0;
+		int i, j, len = 0;
+
+		for (i = 0, j = 0; i < depth; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "  ");
+		size = sizeof(buffer);
+		tlv_encode_identifier(tlv, buffer, &size);
+		for (i = 0; i < (int)size; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "%02X",
+								     buffer[i]);
+		len += snprintf(&line[len], sizeof(line) - len, " ");
+		for (i = 0; i < ARRAY_SIZE(tag_desc); i++)
+			if ((tag_desc[i].length == size) &&
+					 !memcmp(tag_desc[i].tag, buffer, size))
+				desc = &tag_desc[i];
+		size = sizeof(buffer);
+		tlv_encode_length(tlv, buffer, &size);
+		for (i = 0; i < (int)size; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "%02X",
+								     buffer[i]);
+		len += snprintf(&line[len], sizeof(line) - len, " ");
+		size = sizeof(buffer);
+		tlv_encode_value(tlv, buffer, &size);
+		for (i = 0; i < (int)size; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "%02X",
+								     buffer[i]);
+		if (desc) {
+			for (; j < 46; j++)
+				len += snprintf(&line[len], sizeof(line) - len,
+									   " ");
+			len += snprintf(&line[len], sizeof(line) - len, " # %s",
+								    desc->name);
+		}
+		len += snprintf(&line[len], sizeof(line) - len, "\n");
+
+		size = 0;
+		do {
+			rc = write(fd, &line[size], len - size);
+			if (rc < 0)
+				return TLV_RC_IO_ERROR;
+			size += rc;
+		} while (size < len);
+	}
 
 	return TLV_RC_OK;
 }

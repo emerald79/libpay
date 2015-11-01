@@ -9,3 +9,5 @@ tlv_get_next
 tlv_get_parent
 tlv_get_child
 tlv_insert_after
+tlv_parse_file
+tlv_encode_file

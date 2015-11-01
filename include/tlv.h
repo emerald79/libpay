@@ -34,6 +34,7 @@
 #define TLV_RC_OUT_OF_MEMORY			4
 #define TLV_RC_INDEFINITE_LENGTH_NOT_SUPPORTED	5
 #define TLV_RC_VALUE_LENGTH_TOO_LARGE		6
+#define TLV_RC_IO_ERROR				7
 
 #define TLV_TAG_CLASS_UNIVERSAL		0x00u
 #define TLV_TAG_CLASS_APPLICATION	0x40u
@@ -165,5 +166,9 @@ struct tlv *tlv_get_child(struct tlv *tlv);
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
 int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
+
+int tlv_parse_file(int fd, struct tlv **tlv);
+
+int tlv_encode_file(int fd, struct tlv *tlv);
 
 #endif /* ndef __TLV_H__ */
