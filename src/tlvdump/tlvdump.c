@@ -19,6 +19,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+
 #include <tlv.h>
 
 struct tag_desc {
@@ -28,16 +31,26 @@ struct tag_desc {
 };
 
 struct tag_desc tag_desc[] = {
-	{ "\x70",	1,	"READ RECORD Response Message Template"	   },
+	{ "\x4F",	1,	"Application Identifier (AID) – card"      },
+	{ "\x50",	1,	"Application Label"			   },
 	{ "\x5A",	1,	"Application Primary Account Number (PAN)" },
 	{ "\x5F\x24",	2,	"Application Expiration Date"		   },
 	{ "\x5F\x25",	2,	"Application Effective Date"		   },
 	{ "\x5F\x34",	2,	"Application Primary Account Number (PAN) "
 						   "Sequence Number (PSN)" },
+	{ "\x61",	1,	"Application Template"			   },
+	{ "\x6F",	1,	"File Control Information (FCI) Template"  },
+	{ "\x70",	1,	"READ RECORD Response Message Template"	   },
+	{ "\x84",	1,	"Dedicated File (DF) Name"		   },
+	{ "\x87",	1,	"Application Priority Indicator"	   },
 	{ "\x9F\x07",	2,	"Application Usage Control (AUC)"	   },
 	{ "\x9F\x0D",	2,	"Issuer Action Code - Default"		   },
 	{ "\x9F\x0E",	2,	"Issuer Action Code - Denial"		   },
-	{ "\x9F\x0F",	2,	"Issuer Action Code - Online"		   }
+	{ "\x9F\x0F",	2,	"Issuer Action Code - Online"		   },
+	{ "\xA5",	1,	"File Control Information (FCI) "
+						    "Proprietary Template" },
+	{ "\xBF\x0C",	2,	"File Control Information (FCI) Issuer"
+						      "Discretionary Data" },
 };
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
@@ -65,28 +78,116 @@ static struct tlv *tlv_iterate(struct tlv *tlv, int *depth)
 	return NULL;
 }
 
-int main(void)
+static uint8_t *read_ascii_coded_der(const char *filename, size_t *size)
 {
-	struct tlv *tlv, *tlv2;
-	uint8_t read_record_rsp[] = {
-		0x70, 0x39, 0x5A, 0x0A, 0x67, 0x99, 0x99, 0x89, 0x00, 0x00,
-		0x02, 0x00, 0x06, 0x9F, 0x5F, 0x24, 0x03, 0x25, 0x12, 0x31,
-		0x5F, 0x25, 0x03, 0x04, 0x01, 0x01, 0x5F, 0x34, 0x01, 0x25,
-		0x9F, 0x07, 0x02, 0xFF, 0x00, 0x9F, 0x0D, 0x05, 0xFC, 0x50,
-		0xA0, 0x00, 0x00, 0x9F, 0x0E, 0x05, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x9F, 0x0F, 0x05, 0xF8, 0x70, 0xA4, 0x98, 0x00
-	};
-	int rc, depth;
+	ssize_t rc = 0;
+	uint8_t buffer[1024], *result = NULL;
+	int fd = -1, i, nibbles = 0, comment = 0;
 
-	rc = tlv_parse(read_record_rsp, sizeof(read_record_rsp), &tlv);
-	if (rc != TLV_RC_OK)
+	fd = open(filename, O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "open('%s') failed: %s\n", filename,
+							       strerror(errno));
+		goto error;
+	}
+
+	do {
+		rc = read(fd, buffer, sizeof(buffer));
+		if (rc < 0) {
+			fprintf(stderr, "read failed: %s\n", strerror(errno));
+			goto error;
+		}
+
+		for (i = 0; i < (int)rc; i++) {
+			if (!comment &&
+				     ((buffer[i] >= '0' && buffer[i] <= '9') ||
+				      (buffer[i] >= 'a' && buffer[i] <= 'f') ||
+				      (buffer[i] >= 'A' && buffer[i] <= 'F')))
+				nibbles++;
+			if (!comment && (buffer[i] == '#'))
+				comment = 1;
+			if (comment && buffer[i] == '\n')
+				comment = 0;
+		}
+	} while (rc > 0);
+
+	rc = (size_t)lseek(fd, SEEK_SET, 0);
+	if (rc < 0) {
+		fprintf(stderr, "lseek failed: %s\n", strerror(errno));
+		goto error;
+	}
+
+	if (nibbles & 0x1) {
+		fprintf(stderr, "Format error: Uneven number of nibbles\n");
+		goto error;
+	}
+
+	result = (uint8_t *)malloc(nibbles >> 1);
+	if (!result) {
+		fprintf(stderr, "out of memory");
+		goto error;
+	}
+
+	memset(result, 0, nibbles >> 1);
+	nibbles = 0;
+
+	do {
+		rc = read(fd, buffer, sizeof(buffer));
+		if (rc < 0) {
+			fprintf(stderr, "read failed: %s\n", strerror(errno));
+			goto error;
+		}
+
+		for (i = 0; i < (int)rc; i++) {
+			if (!comment) {
+				if (buffer[i] >= '0' && buffer[i] <= '9') {
+					result[nibbles >> 1] <<= 4;
+					result[nibbles >> 1] |= buffer[i] - '0';
+					nibbles++;
+				}
+				if (buffer[i] >= 'a' && buffer[i] <= 'f') {
+					result[nibbles >> 1] <<= 4;
+					result[nibbles >> 1] |= buffer[i] - 'a'
+									   + 10;
+					nibbles++;
+				}
+				if (buffer[i] >= 'A' && buffer[i] <= 'F') {
+					result[nibbles >> 1] <<= 4;
+					result[nibbles >> 1] |= buffer[i] - 'A'
+									   + 10;
+					nibbles++;
+				}
+				if (buffer[i] == '#')
+					comment = 1;
+			} else
+				if (buffer[i] == '\n')
+					comment = 0;
+		}
+	} while (rc > 0);
+
+	*size = (size_t)(nibbles >> 1);
+	return result;
+
+error:
+	if (result)
+		free(result);
+	if (fd >= 0)
+		close(fd);
+	return NULL;
+}
+
+int main(int argc, char **argv)
+{
+	struct tlv *tlv = NULL;
+	uint8_t *der_tlv = NULL;
+	size_t der_tlv_size = 0;
+	int rc = 0, depth = 0;
+
+	der_tlv = read_ascii_coded_der(argv[1], &der_tlv_size);
+	if (!der_tlv)
 		return EXIT_FAILURE;
 
-	rc = tlv_parse(read_record_rsp, sizeof(read_record_rsp), &tlv2);
-	if (rc != TLV_RC_OK)
-		return EXIT_FAILURE;
-
-	rc = tlv_insert_after(tlv_get_child(tlv), tlv2);
+	rc = tlv_parse(der_tlv, der_tlv_size, &tlv);
 	if (rc != TLV_RC_OK)
 		return EXIT_FAILURE;
 
@@ -94,12 +195,12 @@ int main(void)
 		struct tag_desc *desc = NULL;
 		uint8_t buffer[256];
 		size_t size;
-		int i;
-		for (i = 0; i < depth; i++)
+		int i, j;
+		for (i = 0, j = 0; i < depth; i++, j += 2)
 			printf("  ");
 		size = sizeof(buffer);
 		tlv_encode_identifier(tlv, buffer, &size);
-		for (i = 0; i < (int)size; i++)
+		for (i = 0; i < (int)size; i++, j += 2)
 			printf("%02X", buffer[i]);
 		printf(" ");
 		for (i = 0; i < ARRAY_SIZE(tag_desc); i++)
@@ -108,15 +209,18 @@ int main(void)
 				desc = &tag_desc[i];
 		size = sizeof(buffer);
 		tlv_encode_length(tlv, buffer, &size);
-		for (i = 0; i < (int)size; i++)
+		for (i = 0; i < (int)size; i++, j += 2)
 			printf("%02X", buffer[i]);
 		printf(" ");
 		size = sizeof(buffer);
 		tlv_encode_value(tlv, buffer, &size);
-		for (i = 0; i < (int)size; i++)
+		for (i = 0; i < (int)size; i++, j += 2)
 			printf("%02X", buffer[i]);
-		if (desc)
-			printf(" '%s'", desc->name);
+		if (desc) {
+			for (; j < 40; j++)
+				printf(" ");
+			printf("# %s", desc->name);
+		}
 		printf("\n");
 	}
 

@@ -1,0 +1,8 @@
+6F 2F                                     # File Control Information (FCI) Template
+  84 0E 325041592E5359532E4444463031      # Dedicated File (DF) Name
+  A5 1D                                   # File Control Information (FCI) Proprietary Template
+    BF0C 1A                               # File Control Information (FCI) IssuerDiscretionary Data
+      61 18                               # Application Template
+        4F 07 A0000000041010              # Application Identifier (AID) – card
+        50 0A 4D617374657243617264        # Application Label
+        87 01 01                          # Application Priority Indicator
