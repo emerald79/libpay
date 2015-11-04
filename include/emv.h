@@ -33,10 +33,10 @@
 struct emv_ep_config {
 	uint8_t		presence_flags;
 	uint8_t		support_flags;
-	uint8_t		reader_contactless_transaction_limit[6];
-	uint8_t		reader_contactless_floor_limit[6];
-	uint8_t		terminal_floor_limit[6];
-	uint8_t		reader_cvm_required_limit[6];
+	uint64_t	reader_contactless_transaction_limit;
+	uint64_t	reader_contactless_floor_limit;
+	uint64_t	terminal_floor_limit;
+	uint64_t	reader_cvm_required_limit;
 	uint32_t	terminal_transaction_qualifiers;
 };
 
@@ -80,5 +80,40 @@ struct emv_ep {
 
 #define ISO4217_USD	840
 #define ISO4217_EUR	978
+
+
+#define EMV_OUTCOME_START_NA	0x00u
+#define EMV_OUTCOME_START_A	0x01u
+#define EMV_OUTCOME_START_B	0x02u
+#define EMV_OUTCOME_START_C	0x03u
+#define EMV_OUTCOME_START_D	0x04u
+
+#define EMV_OUTCOME_ONLINE_RESPONSE_DATA_NA		0x00u
+#define EMV_OUTCOME_ONLINE_RESPONSE_DATA_EMV_DATA	0x01u
+#define EMV_OUTCOME_ONLINE_RESPONSE_DATA_ANY		0x02u
+
+#define EMV_OUTCOME_CVM_NA				0x00u
+#define EMV_OUTCOME_CVM_ONLINE_PIN			0x01u
+#define EMV_OUTCOME_CVM_CONFIRMATION_CODE_VERIFIED	0x02u
+#define EMV_OUTCOME_CVM_OBTAIN_SIGNATURE		0x03u
+#define EMV_OUTCOME_CVM_NO_CVM				0x04u
+
+#define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_NA		0x00u
+#define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_CONTACT_CHIP	0x01u
+#define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_MAGSTRIPE	0x02u
+
+struct emv_outcome {
+	uint8_t	start;
+	uint8_t online_response_data;
+	uint8_t cvm;
+	int	ui_request_on_outcome_present;
+	int	ui_request_on_restart_present;
+	int	data_record_present;
+	int	discretionary_data_present;
+	int	alternate_interface_preference;
+	int	field_off_request;
+	int	hold_time_value;
+	int	removal_timeout;
+};
 
 #endif							    /* ndef __EMV_H__ */
