@@ -6,7 +6,7 @@
 
 #define EMV_RC_OK				0
 #define EMV_RC_UNSUPPORTED_TRANSACTION_TYPE	1
-#define EMV_RC_UNSUPPORTED_CURRENCY_CODE	2			
+#define EMV_RC_UNSUPPORTED_CURRENCY_CODE	2
 
 #define EMV_EP_CONFIG_STATUS_CHECK_SUPPORT_FLAG			0x01u
 #define EMV_EP_CONFIG_ZERO_AMOUNT_ALLOWED_FLAG			0x02u
@@ -72,7 +72,7 @@ struct emv_transaction_data {
 	uint32_t	unpredictable_number;
 	uint16_t	currency_code;
 };
-	
+
 struct emv_ep {
 	struct emv_ep_combination	*combinations;
 	int				num_combinations;
@@ -81,6 +81,55 @@ struct emv_ep {
 #define ISO4217_USD	840
 #define ISO4217_EUR	978
 
+
+#define EMV_MSGID_APPROVED		0x03u
+#define EMV_MSGID_NOT_AUTHORISED	0x07u
+#define EMV_MSGID_ENTER_PIN		0x09u
+#define EMV_MSGID_PROCESSING_ERROR	0x0Fu
+#define EMV_MSGID_REMOVE_CARD		0x10u
+#define EMV_MSGID_WELCOME		0x14u
+#define EMV_MSGID_PRESENT_CARD		0x15u
+#define EMV_MSGID_PROCESSING		0x16u
+#define EMV_MSGID_CARD_READ_OK		0x17u
+#define EMV_MSGID_INSERT_OR_SWIPE_CARD	0x18u
+#define EMV_MSGID_PRESENT_ONE_CARD_ONLY	0x19u
+#define EMV_MSGID_APPROVED_PLEASE_SIGN	0x1Au
+#define EMV_MSGID_AUTHORISING		0x1Bu
+#define EMV_MSGID_TRY_ANOTHER_CARD	0x1Cu
+#define EMV_MSGID_INSERT_CARD		0x1Du
+#define EMV_MSGID_CLEAR_DISPLAY		0x1Eu
+#define EMV_MSGID_SEE_PHONE		0x20u
+#define EMV_MSGID_PRESENT_CARD_AGAIN	0x21u
+
+#define EMV_VALUE_AMOUNT		0x01u
+#define EMV_VALUE_BALANCE		0x02u
+
+#define EMV_STATUS_NOT_READY		0x01u
+#define EMV_STATUS_IDLE			0x02u
+#define EMV_STATUS_READY_TO_READ	0x03u
+#define EMV_STATUS_PROCESSING		0x04u
+#define EMV_STATUS_CARD_READ_SUCCESS	0x05u
+#define EMV_STATUS_PROCESSING_ERROR	0x06u
+
+struct emv_ui_req {
+	int		present;
+	uint8_t 	msgid;
+	uint8_t 	status;
+	int		hold_time;
+	char		lang_pref[8];
+	size_t		lang_pref_len;
+	uint8_t		value_qualifier;
+	uint64_t	value;
+	uint16_t	currency_code;
+};
+
+#define EMV_OUTCOME_SELECT_NEXT		0x01u
+#define EMV_OUTCOME_TRY_AGAIN		0x02u
+#define EMV_OUTCOME_APPROVED		0x03u
+#define EMV_OUTCOME_DECLINED		0x04u
+#define EMV_OUTCOME_ONLINE_REQUEST	0x05u
+#define EMV_OUTCOME_TRY_ANOTHER_IFACE	0x06u
+#define EMV_OUTCOME_END_APPLICATION	0x07u
 
 #define EMV_OUTCOME_START_NA	0x00u
 #define EMV_OUTCOME_START_A	0x01u
@@ -102,18 +151,25 @@ struct emv_ep {
 #define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_CONTACT_CHIP	0x01u
 #define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_MAGSTRIPE	0x02u
 
-struct emv_outcome {
-	uint8_t	start;
-	uint8_t online_response_data;
-	uint8_t cvm;
-	int	ui_request_on_outcome_present;
-	int	ui_request_on_restart_present;
-	int	data_record_present;
-	int	discretionary_data_present;
-	int	alternate_interface_preference;
-	int	field_off_request;
-	int	hold_time_value;
-	int	removal_timeout;
+#define EMV_OUTCOME_RECEIPT_NA	0x00
+#define EMV_OUTCOME_RECEIPT_YES	0x01
+#define EMV_OUTCOME_RECEIPT_NO	0x02
+
+struct emv_outcome_parms {
+	uint8_t			outcome;
+	uint8_t			start;
+	uint8_t			online_response_data;
+	uint8_t			cvm;
+	int			ui_req_on_outcome_present;
+	struct emv_ui_req	ui_req_on_outcome;
+	int			ui_req_on_restart_present;
+	struct emv_ui_req	ui_req_on_restart;
+	int			data_record_present;
+	int			discretionary_data_present;
+	int			alternate_interface_preference;
+	uint8_t			receipt;
+	int			field_off_request;
+	int			removal_timeout;
 };
 
 #endif							    /* ndef __EMV_H__ */

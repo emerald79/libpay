@@ -20,7 +20,7 @@ static uint64_t emv_single_unit_of_currency(uint16_t currency_code)
 	return 100;
 }
 
-int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx, struct emv_outcome *outcome)
+int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx, struct emv_outcome_parms *outcome)
 {
 	int i = 0, tx_type_idx = 0, contactless_application_allowed = 0;
 
@@ -183,15 +183,17 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx, str
 	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.1.1.13");
 
 	if (!contactless_application_allowed) {
+		memset(outcome, 0, sizeof(*outcome));
+		outcome->outcome = EMV_OUTCOME_END_APPLICATION;
 		outcome->start = EMV_OUTCOME_START_NA;
 		outcome->online_response_data =	EMV_OUTCOME_ONLINE_RESPONSE_DATA_NA;
 		outcome->cvm = EMV_OUTCOME_CVM_NA;
-		outcome->ui_request_on_outcome_present = 1;
-		outcome->ui_request_on_restart_present = 0;
+		outcome->ui_req_on_outcome.present = 1;
+		outcome->ui_req_on_outcome.msgid = EMV_MSGID_INSERT_OR_SWIPE_CARD;
+		outcome->ui_req_on_outcome.status = EMV_STATUS_PROCESSING_ERROR;
 		outcome->data_record_present = 0;
 		outcome->discretionary_data_present = 0;
 		outcome->field_off_request = 0;
-		outcome->hold_time_value = 0;
 		outcome->removal_timeout = 0;
 	}
 
