@@ -93,6 +93,7 @@ struct emv_transaction_data {
 };
 
 struct emv_ep {
+	bool				restart;
 	struct emv_ep_combination	*combinations;
 	int				num_combinations;
 };

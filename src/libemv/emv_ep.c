@@ -64,31 +64,46 @@ static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
 }
 #endif
 
+static int get_tx_type_idx(struct emv_transaction_data *tx, int *type_idx)
+{
+	/* See EMV Contactless Book A v2.5, Table 5-6: Type of Transaction.   */
+	switch (tx->transaction_type) {
+	case 0x00:
+		if (tx->amount_other)
+			*type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE_WITH_CASHBACK;
+		else
+			*type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE;
+		break;
+	case 0x09:
+		*type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE_WITH_CASHBACK;
+		break;
+	case 0x01:
+		*type_idx = EMV_EP_TX_TYPE_IDX_CASH_ADVANCE;
+		break;
+	case 0x20:
+		*type_idx = EMV_EP_TX_TYPE_IDX_REFUND;
+		break;
+	default:
+		return EMV_RC_UNSUPPORTED_TRANSACTION_TYPE;
+	}
+
+	return EMV_RC_OK;
+}
+
 int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 					      struct emv_outcome_parms *outcome)
 {
 	uint64_t amount_authorised = 0, unit_of_currency = 0;
 	bool ctls_app_allowed = 0;
-	int i = 0, tx_type_idx = 0;
+	int i = 0, tx_type_idx = 0, rc = EMV_RC_OK;
 
 	amount_authorised = bcd_to_u64(tx->amount_authorised, 6);
 	unit_of_currency  = bcd_to_u64(
 				 single_unit_of_currency(tx->currency_code), 6);
 
-	/* See EMV Contactless Book A v2.5, Table 5-6: Type of Transaction.   */
-	if (tx->transaction_type == 0x00)
-		if (tx->amount_other)
-			tx_type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE_WITH_CASHBACK;
-		else
-			tx_type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE;
-	else if (tx->transaction_type == 0x09)
-		tx_type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE_WITH_CASHBACK;
-	else if (tx->transaction_type == 0x01)
-		tx_type_idx = EMV_EP_TX_TYPE_IDX_CASH_ADVANCE;
-	else if (tx->transaction_type == 0x20)
-		tx_type_idx = EMV_EP_TX_TYPE_IDX_REFUND;
-	else
-		return EMV_RC_UNSUPPORTED_TRANSACTION_TYPE;
+	rc = get_tx_type_idx(tx, &tx_type_idx);
+	if (rc != EMV_RC_OK)
+		return rc;
 
 	if (!is_currency_code_supported(tx->currency_code))
 		return EMV_RC_UNSUPPORTED_CURRENCY_CODE;
@@ -219,6 +234,57 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 		ui_req->msg_id	 = msg_insert_or_swipe_card;
 		ui_req->status	 = sts_processing_error;
 	}
+
+	return EMV_RC_OK;
+}
+
+int emv_ep_protocol_activation(struct emv_ep *ep,
+			struct emv_transaction_data *tx, bool started_by_reader)
+{
+	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.1");
+
+	if (!ep->restart) {
+		if (started_by_reader) {
+			int i, tx_type_idx, rc;
+
+			rc = get_tx_type_idx(tx, &tx_type_idx);
+			if (rc != EMV_RC_OK)
+				return rc;
+
+			for (i = 0; i < ep->num_combinations; i++) {
+				struct emv_ep_config *cfg = NULL;
+				struct emv_ep_preproc_indicators *indicators;
+
+				cfg = &ep->combinations[i].config[tx_type_idx];
+				indicators = &ep->combinations[i].indicators;
+
+				memset(indicators, 0, sizeof(*indicators));
+
+				if (cfg->present.ttq)
+					indicators->copy_of_ttq = cfg->ttq;
+			}
+		}
+
+		/* FIXME: Entry Point shall clear the Candidate list */
+	}
+
+
+	/* FIXME: The following requirements should be done before calling the
+	 * entry point.
+	 */
+	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.2"); /* FIXME */
+
+
+	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.3"); /* FIXME */
+
+
+	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.4"); /* FIXME */
+
+
+	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.5"); /* FIXME */
+
+
+	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.6"); /* FIXME */
 
 	return EMV_RC_OK;
 }
