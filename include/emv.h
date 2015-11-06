@@ -3,19 +3,11 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define EMV_RC_OK				0
 #define EMV_RC_UNSUPPORTED_TRANSACTION_TYPE	1
 #define EMV_RC_UNSUPPORTED_CURRENCY_CODE	2
-
-#define EMV_EP_CONFIG_STATUS_CHECK_SUPPORT_FLAG			0x01u
-#define EMV_EP_CONFIG_ZERO_AMOUNT_ALLOWED_FLAG			0x02u
-#define EMV_EP_CONFIG_READER_CONTACTLESS_TRANSACTION_LIMIT	0x04u
-#define EMV_EP_CONFIG_READER_CONTACTLESS_FLOOR_LIMIT		0x08u
-#define EMV_EP_CONFIG_TERMINAL_FLOOR_LIMIT			0x10u
-#define EMV_EP_CONFIG_READER_CVM_REQUIRED_LIMIT			0x20u
-#define EMV_EP_CONFIG_TERMINAL_TRANSACTION_QUALIFIERS		0x40u
-#define EMV_EP_CONFIG_EXTENDED_SELECTION_SUPPORT_FLAG		0x80u
 
 #define TTQ_MAG_STRIPE_MODE_SUPPORTED		0x80000000u
 #define TTQ_EMV_MODE_SUPPORTED			0x20000000u
@@ -30,25 +22,34 @@
 #define TTQ_ISSUER_UPDATE_PROCESSING_SUPPORTED	0x00008000u
 #define TTQ_CONSUMER_DEVICE_CVM_SUPPORTED	0x00004000u
 
-struct emv_ep_config {
-	uint8_t		presence_flags;
-	uint8_t		support_flags;
-	uint64_t	reader_contactless_transaction_limit;
-	uint64_t	reader_contactless_floor_limit;
-	uint64_t	terminal_floor_limit;
-	uint64_t	reader_cvm_required_limit;
-	uint32_t	terminal_transaction_qualifiers;
+struct emv_ep_config_flags {
+	bool	status_check_support:1;
+	bool	zero_amount_allowed:1;
+	bool	reader_ctls_tx_limit:1;
+	bool	reader_ctls_floor_limit:1;
+	bool	terminal_floor_limit:1;
+	bool	reader_cvm_reqd_limit:1;
+	bool	ttq:1;
+	bool	ext_selection_support:1;
 };
 
-#define EMV_EP_PREPROC_INDICATORS_STATUS_CHECK_REQUESTED		   0x01u
-#define EMV_EP_PREPROC_INDICATORS_CONTACTLESS_APPLICATION_NOT_ALLOWED	   0x02u
-#define EMV_EP_PREPROC_INDICATORS_ZERO_AMOUNT				   0x04u
-#define EMV_EP_PREPROC_INDICATORS_READER_CVM_REQUIRED_LIMIT_EXCEEDED	   0x08u
-#define EMV_EP_PREPROC_INDICATORS_READER_CONTACTLESS_FLOOR_LIMIT_EXCEEDED  0x10u
+struct emv_ep_config {
+	struct emv_ep_config_flags	present;
+	struct emv_ep_config_flags	supported;
+	uint8_t				reader_ctls_tx_limit[6];
+	uint8_t				reader_ctls_floor_limit[6];
+	uint8_t				terminal_floor_limit[6];
+	uint8_t				reader_cvm_reqd_limit[6];
+	uint32_t			ttq;
+};
 
 struct emv_ep_preproc_indicators {
-	uint8_t		flags;
-	uint32_t	copy_of_ttq;
+	bool	 status_check_requested:1;
+	bool	 ctls_app_not_allowed:1;
+	bool	 zero_amount:1;
+	bool	 cvm_reqd_limit_exceeded:1;
+	bool	 floor_limit_exceeded:1;
+	uint32_t copy_of_ttq;
 };
 
 #define EMV_EP_TX_TYPE_IDX_PURCHASE			0
@@ -66,11 +67,11 @@ struct emv_ep_combination {
 };
 
 struct emv_transaction_data {
-	uint8_t		transaction_type;
-	uint64_t	amount_authorised;
-	uint64_t	amount_other;
-	uint32_t	unpredictable_number;
-	uint16_t	currency_code;
+	uint8_t	 transaction_type;
+	uint8_t	 amount_authorised[6];
+	uint8_t	 amount_other[6];
+	uint32_t unpredictable_number;
+	uint8_t	 currency_code[2];
 };
 
 struct emv_ep {
@@ -78,98 +79,132 @@ struct emv_ep {
 	int				num_combinations;
 };
 
-#define ISO4217_USD	840
-#define ISO4217_EUR	978
+#define EMV_MAX_ONLINE_RESPONSE_LEN	256
+#define EMV_MAX_DATA_RECORD_LEN		512
+#define	EMV_MAX_DISCRETIONARY_DATA_LEN	1024
 
+#define ISO4217_USD	((const uint8_t []){ '\x08', '\x40' })
+#define ISO4217_EUR	((const uint8_t []){ '\x09', '\x78' })
 
-#define EMV_MSGID_APPROVED		0x03u
-#define EMV_MSGID_NOT_AUTHORISED	0x07u
-#define EMV_MSGID_ENTER_PIN		0x09u
-#define EMV_MSGID_PROCESSING_ERROR	0x0Fu
-#define EMV_MSGID_REMOVE_CARD		0x10u
-#define EMV_MSGID_WELCOME		0x14u
-#define EMV_MSGID_PRESENT_CARD		0x15u
-#define EMV_MSGID_PROCESSING		0x16u
-#define EMV_MSGID_CARD_READ_OK		0x17u
-#define EMV_MSGID_INSERT_OR_SWIPE_CARD	0x18u
-#define EMV_MSGID_PRESENT_ONE_CARD_ONLY	0x19u
-#define EMV_MSGID_APPROVED_PLEASE_SIGN	0x1Au
-#define EMV_MSGID_AUTHORISING		0x1Bu
-#define EMV_MSGID_TRY_ANOTHER_CARD	0x1Cu
-#define EMV_MSGID_INSERT_CARD		0x1Du
-#define EMV_MSGID_CLEAR_DISPLAY		0x1Eu
-#define EMV_MSGID_SEE_PHONE		0x20u
-#define EMV_MSGID_PRESENT_CARD_AGAIN	0x21u
-
-#define EMV_VALUE_AMOUNT		0x01u
-#define EMV_VALUE_BALANCE		0x02u
-
-#define EMV_STATUS_NOT_READY		0x01u
-#define EMV_STATUS_IDLE			0x02u
-#define EMV_STATUS_READY_TO_READ	0x03u
-#define EMV_STATUS_PROCESSING		0x04u
-#define EMV_STATUS_CARD_READ_SUCCESS	0x05u
-#define EMV_STATUS_PROCESSING_ERROR	0x06u
-
-struct emv_ui_req {
-	int		present;
-	uint8_t 	msgid;
-	uint8_t 	status;
-	int		hold_time;
-	char		lang_pref[8];
-	size_t		lang_pref_len;
-	uint8_t		value_qualifier;
-	uint64_t	value;
-	uint16_t	currency_code;
+enum emv_message_identifier {
+	msg_approved			= 0x03,
+	msg_not_authorized		= 0x07,
+	msg_enter_pin			= 0x09,
+	msg_processing_error		= 0x0f,
+	msg_remove_card			= 0x10,
+	msg_welcome			= 0x14,
+	msg_present_card		= 0x15,
+	msg_processing			= 0x16,
+	msg_card_read_ok		= 0x17,
+	msg_insert_or_swipe_card	= 0x18,
+	msg_present_one_card_only	= 0x19,
+	msg_approved_please_sign	= 0x1a,
+	msg_authorising			= 0x1b,
+	msg_try_another_card		= 0x1c,
+	msg_insert_card			= 0x1d,
+	msg_clear_display		= 0x1e,
+	msg_see_phone			= 0x20,
+	msg_present_card_again		= 0x21,
 };
 
-#define EMV_OUTCOME_SELECT_NEXT		0x01u
-#define EMV_OUTCOME_TRY_AGAIN		0x02u
-#define EMV_OUTCOME_APPROVED		0x03u
-#define EMV_OUTCOME_DECLINED		0x04u
-#define EMV_OUTCOME_ONLINE_REQUEST	0x05u
-#define EMV_OUTCOME_TRY_ANOTHER_IFACE	0x06u
-#define EMV_OUTCOME_END_APPLICATION	0x07u
+enum emv_value_qualifier {
+	val_amount = 0,
+	val_balance
+};
 
-#define EMV_OUTCOME_START_NA	0x00u
-#define EMV_OUTCOME_START_A	0x01u
-#define EMV_OUTCOME_START_B	0x02u
-#define EMV_OUTCOME_START_C	0x03u
-#define EMV_OUTCOME_START_D	0x04u
+enum emv_status {
+	sts_not_ready = 0,
+	sts_idle,
+	sts_ready_to_read,
+	sts_processing,
+	sts_card_read_successfully,
+	sts_processing_error
+};
 
-#define EMV_OUTCOME_ONLINE_RESPONSE_DATA_NA		0x00u
-#define EMV_OUTCOME_ONLINE_RESPONSE_DATA_EMV_DATA	0x01u
-#define EMV_OUTCOME_ONLINE_RESPONSE_DATA_ANY		0x02u
+struct emv_ui_request {
+	bool				present;
+	enum	emv_message_identifier	msg_id;
+	enum	emv_status		status;
+	uint8_t				hold_time;
+	char				lang_pref[8];
+	size_t				lang_pref_len;
+	enum	emv_value_qualifier	value_qualifier;
+	uint8_t				value[6];
+	uint8_t				currency_code[2];
+};
 
-#define EMV_OUTCOME_CVM_NA				0x00u
-#define EMV_OUTCOME_CVM_ONLINE_PIN			0x01u
-#define EMV_OUTCOME_CVM_CONFIRMATION_CODE_VERIFIED	0x02u
-#define EMV_OUTCOME_CVM_OBTAIN_SIGNATURE		0x03u
-#define EMV_OUTCOME_CVM_NO_CVM				0x04u
+enum emv_outcome {
+	out_select_next = 0,
+	out_try_again,
+	out_approved,
+	out_declined,
+	out_online_request,
+	out_try_another_interface,
+	out_end_application
+};
 
-#define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_NA		0x00u
-#define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_CONTACT_CHIP	0x01u
-#define EMV_OUTCOME_ALTERNATE_INTERFACE_PREFERENCE_MAGSTRIPE	0x02u
+enum emv_start {
+	start_na = 0,
+	start_a,
+	start_b,
+	start_c,
+	start_d
+};
 
-#define EMV_OUTCOME_RECEIPT_NA	0x00
-#define EMV_OUTCOME_RECEIPT_YES	0x01
-#define EMV_OUTCOME_RECEIPT_NO	0x02
+enum emv_cvm {
+	cvm_na = 0,
+	cvm_online_pin,
+	cvm_confirmation_code_verified,
+	cvm_obtain_signature,
+	cvm_no_cvm
+};
+
+enum emv_online_response_type {
+	ort_na = 0,
+	ort_emv_data,
+	ort_any
+};
+
+struct emv_online_response {
+	enum emv_online_response_type	type;
+	uint8_t				data[EMV_MAX_ONLINE_RESPONSE_LEN];
+	size_t				len;
+};
+
+struct emv_data_record {
+	uint8_t	data[EMV_MAX_DATA_RECORD_LEN];
+	size_t	len;
+};
+
+struct emv_discretionary_data {
+	uint8_t data[EMV_MAX_DISCRETIONARY_DATA_LEN];
+	size_t len;
+};
+
+enum emv_alternate_interface_pref {
+	aip_na = 0,
+	aip_contact_chip,
+	aip_magstripe
+};
+
+struct emv_field_off_request {
+	bool	requested;
+	int	hold_time_value;
+};
 
 struct emv_outcome_parms {
-	uint8_t			outcome;
-	uint8_t			start;
-	uint8_t			online_response_data;
-	uint8_t			cvm;
-	int			ui_req_on_outcome_present;
-	struct emv_ui_req	ui_req_on_outcome;
-	int			ui_req_on_restart_present;
-	struct emv_ui_req	ui_req_on_restart;
-	int			data_record_present;
-	int			discretionary_data_present;
-	int			alternate_interface_preference;
-	uint8_t			receipt;
-	int			field_off_request;
-	int			removal_timeout;
+	enum	emv_outcome			outcome;
+	enum	emv_start			start;
+	struct	emv_online_response		online_response;
+	enum	emv_cvm				cvm;
+	struct	emv_ui_request			ui_request_on_outcome;
+	struct	emv_ui_request			ui_request_on_restart;
+	struct	emv_data_record			data_record;
+	struct	emv_discretionary_data		discretionary_data;
+	enum	emv_alternate_interface_pref	alternate_interface_pref;
+	bool					receipt;
+	struct	emv_field_off_request		field_off_request;
+	int					removal_timeout;
 };
 
 #endif							    /* ndef __EMV_H__ */

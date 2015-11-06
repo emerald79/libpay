@@ -4,26 +4,59 @@
 
 #define REQUIREMENT(book, id)
 
-static int emv_is_currency_code_supported(uint16_t currency_code)
+static bool is_currency_code_supported(const uint8_t *currency_code)
 {
-	switch (currency_code) {
-	case ISO4217_USD:
-	case ISO4217_EUR:
-		return 1;
+	if (!memcmp(ISO4217_USD, currency_code, sizeof(ISO4217_USD)) ||
+	    !memcmp(ISO4217_EUR, currency_code, sizeof(ISO4217_EUR)))
+		return true;
+
+	return false;
+}
+
+static const uint8_t *single_unit_of_currency(const uint8_t *currency_code)
+{
+	return (uint8_t [6]) { '\x00', '\x00', '\x00', '\x00', '\x01', '\x00' };
+}
+
+static uint64_t bcd_to_u64(const uint8_t *bcd, size_t len)
+{
+	uint64_t u64 = 0;
+	unsigned i = 0;
+
+	for (i = 0, u64 = 0; i < len; i++) {
+		u64 *= 10;
+		u64 += (bcd[i] >> 4);
+		u64 *= 10;
+		u64 += bcd[i] & 0xfu;
 	}
 
-	return 0;
+	return u64;
 }
 
-static uint64_t emv_single_unit_of_currency(uint16_t currency_code)
+#if 0
+static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
 {
-	return 100;
+	unsigned i = 0;
+
+	for (i = len; i > 0; i--) {
+		bcd[i] = (uint8_t)(u64 % 10);
+		u64 /= 10;
+		bcd[i] |= (uint8_t)((u64 % 10) << 4);
+		u64 /= 10;
+	}
 }
+#endif
 
-int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx, struct emv_outcome_parms *outcome)
+int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
+					      struct emv_outcome_parms *outcome)
 {
-	int i = 0, tx_type_idx = 0, contactless_application_allowed = 0;
+	uint64_t amount_authorised = 0, unit_of_currency = 0;
+	bool ctls_app_allowed = 0;
+	int i = 0, tx_type_idx = 0;
 
+	amount_authorised = bcd_to_u64(tx->amount_authorised, 6);
+	unit_of_currency  = bcd_to_u64(
+				 single_unit_of_currency(tx->currency_code), 6);
 
 	/* See EMV Contactless Book A v2.5, Table 5-6: Type of Transaction.   */
 	if (tx->transaction_type == 0x00)
@@ -40,13 +73,23 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx, str
 	else
 		return EMV_RC_UNSUPPORTED_TRANSACTION_TYPE;
 
-	if (!emv_is_currency_code_supported(tx->currency_code))
+	if (!is_currency_code_supported(tx->currency_code))
 		return EMV_RC_UNSUPPORTED_CURRENCY_CODE;
 
 	for (i = 0; i < ep->num_combinations; i++) {
-		struct emv_ep_config *config = NULL;
+		struct emv_ep_preproc_indicators *indicators = NULL;
+		struct emv_ep_config *cfg = NULL;
+		uint64_t ctls_tx_limit = 0, ctls_floor_limit = 0;
+		uint64_t floor_limit = 0, cvm_reqd_limit = 0;
+		uint32_t *ttq = NULL;
 
-		config = &ep->combinations[i].config[tx_type_idx];
+		cfg	   = &ep->combinations[i].config[tx_type_idx];
+		indicators = &ep->combinations[i].indicators;
+
+		ctls_tx_limit	 = bcd_to_u64(cfg->reader_ctls_floor_limit, 6);
+		ctls_floor_limit = bcd_to_u64(cfg->reader_ctls_floor_limit, 6);
+		floor_limit	 = bcd_to_u64(cfg->terminal_floor_limit, 6);
+		cvm_reqd_limit	 = bcd_to_u64(cfg->reader_cvm_reqd_limit, 6);
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.1");
@@ -57,144 +100,107 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx, str
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.2");
 
-		if (config->presence_flags &
-				EMV_EP_CONFIG_TERMINAL_TRANSACTION_QUALIFIERS) {
-			ep->combinations[i].indicators.copy_of_ttq =
-					config->terminal_transaction_qualifiers;
-			ep->combinations[i].indicators.copy_of_ttq &=
-					      ~(TTQ_ONLINE_CRYPTOGRAM_REQUIRED |
+		if (cfg->present.ttq) {
+			ttq = &indicators->copy_of_ttq;
+			*ttq = cfg->ttq & ~(TTQ_ONLINE_CRYPTOGRAM_REQUIRED |
 							      TTQ_CVM_REQUIRED);
 		}
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.3");
 
-		if ((config->presence_flags &
-				     EMV_EP_CONFIG_STATUS_CHECK_SUPPORT_FLAG) &&
-		    (config->support_flags &
-				     EMV_EP_CONFIG_STATUS_CHECK_SUPPORT_FLAG) &&
-		    (tx->amount_authorised == emv_single_unit_of_currency(
-							    tx->currency_code)))
-			ep->combinations[i].indicators.flags |=
-			       EMV_EP_PREPROC_INDICATORS_STATUS_CHECK_REQUESTED;
+		if (cfg->present.status_check_support &&
+		    cfg->supported.status_check_support &&
+		    (amount_authorised == unit_of_currency))
+			indicators->status_check_requested = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.4");
 
-		if ((tx->amount_authorised == 0) &&
-		    (config->presence_flags &
-				      EMV_EP_CONFIG_ZERO_AMOUNT_ALLOWED_FLAG)) {
-			if (config->support_flags &
-				       EMV_EP_CONFIG_ZERO_AMOUNT_ALLOWED_FLAG) {
-				ep->combinations[i].indicators.flags |=
-					  EMV_EP_PREPROC_INDICATORS_ZERO_AMOUNT;
-			} else {
-				ep->combinations[i].indicators.flags |=
-					EMV_EP_PREPROC_INDICATORS_CONTACTLESS_APPLICATION_NOT_ALLOWED;
-			}
+		if (!amount_authorised) {
+			if (cfg->present.zero_amount_allowed &&
+			    !cfg->supported.zero_amount_allowed)
+				indicators->ctls_app_not_allowed = true;
+			else
+				indicators->zero_amount = true;
 		}
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.5");
 
-		if ((config->presence_flags &
-			  EMV_EP_CONFIG_READER_CONTACTLESS_TRANSACTION_LIMIT) &&
-			(tx->amount_authorised >=
-				  config->reader_contactless_transaction_limit))
-			ep->combinations[i].indicators.flags |=
-					EMV_EP_PREPROC_INDICATORS_CONTACTLESS_APPLICATION_NOT_ALLOWED;
+		if (cfg->present.reader_ctls_tx_limit &&
+		    (amount_authorised >= ctls_tx_limit))
+			indicators->ctls_app_not_allowed = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.6");
 
-		if ((config->presence_flags &
-				EMV_EP_CONFIG_READER_CONTACTLESS_FLOOR_LIMIT) &&
-			(tx->amount_authorised >
-					config->reader_contactless_floor_limit))
-			ep->combinations[i].indicators.flags |=
-					EMV_EP_PREPROC_INDICATORS_READER_CONTACTLESS_FLOOR_LIMIT_EXCEEDED;
+		if (cfg->present.reader_ctls_floor_limit &&
+		    (amount_authorised > ctls_floor_limit))
+			indicators->floor_limit_exceeded = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.7");
 
-		if (!(config->presence_flags &
-				EMV_EP_CONFIG_READER_CONTACTLESS_FLOOR_LIMIT) &&
-		    (config->presence_flags &
-					  EMV_EP_CONFIG_TERMINAL_FLOOR_LIMIT) &&
-			 (tx->amount_authorised > config->terminal_floor_limit))
-			ep->combinations[i].indicators.flags |=
-					EMV_EP_PREPROC_INDICATORS_READER_CONTACTLESS_FLOOR_LIMIT_EXCEEDED;
+		if (!cfg->present.reader_ctls_floor_limit &&
+		    cfg->present.terminal_floor_limit &&
+		    (amount_authorised > floor_limit))
+			indicators->floor_limit_exceeded = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.8");
 
-		if ((config->presence_flags &
-				     EMV_EP_CONFIG_READER_CVM_REQUIRED_LIMIT) &&
-			(tx->amount_authorised >= config->reader_cvm_required_limit))
-			ep->combinations[i].indicators.flags |=
-				EMV_EP_PREPROC_INDICATORS_READER_CVM_REQUIRED_LIMIT_EXCEEDED;
+		if (cfg->present.reader_cvm_reqd_limit &&
+		    (amount_authorised >= cvm_reqd_limit))
+			indicators->cvm_reqd_limit_exceeded = true;
 
 
-		if (config->presence_flags &
-				EMV_EP_CONFIG_TERMINAL_TRANSACTION_QUALIFIERS) {
+		if (cfg->present.ttq) {
+
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.9");
 
-			if (ep->combinations[i].indicators.flags &
-					EMV_EP_PREPROC_INDICATORS_READER_CONTACTLESS_FLOOR_LIMIT_EXCEEDED)
-				ep->combinations[i].indicators.copy_of_ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
+			if (indicators->floor_limit_exceeded)
+				*ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
 
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.10");
 
-			if (ep->combinations[i].indicators.flags &
-					EMV_EP_PREPROC_INDICATORS_STATUS_CHECK_REQUESTED)
-				ep->combinations[i].indicators.copy_of_ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
+			if (indicators->status_check_requested)
+				*ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
 
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.11");
 
-			if (ep->combinations[i].indicators.flags &
-						EMV_EP_PREPROC_INDICATORS_ZERO_AMOUNT)
-			{
-				if (ep->combinations[i].indicators.copy_of_ttq & TTQ_OFFLINE_ONLY_READER)
-					ep->combinations[i].indicators.flags |=
-						EMV_EP_PREPROC_INDICATORS_CONTACTLESS_APPLICATION_NOT_ALLOWED;
+			if (indicators->zero_amount) {
+				if (*ttq & TTQ_OFFLINE_ONLY_READER)
+					indicators->ctls_app_not_allowed = true;
 				else
-					ep->combinations[i].indicators.copy_of_ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
+					*ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
 			}
 
 
 			REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.1.1.12");
 
-			if (ep->combinations[i].indicators.flags &
-					EMV_EP_PREPROC_INDICATORS_READER_CVM_REQUIRED_LIMIT_EXCEEDED)
-				ep->combinations[i].indicators.copy_of_ttq |= TTQ_CVM_REQUIRED;
-
+			if (indicators->cvm_reqd_limit_exceeded)
+				*ttq |= TTQ_CVM_REQUIRED;
 		}
 
-
-		if (!(ep->combinations[i].indicators.flags &
-					EMV_EP_PREPROC_INDICATORS_CONTACTLESS_APPLICATION_NOT_ALLOWED))
-			contactless_application_allowed = 1;
+		if (!indicators->ctls_app_not_allowed)
+			ctls_app_allowed = true;
 	}
 
 
 	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.1.1.13");
 
-	if (!contactless_application_allowed) {
+	if (!ctls_app_allowed) {
+		struct emv_ui_request *ui_req = &outcome->ui_request_on_outcome;
+
 		memset(outcome, 0, sizeof(*outcome));
-		outcome->outcome = EMV_OUTCOME_END_APPLICATION;
-		outcome->start = EMV_OUTCOME_START_NA;
-		outcome->online_response_data =	EMV_OUTCOME_ONLINE_RESPONSE_DATA_NA;
-		outcome->cvm = EMV_OUTCOME_CVM_NA;
-		outcome->ui_req_on_outcome.present = 1;
-		outcome->ui_req_on_outcome.msgid = EMV_MSGID_INSERT_OR_SWIPE_CARD;
-		outcome->ui_req_on_outcome.status = EMV_STATUS_PROCESSING_ERROR;
-		outcome->data_record_present = 0;
-		outcome->discretionary_data_present = 0;
-		outcome->field_off_request = 0;
-		outcome->removal_timeout = 0;
+		outcome->outcome = out_try_another_interface;
+		ui_req->present	 = true;
+		ui_req->msg_id	 = msg_insert_or_swipe_card;
+		ui_req->status	 = sts_processing_error;
 	}
 
 	return EMV_RC_OK;
