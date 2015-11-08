@@ -26,6 +26,8 @@
 #define EMV_RC_OK				0
 #define EMV_RC_UNSUPPORTED_TRANSACTION_TYPE	1
 #define EMV_RC_UNSUPPORTED_CURRENCY_CODE	2
+#define EMV_RC_RF_COMMUNICATION_ERROR		3
+#define EMV_RC_CARD_PROTOCOL_ERROR		4
 
 #define TTQ_MAG_STRIPE_MODE_SUPPORTED		0x80000000u
 #define TTQ_EMV_MODE_SUPPORTED			0x20000000u
@@ -92,7 +94,17 @@ struct emv_transaction_data {
 	uint8_t	 currency_code[2];
 };
 
+struct emv_hal {
+	void	*priv;
+	int	(*emv_transceive)(struct emv_hal *hal,
+				  const uint8_t	 *capdu,
+				  size_t	 capdu_len,
+				  uint8_t	 *rapdu,
+				  size_t	 *rapdu_len);
+};
+
 struct emv_ep {
+	struct emv_hal			*hal;
 	bool				restart;
 	struct emv_ep_combination	*combinations;
 	int				num_combinations;
@@ -228,7 +240,12 @@ struct emv_outcome_parms {
 
 int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 					     struct emv_outcome_parms *outcome);
+
 int emv_ep_protocol_activation(struct emv_ep *ep,
 		       struct emv_transaction_data *tx, bool started_by_reader);
+
+int emv_ep_combination_selection(struct emv_ep *ep);
+
+void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
 
 #endif							    /* ndef __EMV_H__ */

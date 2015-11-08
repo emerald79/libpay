@@ -41,6 +41,23 @@
 #define TLV_TAG_CLASS_CONTEXT_SPECIFIC	0x80u
 #define TLV_TAG_CLASS_PRIVATE		0xC0u
 
+#define TLV_ID_1(a)		   ((const uint8_t [1]) { a })
+#define TLV_ID_2(a, b)		   ((const uint8_t [2]) { a, b })
+#define TLV_ID_3(a, b, c)	   ((const uint8_t [3]) { a, b, c })
+#define TLV_ID_4(a, b, c, d)	   ((const uint8_t [4]) { a, b, c, d })
+#define TLV_ID_5(a, b, c, d, e)	   ((const uint8_t [5]) { a, b, c, d, e })
+#define TLV_ID_6(a, b, c, d, e, f) ((const uint8_t [6]) { a, b, c, d, e, f })
+
+#define TLV_ID_FCI_TEMPLATE			TLV_ID_1(0x6F)
+#define TLV_ID_FCI_PROPRIETARY_TEMPLATE		TLV_ID_1(0xA5)
+#define TLV_ID_FCI_ISSUER_DISCRETIONARY_DATA	TLV_ID_2(0xBF, 0x0C)
+#define TLV_ID_DIRECTORY_ENTRY			TLV_ID_1(0x61)
+#define TLV_ID_ADF_NAME				TLV_ID_1(0x4F)
+#define TLV_ID_APPLICATION_LABEL		TLV_ID_1(0x50)
+#define TLV_ID_APPLICATION_PRIORITY_INDICATOR	TLV_ID_1(0x87)
+#define TLV_ID_KERNEL_IDENTIFIER		TLV_ID_2(0x9F, 0x2A)
+#define TLV_ID_EXTENDED_SELECTION		TLV_ID_2(0x9F, 0x29)
+
 struct tlv;
 
 /**
@@ -156,6 +173,8 @@ struct tlv *tlv_get_parent(struct tlv *tlv);
  *            none.
  */
 struct tlv *tlv_get_child(struct tlv *tlv);
+
+struct tlv *tlv_find(struct tlv *tlv, const void *tag);
 
 /**
  * Insert one TLV structure after a TLV node

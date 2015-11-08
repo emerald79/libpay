@@ -781,3 +781,36 @@ int tlv_encode_file(int fd, struct tlv *tlv)
 
 	return TLV_RC_OK;
 }
+
+static inline size_t tlv_get_tag_length(const void *tag)
+{
+	uint8_t *p = (uint8_t *)tag;
+	size_t i;
+
+	if ((p[0] & TLV_TAG_NUMBER_MASK) != 0x1Fu)
+		return 1;
+
+	for (i = 1; i < 6; i++)
+		if (!(p[i] & 0x80u))
+			break;
+
+	return i + 1;
+}
+
+struct tlv *tlv_find(struct tlv *tlv, const void *tag)
+{
+	struct tlv *tlv_i = NULL;
+	size_t tag_len = tlv_get_tag_length(tag);
+
+	for (tlv_i = tlv; tlv_i; tlv_i = tlv_i->next) {
+		uint8_t encoded_tag[6];
+		size_t encoded_tag_len = sizeof(encoded_tag);
+
+		tlv_encode_identifier(tlv_i, encoded_tag, &encoded_tag_len);
+		if ((tag_len == encoded_tag_len) &&
+					   (!memcmp(tag, encoded_tag, tag_len)))
+			break;
+	}
+
+	return tlv_i;
+}

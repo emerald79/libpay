@@ -8,6 +8,8 @@ libemv_la_SOURCES = emv_ep.c
 
 libemv_la_CFLAGS = -fPIC $(AM_CFLAGS)
 
+libemv_la_LIBADD = -ldl ../libtlv/libtlv.la
+
 libemv_la_LDFLAGS = $(AM_LDFLAGS) \
 	-export-symbols "$(srcdir)/libemv.exports" \
 	-shared -avoid-version -noundefined -pthread
