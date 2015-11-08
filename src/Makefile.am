@@ -1,4 +1,4 @@
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = libtlv tlvdump tests
+SUBDIRS = libtlv libemv tlvdump tests

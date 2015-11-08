@@ -14,6 +14,8 @@ AC_CONFIG_FILES([
 	src/Makefile
 	src/libtlv/Makefile
 	src/libtlv/libtlv.pc
+	src/libemv/Makefile
+	src/libemv/libemv.pc
 	src/tlvdump/Makefile
 	src/tests/Makefile
 ])

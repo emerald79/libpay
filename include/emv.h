@@ -226,4 +226,9 @@ struct emv_outcome_parms {
 	int					removal_timeout;
 };
 
+int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
+					     struct emv_outcome_parms *outcome);
+int emv_ep_protocol_activation(struct emv_ep *ep,
+		       struct emv_transaction_data *tx, bool started_by_reader);
+
 #endif							    /* ndef __EMV_H__ */
