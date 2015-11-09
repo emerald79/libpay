@@ -310,7 +310,7 @@ struct emv_candidate {
 	size_t	extended_selection_len;
 };
 
-static int emv_transceive_apdu(struct emv_ep *ep, uint8_t cla, uint8_t ins,
+static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
 		      uint8_t p1, uint8_t p2, const void *data, size_t data_len,
 			 void *response, size_t *response_length, uint8_t sw[2])
 {
@@ -318,7 +318,7 @@ static int emv_transceive_apdu(struct emv_ep *ep, uint8_t cla, uint8_t ins,
 	size_t capdu_len = 0, rapdu_len = sizeof(rapdu);
 	int rc = EMV_RC_OK;
 
-	assert(ep && ep->hal && ep->hal->emv_transceive);
+	assert(hal && hal->emv_transceive);
 	assert(!response || response_length);
 	assert(!data_len || data);
 	assert(!response_length || (*response_length <= 256));
@@ -339,8 +339,7 @@ static int emv_transceive_apdu(struct emv_ep *ep, uint8_t cla, uint8_t ins,
 	if (response_length && *response_length)
 		capdu[capdu_len++] = (uint8_t)*response_length;
 
-	rc = ep->hal->emv_transceive(ep->hal, capdu, capdu_len, rapdu,
-								    &rapdu_len);
+	rc = hal->emv_transceive(hal, capdu, capdu_len, rapdu, &rapdu_len);
 	if (rc != EMV_RC_OK)
 		return rc;
 
@@ -352,6 +351,12 @@ static int emv_transceive_apdu(struct emv_ep *ep, uint8_t cla, uint8_t ins,
 	return EMV_RC_OK;
 }
 
+#define EMV_CMD_SELECT_CLA		0x00u
+#define EMV_CMD_SELECT_INS		0xA4u
+#define EMV_CMD_SELECT_P1_BY_NAME	0x04u
+#define EMV_CMD_SELECT_P2_FIRST		0x00u
+#define EMV_CMD_SELECT_P2_NEXT		0x02u
+
 int emv_ep_combination_selection(struct emv_ep *ep)
 {
 	struct emv_candidate candidates[16];
@@ -362,7 +367,9 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	int rc, i;
 	struct tlv *tlv_fci = NULL, *tlv_cur = NULL, *tlv_dir = NULL;
 
-	rc = emv_transceive_apdu(ep, 0x00, 0xA4, 0x04, 0x00, "2PAY.SYS.DDF01",
+	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
+				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
+				      EMV_CMD_SELECT_P2_FIRST, "2PAY.SYS.DDF01",
 							 14, fci, &fci_len, sw);
 	if (rc != EMV_RC_OK)
 		goto done;
