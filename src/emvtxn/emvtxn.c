@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 									 0x00 },
 			.aid_len = 9,
 			.kernel_id = { 0xc0, 0x61, 0x50 },
-			.kernel_id_len = 1,
+			.kernel_id_len = 3,
 			.config[EMV_EP_TX_TYPE_IDX_PURCHASE] = {
 				.present = {
 					.reader_ctls_tx_limit = true,
@@ -155,10 +155,11 @@ int main(int argc, char **argv)
 	emv_priv.fd_feclr = fd;
 	feclr_hal.priv = &emv_priv;
 	feclr_hal.emv_transceive = feclr_emv_transceive;
+	memset(&emv_ep, 0, sizeof(emv_ep));
 	emv_ep.hal = &feclr_hal;
 	emv_ep.restart = false;
-	emv_ep.combinations = NULL;
-	emv_ep.num_combinations = 0;
+	emv_ep.combinations = combinations;
+	emv_ep.num_combinations = 2;
 
 	rc = emv_ep_combination_selection(&emv_ep);
 	if (rc != EMV_RC_OK) {

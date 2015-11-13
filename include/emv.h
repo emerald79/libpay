@@ -29,6 +29,7 @@
 #define EMV_RC_RF_COMMUNICATION_ERROR		3
 #define EMV_RC_CARD_PROTOCOL_ERROR		4
 #define EMV_RC_BUFFER_OVERFLOW			5
+#define EMV_RC_OUT_OF_MEMORY			6
 
 #define TTQ_MAG_STRIPE_MODE_SUPPORTED		0x80000000u
 #define TTQ_EMV_MODE_SUPPORTED			0x20000000u
@@ -87,6 +88,16 @@ struct emv_ep_combination {
 	struct emv_ep_preproc_indicators	indicators;
 };
 
+struct emv_ep_candidate {
+	uint8_t	adf_name[16];
+	size_t	adf_name_len;
+	uint8_t	application_priority_indicator;
+	uint8_t	extended_selection[16];
+	size_t	extended_selection_len;
+	struct	emv_ep_combination *combination;
+	struct	emv_ep_candidate *next;
+};
+
 struct emv_transaction_data {
 	uint8_t	 transaction_type;
 	uint8_t	 amount_authorised[6];
@@ -109,6 +120,7 @@ struct emv_ep {
 	bool				restart;
 	struct emv_ep_combination	*combinations;
 	int				num_combinations;
+	struct emv_ep_candidate		*candidates;
 };
 
 #define EMV_MAX_ONLINE_RESPONSE_LEN	256

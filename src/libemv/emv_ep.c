@@ -217,7 +217,7 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 			}
 
 
-			REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.1.1.12");
+			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.12");
 
 			if (indicators->cvm_reqd_limit_exceeded)
 				*ttq |= TTQ_CVM_REQUIRED;
@@ -228,7 +228,7 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 	}
 
 
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.1.1.13");
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.13");
 
 	if (!ctls_app_allowed) {
 		struct emv_ui_request *ui_req = &outcome->ui_request_on_outcome;
@@ -246,7 +246,7 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 int emv_ep_protocol_activation(struct emv_ep *ep,
 			struct emv_transaction_data *tx, bool started_by_reader)
 {
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.1");
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.1");
 
 	if (!ep->restart) {
 		if (started_by_reader) {
@@ -277,19 +277,19 @@ int emv_ep_protocol_activation(struct emv_ep *ep,
 	/* FIXME: The following requirements should be done before calling the
 	 * entry point.
 	 */
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.2"); /* FIXME */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.2"); /* FIXME */
 
 
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.3"); /* FIXME */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.3"); /* FIXME */
 
 
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.4"); /* FIXME */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.4"); /* FIXME */
 
 
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.5"); /* FIXME */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.5"); /* FIXME */
 
 
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.2.1.6"); /* FIXME */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.6"); /* FIXME */
 
 	return EMV_RC_OK;
 }
@@ -380,24 +380,11 @@ int emv_ep_parse_ppse(struct tlv *ppse, struct ppse_dir_entry *entries,
 	assert(entries);
 	assert(num_entries);
 
-	i_tlv = tlv_find(
-		 tlv_get_child(
-		  tlv_find(
-		   tlv_get_child(
-		    tlv_find(
-		     tlv_get_child(
-		      tlv_find(
-		       ppse,
-		       TLV_ID_FCI_TEMPLATE
-		      )
-		     ),
-		     TLV_ID_FCI_PROPRIETARY_TEMPLATE
-		    )
-		   ),
-		   TLV_ID_FCI_ISSUER_DISCRETIONARY_DATA
-		  )
-		 ),
-		TLV_ID_DIRECTORY_ENTRY);
+	i_tlv = tlv_find(tlv_get_child(tlv_find(tlv_get_child(tlv_find(
+			     tlv_get_child(tlv_find(ppse, TLV_ID_FCI_TEMPLATE)),
+					      TLV_ID_FCI_PROPRIETARY_TEMPLATE)),
+					 TLV_ID_FCI_ISSUER_DISCRETIONARY_DATA)),
+							TLV_ID_DIRECTORY_ENTRY);
 
 	for (num = 0;
 	     i_tlv && (num < *num_entries);
@@ -471,6 +458,57 @@ int emv_ep_parse_ppse(struct tlv *ppse, struct ppse_dir_entry *entries,
 	return EMV_RC_OK;
 }
 
+bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
+					       struct ppse_dir_entry *dir_entry)
+
+{
+	uint8_t requested_kernel_id[8];
+	size_t requested_kernel_id_len;
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 A");
+
+	if (dir_entry->adf_name_len < 5)
+		return false;
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 B");
+
+	if (memcmp(combination->aid, dir_entry->adf_name, combination->aid_len))
+		return false;
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 C");
+
+	if (dir_entry->kernel_identifier_len == 0) {
+		/* FIXME: See Table 3-6 in EMV_CTLS_BOOK_B */
+		requested_kernel_id[0] = 0;
+		requested_kernel_id_len = 1;
+	} else if (((dir_entry->kernel_identifier[0] & 0xc0) == 0x00) ||
+			   ((dir_entry->kernel_identifier[0] & 0xc0) == 0x40)) {
+		requested_kernel_id[0] = dir_entry->kernel_identifier[0];
+		requested_kernel_id_len = 1;
+	} else if (dir_entry->kernel_identifier[0] & 0x3f) {
+		memcpy(requested_kernel_id, dir_entry->kernel_identifier, 3);
+		requested_kernel_id_len = 3;
+	} else {
+		memcpy(requested_kernel_id, dir_entry->kernel_identifier,
+					      dir_entry->kernel_identifier_len);
+		requested_kernel_id_len = dir_entry->kernel_identifier_len;
+	}
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 D");
+
+	if ((requested_kernel_id[0] != 0) &&
+	    ((requested_kernel_id_len != dir_entry->kernel_identifier_len) ||
+	     (memcmp(requested_kernel_id, dir_entry->kernel_identifier,
+						     requested_kernel_id_len))))
+		return false;
+
+	return true;
+}
+
 int emv_ep_combination_selection(struct emv_ep *ep)
 {
 	struct ppse_dir_entry dir_entry[32];
@@ -478,12 +516,13 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	uint8_t fci[256];
 	size_t fci_len = sizeof(fci);
 	uint8_t sw[2];
-	int rc, i;
+	int rc = EMV_RC_OK, i_comb, i_dir, i;
 	struct tlv *tlv_fci = NULL;
+	struct emv_ep_candidate *i_cand = NULL;
 
 
 
-	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.3.2.1");
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.1");
 
 	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
 				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
@@ -507,27 +546,59 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	rc = emv_ep_parse_ppse(tlv_fci, dir_entry, &num_dir_entries);
 	assert(rc == EMV_RC_OK);
 
-	for (i = 0; i < num_dir_entries; i++) {
+	for (i_comb = 0; i_comb < ep->num_combinations; i_comb++) {
+		struct emv_ep_combination *comb = &ep->combinations[i_comb];
+
+
+		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
+
+		if (comb->indicators.ctls_app_not_allowed)
+			continue;
+
+		for (i_dir = 0; i_dir < num_dir_entries; i_dir++) {
+			struct ppse_dir_entry *entry = &dir_entry[i_dir];
+			struct emv_ep_candidate *candidate = NULL;
+
+			if (!emv_ep_is_combination_candidate(comb, entry))
+				continue;
+
+			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 E");
+
+			candidate = malloc(sizeof(*candidate));
+			if (!candidate)
+				return EMV_RC_OUT_OF_MEMORY;
+
+			memcpy(candidate->adf_name, entry->adf_name,
+							   entry->adf_name_len);
+			candidate->adf_name_len = entry->adf_name_len;
+			candidate->application_priority_indicator =
+					  entry->application_priority_indicator;
+			memcpy(candidate->extended_selection,
+						      entry->extended_selection,
+						 entry->extended_selection_len);
+			candidate->extended_selection_len =
+						  entry->extended_selection_len;
+			candidate->combination = comb;
+			candidate->next = ep->candidates;
+			ep->candidates = candidate;
+		}
+	}
+
+	for (i_cand = ep->candidates; i_cand; i_cand = i_cand->next) {
 		int j;
 
-		for (j = 0; j < dir_entry[i].adf_name_len; j++)
-			printf("%02X", dir_entry[i].adf_name[j]);
+		for (j = 0; j < i_cand->adf_name_len; j++)
+			printf("%02X", i_cand->adf_name[j]);
+
+		printf(" %hhu ", i_cand->application_priority_indicator);
+
+		for (j = 0; j < i_cand->combination->kernel_id_len; j++)
+			printf("%02X", i_cand->combination->kernel_id[j]);
 
 		printf(" ");
 
-		for (j = 0; j < dir_entry[i].application_label_len; j++)
-			printf("%c", dir_entry[i].application_label[j]);
-
-		printf(" %u", (unsigned)
-				   dir_entry[i].application_priority_indicator);
-
-		for (j = 0; j < dir_entry[i].kernel_identifier_len; j++)
-			printf("%02X", dir_entry[i].kernel_identifier[j]);
-
-		printf(" ");
-
-		for (j = 0; j < dir_entry[i].extended_selection_len; j++)
-			printf("%02X", dir_entry[i].extended_selection[j]);
+		for (j = 0; j < i_cand->extended_selection_len; j++)
+			printf("%02X", i_cand->extended_selection[j]);
 
 		printf("\n");
 	}
