@@ -52,6 +52,38 @@ int main(int argc, char **argv)
 	union tech_data tech_data;
 	uint64_t status = FECLR_STS_OK, tech = 0;
 	int fd = -1, rc = 0;
+	struct emv_ep_combination combinations[2] = {
+		{
+			.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04 },
+			.aid_len = 5,
+			.kernel_id = { 0x02 },
+			.kernel_id_len = 1,
+			.config[EMV_EP_TX_TYPE_IDX_PURCHASE] = {
+				.present = {
+					.reader_ctls_tx_limit = true,
+					.reader_ctls_floor_limit = true,
+				},
+				.reader_ctls_tx_limit = {
+					0x00, 0x00, 0x00, 0x05, 0x00, 0x00 },
+				.reader_ctls_floor_limit = {
+					0x00, 0x00, 0x00, 0x00, 0x25, 0x00 }
+			}
+		},
+		{
+			.aid = { 0xD2, 0x76, 0x00, 0x00, 0x25, 0x45, 0x50, 0x02,
+									 0x00 },
+			.aid_len = 9,
+			.kernel_id = { 0xc0, 0x61, 0x50 },
+			.kernel_id_len = 1,
+			.config[EMV_EP_TX_TYPE_IDX_PURCHASE] = {
+				.present = {
+					.reader_ctls_tx_limit = true,
+				},
+				.reader_ctls_tx_limit = {
+					0x00, 0x00, 0x00, 0x01, 0x00, 0x00 },
+			}
+		}
+	};
 
 	fd = open("/dev/feclr0", O_RDWR);
 	if (fd < 0) {

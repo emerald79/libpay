@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <tlv.h>
 
@@ -93,22 +94,22 @@ int tlv_is_constructed(struct tlv *tlv)
 
 struct tlv *tlv_get_next(struct tlv *tlv)
 {
-	return tlv->next;
+	return tlv ? tlv->next : NULL;
 }
 
 struct tlv *tlv_get_prev(struct tlv *tlv)
 {
-	return tlv->prev;
+	return tlv ? tlv->prev : NULL;
 }
 
 struct tlv *tlv_get_parent(struct tlv *tlv)
 {
-	return tlv->parent;
+	return tlv ? tlv->parent : NULL;
 }
 
 struct tlv *tlv_get_child(struct tlv *tlv)
 {
-	return tlv->child;
+	return tlv ? tlv->child : NULL;
 }
 
 static int tlv_parse_identifier(const void **buffer, size_t length,
@@ -800,7 +801,14 @@ static inline size_t tlv_get_tag_length(const void *tag)
 struct tlv *tlv_find(struct tlv *tlv, const void *tag)
 {
 	struct tlv *tlv_i = NULL;
-	size_t tag_len = tlv_get_tag_length(tag);
+	size_t tag_len;
+
+	assert(tag);
+
+	if (!tlv)
+		return NULL;
+
+	tag_len = tlv_get_tag_length(tag);
 
 	for (tlv_i = tlv; tlv_i; tlv_i = tlv_i->next) {
 		uint8_t encoded_tag[6];

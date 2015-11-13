@@ -24,6 +24,7 @@
 #include <tlv.h>
 
 #define REQUIREMENT(book, id)
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
 
 static bool is_currency_code_supported(const uint8_t *currency_code)
 {
@@ -357,15 +358,132 @@ static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
 #define EMV_CMD_SELECT_P2_FIRST		0x00u
 #define EMV_CMD_SELECT_P2_NEXT		0x02u
 
+struct ppse_dir_entry {
+	uint8_t adf_name[16];
+	size_t	adf_name_len;
+	char	application_label[16];
+	size_t	application_label_len;
+	uint8_t	application_priority_indicator;
+	uint8_t kernel_identifier[8];
+	size_t	kernel_identifier_len;
+	uint8_t extended_selection[16];
+	size_t	extended_selection_len;
+};
+
+int emv_ep_parse_ppse(struct tlv *ppse, struct ppse_dir_entry *entries,
+							    size_t *num_entries)
+{
+	struct tlv *i_tlv;
+	size_t num;
+
+	assert(ppse);
+	assert(entries);
+	assert(num_entries);
+
+	i_tlv = tlv_find(
+		 tlv_get_child(
+		  tlv_find(
+		   tlv_get_child(
+		    tlv_find(
+		     tlv_get_child(
+		      tlv_find(
+		       ppse,
+		       TLV_ID_FCI_TEMPLATE
+		      )
+		     ),
+		     TLV_ID_FCI_PROPRIETARY_TEMPLATE
+		    )
+		   ),
+		   TLV_ID_FCI_ISSUER_DISCRETIONARY_DATA
+		  )
+		 ),
+		TLV_ID_DIRECTORY_ENTRY);
+
+	for (num = 0;
+	     i_tlv && (num < *num_entries);
+	     i_tlv = tlv_find(tlv_get_next(i_tlv), TLV_ID_DIRECTORY_ENTRY)) {
+		struct tlv *adf_name, *label, *prio, *kernel_id, *ext_sel;
+		struct tlv *entry;
+		struct ppse_dir_entry *dir_entry;
+		int rc = TLV_RC_OK;
+
+		entry	  = tlv_get_child(i_tlv);
+		adf_name  = tlv_find(entry, TLV_ID_ADF_NAME);
+		label	  = tlv_find(entry, TLV_ID_APPLICATION_LABEL);
+		kernel_id = tlv_find(entry, TLV_ID_KERNEL_IDENTIFIER);
+		ext_sel	  = tlv_find(entry, TLV_ID_EXTENDED_SELECTION);
+		prio      = tlv_find(entry,
+					 TLV_ID_APPLICATION_PRIORITY_INDICATOR);
+
+		dir_entry = &entries[num];
+		memset(dir_entry, 0, sizeof(*dir_entry));
+
+		if (adf_name) {
+			dir_entry->adf_name_len = sizeof(dir_entry->adf_name);
+			rc = tlv_encode_value(adf_name, dir_entry->adf_name,
+						      &dir_entry->adf_name_len);
+			assert(rc == TLV_RC_OK);
+		}
+
+		if (label) {
+			dir_entry->application_label_len =
+					   sizeof(dir_entry->application_label);
+			rc = tlv_encode_value(label,
+						   dir_entry->application_label,
+					     &dir_entry->application_label_len);
+			assert(rc == TLV_RC_OK);
+		}
+
+		if (kernel_id) {
+			dir_entry->kernel_identifier_len =
+					   sizeof(dir_entry->kernel_identifier);
+			rc = tlv_encode_value(kernel_id,
+						   dir_entry->kernel_identifier,
+					     &dir_entry->kernel_identifier_len);
+			assert(rc == TLV_RC_OK);
+		}
+
+		if (ext_sel) {
+			dir_entry->extended_selection_len =
+					  sizeof(dir_entry->extended_selection);
+			rc = tlv_encode_value(ext_sel,
+						  dir_entry->extended_selection,
+					    &dir_entry->extended_selection_len);
+			assert(rc == TLV_RC_OK);
+		}
+
+		if (prio) {
+			size_t len = 1;
+
+			rc = tlv_encode_value(prio,
+				     &dir_entry->application_priority_indicator,
+									  &len);
+			assert(rc == TLV_RC_OK);
+		}
+
+		num++;
+	}
+
+	if ((num == *num_entries) && (i_tlv))
+		return EMV_RC_BUFFER_OVERFLOW;
+
+	*num_entries = num;
+	return EMV_RC_OK;
+}
+
 int emv_ep_combination_selection(struct emv_ep *ep)
 {
-	struct emv_candidate candidates[16];
-	int num_candidates = 0;
+	struct ppse_dir_entry dir_entry[32];
+	size_t num_dir_entries = ARRAY_SIZE(dir_entry);
 	uint8_t fci[256];
 	size_t fci_len = sizeof(fci);
 	uint8_t sw[2];
 	int rc, i;
-	struct tlv *tlv_fci = NULL, *tlv_cur = NULL, *tlv_dir = NULL;
+	struct tlv *tlv_fci = NULL;
+
+
+
+	REQUIREMENT(EMV_CTRL_BOOK_B_V2_5, "3.3.2.1");
 
 	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
 				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
@@ -374,165 +492,42 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	if (rc != EMV_RC_OK)
 		goto done;
 
+	if ((sw[0] != 0x90) || (sw[1] != 0x00)) {
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+
 	rc = tlv_parse(fci, fci_len, &tlv_fci);
 	if (rc != TLV_RC_OK) {
 		rc = EMV_RC_CARD_PROTOCOL_ERROR;
 		goto done;
 	}
 
-	tlv_cur = tlv_find(tlv_fci, TLV_ID_FCI_TEMPLATE);
-	if (!tlv_cur) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
+	rc = emv_ep_parse_ppse(tlv_fci, dir_entry, &num_dir_entries);
+	assert(rc == EMV_RC_OK);
 
-	tlv_cur = tlv_get_child(tlv_cur);
-	if (!tlv_cur) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	tlv_cur = tlv_find(tlv_cur, TLV_ID_FCI_PROPRIETARY_TEMPLATE);
-	if (!tlv_cur) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	tlv_cur = tlv_get_child(tlv_cur);
-	if (!tlv_cur) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	tlv_cur = tlv_find(tlv_cur, TLV_ID_FCI_ISSUER_DISCRETIONARY_DATA);
-	if (!tlv_cur) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	tlv_cur = tlv_get_child(tlv_cur);
-	if (!tlv_cur) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	num_candidates = 0;
-	for (tlv_dir = tlv_find(tlv_cur, TLV_ID_DIRECTORY_ENTRY);
-	     tlv_dir;
-	     tlv_dir = tlv_find(tlv_get_next(tlv_dir),
-						      TLV_ID_DIRECTORY_ENTRY)) {
-		struct emv_candidate *candidate = &candidates[num_candidates];
-		struct tlv *tlv_dir_entry = NULL;
-
-		tlv_dir_entry = tlv_get_child(tlv_dir);
-		if (!tlv_dir_entry) {
-			rc = EMV_RC_CARD_PROTOCOL_ERROR;
-			goto done;
-		}
-
-		tlv_cur = tlv_find(tlv_dir_entry, TLV_ID_ADF_NAME);
-		if (!tlv_cur) {
-			rc = EMV_RC_CARD_PROTOCOL_ERROR;
-			goto done;
-		}
-
-		candidate->adf_name_len = sizeof(candidate->adf_name);
-		rc = tlv_encode_value(tlv_cur, candidate->adf_name,
-						      &candidate->adf_name_len);
-		if (rc != TLV_RC_OK) {
-			rc = EMV_RC_CARD_PROTOCOL_ERROR;
-			goto done;
-		}
-
-		tlv_cur = tlv_find(tlv_dir_entry, TLV_ID_APPLICATION_LABEL);
-		if (tlv_cur) {
-			candidate->label_len = sizeof(candidate->label);
-			rc = tlv_encode_value(tlv_cur, candidate->label,
-							 &candidate->label_len);
-			if (rc != TLV_RC_OK) {
-				rc = EMV_RC_CARD_PROTOCOL_ERROR;
-				goto done;
-			}
-		} else {
-			candidate->label_len = 0;
-		}
-
-		tlv_cur = tlv_find(tlv_dir_entry,
-					 TLV_ID_APPLICATION_PRIORITY_INDICATOR);
-		if (tlv_cur) {
-			size_t prio_len = sizeof(candidate->prio);
-
-			rc = tlv_encode_value(tlv_cur, &candidate->prio,
-								     &prio_len);
-			if ((rc != TLV_RC_OK) || !prio_len) {
-				rc = EMV_RC_CARD_PROTOCOL_ERROR;
-				goto done;
-			}
-
-			if (!candidate->prio)
-				candidate->prio = 15;
-		} else {
-			candidate->prio = 15;
-		}
-
-		tlv_cur = tlv_find(tlv_dir_entry, TLV_ID_KERNEL_IDENTIFIER);
-		if (tlv_cur) {
-			candidate->kernel_identifier_len =
-					   sizeof(candidate->kernel_identifier);
-			rc = tlv_encode_value(tlv_cur,
-						   candidate->kernel_identifier,
-					     &candidate->kernel_identifier_len);
-			if (rc != TLV_RC_OK) {
-				rc = EMV_RC_CARD_PROTOCOL_ERROR;
-				goto done;
-			}
-		} else {
-			candidate->kernel_identifier_len = 0;
-		}
-
-		tlv_cur = tlv_find(tlv_dir_entry, TLV_ID_EXTENDED_SELECTION);
-		if (tlv_cur) {
-			candidate->extended_selection_len =
-					  sizeof(candidate->extended_selection);
-			rc = tlv_encode_value(tlv_cur,
-						  candidate->extended_selection,
-					    &candidate->extended_selection_len);
-			if (rc != TLV_RC_OK) {
-				rc = EMV_RC_CARD_PROTOCOL_ERROR;
-				goto done;
-			}
-		} else {
-			candidate->extended_selection_len = 0;
-		}
-
-		num_candidates++;
-	}
-
-	if (!num_candidates) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	for (i = 0; i < num_candidates; i++) {
+	for (i = 0; i < num_dir_entries; i++) {
 		int j;
 
-		for (j = 0; j < candidates[i].adf_name_len; j++)
-			printf("%02X", candidates[i].adf_name[j]);
+		for (j = 0; j < dir_entry[i].adf_name_len; j++)
+			printf("%02X", dir_entry[i].adf_name[j]);
 
 		printf(" ");
 
-		for (j = 0; j < candidates[i].label_len; j++)
-			printf("%c", candidates[i].label[j]);
+		for (j = 0; j < dir_entry[i].application_label_len; j++)
+			printf("%c", dir_entry[i].application_label[j]);
 
-		printf(" %u", (unsigned)candidates[i].prio);
+		printf(" %u", (unsigned)
+				   dir_entry[i].application_priority_indicator);
 
-		for (j = 0; j < candidates[i].kernel_identifier_len; j++)
-			printf("%02X", candidates[i].kernel_identifier[j]);
+		for (j = 0; j < dir_entry[i].kernel_identifier_len; j++)
+			printf("%02X", dir_entry[i].kernel_identifier[j]);
 
 		printf(" ");
 
-		for (j = 0; j < candidates[i].extended_selection_len; j++)
-			printf("%02X", candidates[i].extended_selection[j]);
+		for (j = 0; j < dir_entry[i].extended_selection_len; j++)
+			printf("%02X", dir_entry[i].extended_selection[j]);
 
 		printf("\n");
 	}
