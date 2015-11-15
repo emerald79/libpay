@@ -26,6 +26,7 @@
 #include <argp.h>
 #include <assert.h>
 #include <json-c/json.h>
+
 #include <tlv.h>
 
 const char *argp_program_version = "tlvdump 0.1";
@@ -416,7 +417,7 @@ static int read_tag_desc(const char *file, struct tag_desc **tags,
 	return TLV_RC_OK;
 }
 
-static int encode_text_to_file(int fd, struct tlv *tlv, struct tag_desc *tags,
+static int encode_to_text_file(int fd, struct tlv *tlv, struct tag_desc *tags,
 								size_t num_tags)
 {
 	int depth = 0;
@@ -472,6 +473,76 @@ static int encode_text_to_file(int fd, struct tlv *tlv, struct tag_desc *tags,
 
 	return TLV_RC_OK;
 
+}
+
+static int encode_to_c11_file(int fd, struct tlv *tlv, struct tag_desc *tags,
+								size_t num_tags)
+{
+	FILE *out = fdopen(fd, "w");
+	int depth = 0;
+
+	fprintf(out, "const unsigned char ber_tlv[] = {\n");
+
+	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
+		struct tag_desc *desc = NULL;
+		uint8_t buffer[256];
+		char line[256];
+		size_t size;
+		ssize_t rc = 0;
+		int i, j, len = 0;
+
+		size = sizeof(buffer);
+		tlv_encode_identifier(tlv, buffer, &size);
+
+		for (i = 0; i < num_tags; i++)
+			if ((tags[i].tag_length == size) &&
+					     !memcmp(tags[i].tag, buffer, size))
+				desc = &tags[i];
+
+		if (desc) {
+			for (i = 0; i <= depth; i++)
+				fprintf(out, "\t");
+			fprintf(out, "/* %s */\n", desc->name);
+		}
+
+		for (i = 0; i <= depth; i++)
+			fprintf(out, "\t");
+
+		if (desc) {
+			for (; j < 46; j++)
+				len += snprintf(&line[len], sizeof(line) - len,
+									   " ");
+			len += snprintf(&line[len], sizeof(line) - len, " # %s",
+								    desc->name);
+		}
+		len += snprintf(&line[len], sizeof(line) - len, "\n");
+
+		for (i = 0; i < size; i++)
+			fprintf(out, "0x%02X, ", buffer[i]);
+
+		size = sizeof(buffer);
+		tlv_encode_length(tlv, buffer, &size);
+
+		for (i = 0; i < size; i++)
+			fprintf(out, "0x%02X,%s", buffer[i],
+						       i < size - 1 ? " " : "");
+
+		size = sizeof(buffer);
+		tlv_encode_value(tlv, buffer, &size);
+
+		if (size) {
+			fprintf(out, " ");
+			for (i = 0; i < size; i++)
+				fprintf(out, "0x%02X,%s", buffer[i],
+						       i < size - 1 ? " " : "");
+		}
+
+		fprintf(out, "\n");
+	}
+
+	fprintf(out, "};\n");
+
+	return TLV_RC_OK;
 }
 
 int main(int argc, char **argv)
@@ -589,7 +660,8 @@ int main(int argc, char **argv)
 				arguments.output ? arguments.output : "stdout");
 			return EXIT_FAILURE;
 		}
-	} else if (arguments.output_format == text) {
+	} else if ((arguments.output_format == text) ||
+					     (arguments.output_format == c11)) {
 		struct tag_desc *tags = NULL;
 		size_t num_tags = 0;
 
@@ -603,8 +675,13 @@ int main(int argc, char **argv)
 			}
 		}
 
-		rc = encode_text_to_file(arguments.fd_output, tlv, tags,
+		if (arguments.output_format == text)
+			rc = encode_to_text_file(arguments.fd_output, tlv, tags,
 								      num_tags);
+		else
+			rc = encode_to_c11_file(arguments.fd_output, tlv, tags,
+								      num_tags);
+
 		if (rc != TLV_RC_OK) {
 			fprintf(stderr, "Failed to encode output file '%s'.\n",
 							      arguments.output);
