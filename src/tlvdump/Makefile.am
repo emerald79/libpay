@@ -6,5 +6,4 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 bin_PROGRAMS = tlvdump
 
 tlvdump_SOURCES = tlvdump.c
-tlvdump_LDADD = $(top_builddir)/src/libtlv/libtlv.la @JSON_C_LIBS@
-
+tlvdump_LDADD = $(top_builddir)/src/libtlv/libtlv.la $(top_builddir)/src/libemv/libemv.la

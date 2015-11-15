@@ -28,6 +28,7 @@
 #include <json-c/json.h>
 
 #include <tlv.h>
+#include <emv.h>
 
 const char *argp_program_version = "tlvdump 0.1";
 const char *argp_program_bug_address = "mijung@gmx.net";
@@ -306,124 +307,13 @@ static int read_file(int fd, uint8_t **contents, size_t *len)
 	return TLV_RC_OK;
 }
 
-struct tag_desc {
-	void   *tag;
-	size_t tag_length;
-	char   *name;
-};
-
-static int read_tag_desc(const char *file, struct tag_desc **tags,
-							       size_t *num_tags)
-{
-	enum json_tokener_error json_err;
-	struct tag_desc *result = NULL;
-	struct json_tokener *tokener = NULL;
-	struct json_object *object = NULL;
-	char *json_string = NULL;
-	size_t json_string_len = 0;
-	int fd = -1, rc = TLV_RC_OK, i, num;
-
-	assert(file);
-	assert(tags);
-	assert(num_tags);
-
-	*tags = NULL;
-	*num_tags = 0;
-
-	fd = open(file, O_RDONLY);
-	if (fd < 0) {
-		fprintf(stderr, "Failed to open '%s': %s\n", file,
-							       strerror(errno));
-		return TLV_RC_IO_ERROR;
-	}
-
-	rc = read_file(fd, (uint8_t **)&json_string, &json_string_len);
-	if (rc != TLV_RC_OK) {
-		fprintf(stderr, "Failed to read file '%s'\n", file);
-		close(fd);
-		return rc;
-	}
-
-	close(fd);
-
-	tokener = json_tokener_new();
-	if (!tokener) {
-		fprintf(stderr, "Failed to create JSON tokenizer\n");
-		return TLV_RC_OUT_OF_MEMORY;
-	}
-
-	object = json_tokener_parse_ex(tokener, json_string, json_string_len);
-	if (!object) {
-		json_err = json_tokener_get_error(tokener);
-		fprintf(stderr, "Failed to parse '%s'. err %d\n", file,
-								 (int)json_err);
-		return TLV_RC_IO_ERROR;
-	}
-
-	if (!json_object_is_type(object, json_type_array)) {
-		fprintf(stderr, "'%s' is not a valid tag description file!\n",
-									  file);
-		return TLV_RC_INVALID_ARG;
-	}
-
-	num = json_object_array_length(object);
-	if (!num) {
-		fprintf(stderr, "No tags defined in '%s'\n", file);
-		return TLV_RC_INVALID_ARG;
-	}
-
-	result = calloc(num, sizeof(struct tag_desc));
-	if (!result)
-		return TLV_RC_OUT_OF_MEMORY;
-
-	for (i = 0; i < num; i++) {
-		struct json_object *json_tag = NULL, *json_value = NULL;
-
-		json_tag = json_object_array_get_idx(object, i);
-		assert(json_tag);
-
-		if (!json_object_object_get_ex(json_tag, "tag", &json_value)) {
-			fprintf(stderr, "Mandatory attribute 'tag' missing.\n");
-			return TLV_RC_INVALID_ARG;
-		}
-
-		if (!json_object_is_type(json_value, json_type_string)) {
-			fprintf(stderr, "'tag' must be a string!\n");
-			return TLV_RC_INVALID_ARG;
-		}
-
-		rc = hex_to_binary(
-				  (uint8_t *)json_object_get_string(json_value),
-					 json_object_get_string_len(json_value),
-			     (uint8_t **)&result[i].tag, &result[i].tag_length);
-		assert(rc == TLV_RC_OK);
-
-		if (!json_object_object_get_ex(json_tag, "name", &json_value)) {
-			fprintf(stderr, "Mandatory attribute 'name' missing\n");
-			return TLV_RC_INVALID_ARG;
-		}
-
-		if (!json_object_is_type(json_value, json_type_string)) {
-			fprintf(stderr, "'name' must be a string!\n");
-			return TLV_RC_INVALID_ARG;
-		}
-
-		result[i].name = strdup(json_object_get_string(json_value));
-	}
-
-	*num_tags = num;
-	*tags = result;
-
-	return TLV_RC_OK;
-}
-
-static int encode_to_text_file(int fd, struct tlv *tlv, struct tag_desc *tags,
-								size_t num_tags)
+static int encode_to_text_file(int fd, struct tlv *tlv,
+			       struct emv_tag_descriptor *tags, size_t num_tags)
 {
 	int depth = 0;
 
 	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
-		struct tag_desc *desc = NULL;
+		struct emv_tag_descriptor *desc = NULL;
 		uint8_t buffer[256];
 		char line[256];
 		size_t size;
@@ -439,8 +329,8 @@ static int encode_to_text_file(int fd, struct tlv *tlv, struct tag_desc *tags,
 								     buffer[i]);
 		len += snprintf(&line[len], sizeof(line) - len, " ");
 		for (i = 0; i < num_tags; i++)
-			if ((tags[i].tag_length == size) &&
-					     !memcmp(tags[i].tag, buffer, size))
+			if ((tags[i].tag.len == size) &&
+				       !memcmp(tags[i].tag.value, buffer, size))
 				desc = &tags[i];
 		size = sizeof(buffer);
 		tlv_encode_length(tlv, buffer, &size);
@@ -475,8 +365,8 @@ static int encode_to_text_file(int fd, struct tlv *tlv, struct tag_desc *tags,
 
 }
 
-static int encode_to_c11_file(int fd, struct tlv *tlv, struct tag_desc *tags,
-								size_t num_tags)
+static int encode_to_c11_file(int fd, struct tlv *tlv,
+			       struct emv_tag_descriptor *tags, size_t num_tags)
 {
 	FILE *out = fdopen(fd, "w");
 	int depth = 0;
@@ -484,19 +374,17 @@ static int encode_to_c11_file(int fd, struct tlv *tlv, struct tag_desc *tags,
 	fprintf(out, "const unsigned char ber_tlv[] = {\n");
 
 	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
-		struct tag_desc *desc = NULL;
+		struct emv_tag_descriptor *desc = NULL;
 		uint8_t buffer[256];
-		char line[256];
 		size_t size;
-		ssize_t rc = 0;
-		int i, j, len = 0;
+		int i;
 
 		size = sizeof(buffer);
 		tlv_encode_identifier(tlv, buffer, &size);
 
 		for (i = 0; i < num_tags; i++)
-			if ((tags[i].tag_length == size) &&
-					     !memcmp(tags[i].tag, buffer, size))
+			if ((tags[i].tag.len == size) &&
+				       !memcmp(tags[i].tag.value, buffer, size))
 				desc = &tags[i];
 
 		if (desc) {
@@ -507,15 +395,6 @@ static int encode_to_c11_file(int fd, struct tlv *tlv, struct tag_desc *tags,
 
 		for (i = 0; i <= depth; i++)
 			fprintf(out, "\t");
-
-		if (desc) {
-			for (; j < 46; j++)
-				len += snprintf(&line[len], sizeof(line) - len,
-									   " ");
-			len += snprintf(&line[len], sizeof(line) - len, " # %s",
-								    desc->name);
-		}
-		len += snprintf(&line[len], sizeof(line) - len, "\n");
 
 		for (i = 0; i < size; i++)
 			fprintf(out, "0x%02X, ", buffer[i]);
@@ -547,6 +426,8 @@ static int encode_to_c11_file(int fd, struct tlv *tlv, struct tag_desc *tags,
 
 int main(int argc, char **argv)
 {
+	struct emv_tag_descriptor *tags = NULL;
+	size_t num_tags = 0;
 	struct tlv *tlv = NULL;
 	int rc = 0;
 	struct arguments arguments;
@@ -580,6 +461,32 @@ int main(int argc, char **argv)
 		}
 	} else {
 		arguments.fd_output = STDOUT_FILENO;
+	}
+
+	if (arguments.tags) {
+		int fd = open(arguments.tags, O_RDONLY);
+
+		if (fd < 0) {
+			fprintf(stderr, "open('%s') failed: %s\n",
+					       arguments.tags, strerror(errno));
+			return EXIT_FAILURE;
+		}
+
+		rc = read_file(fd, &der, &der_len);
+		if (rc != TLV_RC_OK) {
+			fprintf(stderr, "Failed to read file '%s'\n",
+								arguments.tags);
+			return EXIT_FAILURE;
+		}
+
+		rc = emv_tag_parse_descriptors((char *)der, &tags, &num_tags);
+		if (rc != EMV_RC_OK) {
+			fprintf(stderr, "Failed to parse file '%s'\n",
+								arguments.tags);
+			return EXIT_FAILURE;
+		}
+
+		free(der);
 	}
 
 	rc = read_file(arguments.fd_input, &der, &der_len);
@@ -660,36 +567,24 @@ int main(int argc, char **argv)
 				arguments.output ? arguments.output : "stdout");
 			return EXIT_FAILURE;
 		}
-	} else if ((arguments.output_format == text) ||
-					     (arguments.output_format == c11)) {
-		struct tag_desc *tags = NULL;
-		size_t num_tags = 0;
-
-		if (arguments.tags) {
-			rc = read_tag_desc(arguments.tags, &tags, &num_tags);
-			if (rc != TLV_RC_OK) {
-				fprintf(stderr,
-				    "Failed to read tag definition file '%s'\n",
-								arguments.tags);
-				return EXIT_FAILURE;
-			}
-		}
-
-		if (arguments.output_format == text)
-			rc = encode_to_text_file(arguments.fd_output, tlv, tags,
+	} else if (arguments.output_format == text) {
+		rc = encode_to_text_file(arguments.fd_output, tlv, tags,
 								      num_tags);
-		else
-			rc = encode_to_c11_file(arguments.fd_output, tlv, tags,
-								      num_tags);
-
 		if (rc != TLV_RC_OK) {
 			fprintf(stderr, "Failed to encode output file '%s'.\n",
 							      arguments.output);
 			tlv_free(tlv);
 			return EXIT_FAILURE;
 		}
-
-		free(tags);
+	} else if (arguments.output_format == c11) {
+		rc = encode_to_c11_file(arguments.fd_output, tlv, tags,
+								      num_tags);
+		if (rc != TLV_RC_OK) {
+			fprintf(stderr, "Failed to encode output file '%s'.\n",
+							      arguments.output);
+			tlv_free(tlv);
+			return EXIT_FAILURE;
+		}
 	}
 
 	tlv_free(tlv);

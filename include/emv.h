@@ -30,6 +30,7 @@
 #define EMV_RC_CARD_PROTOCOL_ERROR		4
 #define EMV_RC_BUFFER_OVERFLOW			5
 #define EMV_RC_OUT_OF_MEMORY			6
+#define EMV_RC_SYNTAX_ERROR			7
 
 #define TTQ_MAG_STRIPE_MODE_SUPPORTED		0x80000000u
 #define TTQ_EMV_MODE_SUPPORTED			0x20000000u
@@ -260,5 +261,39 @@ int emv_ep_protocol_activation(struct emv_ep *ep,
 int emv_ep_combination_selection(struct emv_ep *ep);
 
 void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
+
+
+enum emv_tag_format {
+	fmt_a	= 0,
+	fmt_an	= 1,
+	fmt_ans	= 2,
+	fmt_b	= 3,
+	fmt_cn	= 4,
+	fmt_n	= 5,
+	fmt_var = 6
+};
+
+enum emv_tag_source {
+	src_icc	     = 0,
+	src_terminal = 1
+};
+
+struct emv_tag {
+	void	*value;
+	size_t	len;
+};
+
+struct emv_tag_descriptor {
+	char			*name;
+	char			*description;
+	enum emv_tag_source	source;
+	enum emv_tag_format	format;
+	struct emv_tag		*templates;
+	size_t			num_templates;
+	struct emv_tag		tag;
+};
+
+int emv_tag_parse_descriptors(const char *json_string,
+	      struct emv_tag_descriptor **descriptors, size_t *num_descriptors);
 
 #endif							    /* ndef __EMV_H__ */

@@ -516,7 +516,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	uint8_t fci[256];
 	size_t fci_len = sizeof(fci);
 	uint8_t sw[2];
-	int rc = EMV_RC_OK, i_comb, i_dir, i;
+	int rc = EMV_RC_OK, i_comb, i_dir;
 	struct tlv *tlv_fci = NULL;
 	struct emv_ep_candidate *i_cand = NULL;
 

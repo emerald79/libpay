@@ -75,7 +75,7 @@ int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
  * Encode a TLV data structure into a DER-TLV byte stream
  *
  * @param[in]    tlv     The corresponding TLV data structure to encode.
- * @param[in]    buffer  The buffer to store the encoded byte stream in.
+ * @param[out]   buffer  The buffer to store the encoded byte stream in.
  * @param[inout] size    Input: Size of buffer, Output Length of byte stream.
  *
  * @return TLV_RC_OK on success. TLV_RC_BUFFER_OVERFLOW is buffer is too small.
@@ -98,7 +98,7 @@ void tlv_free(struct tlv *tlv);
  * be computed and returned in the size output parameter.
  *
  * @param[in]    tlv     TLV node whose identifier (tag) shall be DER encoded.
- * @param[in]    buffer  Buffer to put the encoded identifier in.
+ * @param[out]   buffer  Buffer to put the encoded identifier in.
  * @param[inout] size    Size of buffer on input, size of encoded tag on output.
  *
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
@@ -112,7 +112,7 @@ int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size);
  * be computed and returned in the size output parameter.
  *
  * @param[in]    tlv     TLV node whose length shall be DER encoded.
- * @param[in]    buffer  Buffer to put the encoded length in.
+ * @param[out]   buffer  Buffer to put the encoded length in.
  * @param[inout] size    Size of buffer on input, size of encoding on output.
  *
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
@@ -129,7 +129,7 @@ int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size);
  * be computed and returned in the size output parameter.
  *
  * @param[in]    tlv     TLV node whose value shall be returned.
- * @param[in]    buffer  Buffer to put the value in.
+ * @param[out]   buffer  Buffer to put the value in.
  * @param[inout] size    Size of buffer on input, size of value on output.
  *
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
@@ -174,6 +174,17 @@ struct tlv *tlv_get_parent(struct tlv *tlv);
  */
 struct tlv *tlv_get_child(struct tlv *tlv);
 
+/**
+ * Search for a TLV node with a given specific tag.
+ *
+ * Note that the descendant nodes of constructed TLV nodes will not be searched.
+ *
+ * @param[in]  tlv  The list of TLV nodes to search.
+ * @param[in]  tag  The tag to search for.
+ *
+ * @returns The first occurence of a TLV node with the given tag or NULL if
+ *          there is none.
+ */
 struct tlv *tlv_find(struct tlv *tlv, const void *tag);
 
 /**
@@ -185,9 +196,5 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag);
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
 int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
-
-int tlv_parse_file(int fd, struct tlv **tlv);
-
-int tlv_encode_file(int fd, struct tlv *tlv);
 
 #endif /* ndef __TLV_H__ */
