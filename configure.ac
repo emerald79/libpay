@@ -21,5 +21,6 @@ AC_CONFIG_FILES([
 ])
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+PKG_CHECK_MODULES([JSON_C], [json-c >= 0.11.0])
 
 AC_OUTPUT

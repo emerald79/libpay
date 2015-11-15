@@ -485,7 +485,7 @@ int tlv_encode(struct tlv *tlv, void *buffer, size_t *size)
 
 	if (encoded_size > *size) {
 		*size = encoded_size;
-		return TLV_RC_BUFFER_OVERFLOW;
+		return buffer ? TLV_RC_BUFFER_OVERFLOW : TLV_RC_OK;
 	}
 
 	*size = encoded_size;

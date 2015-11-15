@@ -18,53 +18,603 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <argp.h>
+#include <assert.h>
+#include <json-c/json.h>
 #include <tlv.h>
+
+const char *argp_program_version = "tlvdump 0.1";
+const char *argp_program_bug_address = "mijung@gmx.net";
+static const char doc[] = "BER-TLV conversion tool";
+
+static const char args_doc[] = "";
+static struct argp_option options[] = {
+	{ "input",	   'i', "FILE",	  0,
+		 "Input from FILE instead of standard input" },
+	{ "output",	   'o', "FILE",	  0,
+		 "Output to FILE instead of standard output" },
+	{ "input-format",  'f', "FORMAT", 0,
+		 "Format of input (hex or binary, default: hex)" },
+	{ "output-format", 'g', "FORMAT", 0,
+		 "Format of output (hex, binary, text or c11, default: text)" },
+	{ "tags",	   't', "FILE", 0,
+		 "Definition of BER-TLV tags in JSON format" },
+	{ 0 }
+};
+
+enum file_format {
+	hex	= 0,
+	binary	= 1,
+	text	= 2,
+	c11	= 3,
+	invalid = 4
+};
+
+static enum file_format str2ff(const char *string)
+{
+	if (!strcmp("hex", string))
+		return hex;
+	if (!strcmp("binary", string))
+		return binary;
+	if (!strcmp("text", string))
+		return text;
+	if (!strcmp("c11", string))
+		return c11;
+	return invalid;
+}
+
+struct arguments {
+	char *input;
+	enum file_format input_format;
+	int fd_input;
+	char *output;
+	enum file_format output_format;
+	int fd_output;
+	char *tags;
+};
+
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
+{
+	struct arguments *arguments = (struct arguments *)state->input;
+
+	switch (key) {
+	case 'i':
+		arguments->input = arg;
+		break;
+	case 'o':
+		arguments->output = arg;
+		break;
+	case 't':
+		arguments->tags = arg;
+		break;
+	case 'f':
+		arguments->input_format = str2ff(arg);
+		if ((arguments->input_format != binary) &&
+					     (arguments->input_format != hex)) {
+			fprintf(stderr, "Invalid input format '%s' ", arg);
+			fprintf(stderr, "Choose 'binary' or 'hex'\n");
+			argp_usage(state);
+		}
+		break;
+	case 'g':
+		arguments->output_format = str2ff(arg);
+		if (arguments->output_format == invalid) {
+			fprintf(stderr, "Invalid output format '%s'. ", arg);
+			fprintf(stderr,
+				   "Choose 'binary', 'hex', 'text' or 'c11'\n");
+			argp_usage(state);
+		}
+		break;
+	case ARGP_KEY_ARG:
+		argp_usage(state);
+		break;
+	default:
+		return ARGP_ERR_UNKNOWN;
+	}
+
+	return 0;
+}
+
+static struct argp argp = { options, parse_opt, args_doc, doc };
+
+static int binary_to_hex(const uint8_t *binary, size_t binary_len,
+						 uint8_t **hex, size_t *hex_len)
+{
+	int i = 0;
+
+	assert(binary);
+	assert(hex);
+	assert(hex_len);
+
+	*hex_len = binary_len * 2;
+	*hex = malloc(*hex_len);
+	if (!*hex)
+		return TLV_RC_OUT_OF_MEMORY;
+
+	for (i = 0; i < binary_len; i++) {
+		static const uint8_t nibble_to_hex[16] = {
+			'0', '1', '2', '3', '4', '5', '6', '7',
+			'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+		};
+
+		(*hex)[2 * i]	  = nibble_to_hex[binary[i] >> 4];
+		(*hex)[2 * i + 1] = nibble_to_hex[binary[i] & 0xF];
+	}
+
+	return TLV_RC_OK;
+}
+
+static int hex_to_binary(const uint8_t *hex, size_t hex_len, uint8_t **binary,
+							     size_t *binary_len)
+{
+	uint8_t *result = NULL;
+	size_t buffer_len = 256, i_hex = 0, nibbles = 0;
+	bool comment = false;
+
+	assert(hex);
+	assert(binary);
+	assert(binary_len);
+
+	*binary = NULL;
+	*binary_len = 0;
+
+	result = malloc(buffer_len);
+	if (!result)
+		return TLV_RC_OUT_OF_MEMORY;
+
+	for (i_hex = 0, nibbles = 0, comment = false; i_hex < hex_len;
+								      i_hex++) {
+
+		if ((nibbles / 2) >= buffer_len) {
+			uint8_t *new_buffer = NULL;
+
+			buffer_len *= 2;
+			new_buffer = realloc(result, buffer_len);
+			if (!new_buffer) {
+				free(result);
+				return TLV_RC_OUT_OF_MEMORY;
+			}
+			result = new_buffer;
+		}
+
+		if (!comment) {
+			if ((hex[i_hex] >= '0') && (hex[i_hex] <= '9')) {
+				result[nibbles >> 1] <<= 4;
+				result[nibbles >> 1] |= hex[i_hex] - '0';
+				nibbles++;
+			}
+			if ((tolower(hex[i_hex]) >= 'a') &&
+						 (tolower(hex[i_hex]) <= 'f')) {
+				result[nibbles >> 1] <<= 4;
+				result[nibbles >> 1] |= tolower(hex[i_hex]) -
+								       'a' + 10;
+				nibbles++;
+			}
+			if (hex[i_hex] == '#')
+				comment = true;
+		} else {
+			if (hex[i_hex] == '\n')
+				comment = false;
+		}
+	}
+
+	if (nibbles % 2) {
+		free(result);
+		return TLV_RC_INVALID_ARG;
+	}
+
+	*binary = result;
+	*binary_len = nibbles / 2;
+	return TLV_RC_OK;
+}
+
+static struct tlv *tlv_iterate(struct tlv *tlv, int *depth)
+{
+	if (!tlv)
+		return NULL;
+
+	if (tlv_is_constructed(tlv)) {
+		(*depth)++;
+		return tlv_get_child(tlv);
+	}
+
+	if (tlv_get_next(tlv))
+		return tlv_get_next(tlv);
+
+	while (tlv_get_parent(tlv)) {
+		(*depth)--;
+		if (tlv_get_next(tlv_get_parent(tlv)))
+			return tlv_get_next(tlv_get_parent(tlv));
+		tlv = tlv_get_parent(tlv);
+	}
+
+	return NULL;
+}
+
+static int write_file(int fd, uint8_t *contents, size_t len)
+{
+	ssize_t rc = 0;
+	size_t written_bytes = 0;
+
+	assert(contents);
+
+	do {
+		rc = write(fd, &contents[written_bytes], len - written_bytes);
+		if (rc < 0)
+			return TLV_RC_IO_ERROR;
+
+		written_bytes += (size_t)rc;
+	} while ((rc > 0) && (written_bytes < len));
+
+	if (written_bytes < len)
+		return TLV_RC_IO_ERROR;
+
+	return TLV_RC_OK;
+}
+
+static int read_file(int fd, uint8_t **contents, size_t *len)
+{
+	uint8_t *result = NULL;
+	size_t buffer_len = 256;
+	size_t read_bytes = 0;
+	ssize_t rc = 0;
+
+
+	assert(contents);
+	assert(len);
+
+	*contents = NULL;
+	*len = 0;
+
+	result = malloc(buffer_len);
+	if (!result)
+		return TLV_RC_OUT_OF_MEMORY;
+
+	do {
+		rc = read(fd, &(result[read_bytes]), buffer_len - read_bytes);
+		if (rc < 0) {
+			free(result);
+			return TLV_RC_IO_ERROR;
+		}
+
+		read_bytes += (size_t)rc;
+
+		if (read_bytes >= buffer_len) {
+			uint8_t *temp = NULL;
+
+			buffer_len *= 2;
+			temp = realloc(result, buffer_len);
+
+			if (!temp) {
+				free(result);
+				return TLV_RC_OUT_OF_MEMORY;
+			}
+
+			result = temp;
+		}
+	} while (rc > 0);
+
+	*contents = result;
+	*len = read_bytes;
+
+	return TLV_RC_OK;
+}
+
+struct tag_desc {
+	void   *tag;
+	size_t tag_length;
+	char   *name;
+};
+
+static int read_tag_desc(const char *file, struct tag_desc **tags,
+							       size_t *num_tags)
+{
+	enum json_tokener_error json_err;
+	struct tag_desc *result = NULL;
+	struct json_tokener *tokener = NULL;
+	struct json_object *object = NULL;
+	char *json_string = NULL;
+	size_t json_string_len = 0;
+	int fd = -1, rc = TLV_RC_OK, i, num;
+
+	assert(file);
+	assert(tags);
+	assert(num_tags);
+
+	*tags = NULL;
+	*num_tags = 0;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "Failed to open '%s': %s\n", file,
+							       strerror(errno));
+		return TLV_RC_IO_ERROR;
+	}
+
+	rc = read_file(fd, (uint8_t **)&json_string, &json_string_len);
+	if (rc != TLV_RC_OK) {
+		fprintf(stderr, "Failed to read file '%s'\n", file);
+		close(fd);
+		return rc;
+	}
+
+	close(fd);
+
+	tokener = json_tokener_new();
+	if (!tokener) {
+		fprintf(stderr, "Failed to create JSON tokenizer\n");
+		return TLV_RC_OUT_OF_MEMORY;
+	}
+
+	object = json_tokener_parse_ex(tokener, json_string, json_string_len);
+	if (!object) {
+		json_err = json_tokener_get_error(tokener);
+		fprintf(stderr, "Failed to parse '%s'. err %d\n", file,
+								 (int)json_err);
+		return TLV_RC_IO_ERROR;
+	}
+
+	if (!json_object_is_type(object, json_type_array)) {
+		fprintf(stderr, "'%s' is not a valid tag description file!\n",
+									  file);
+		return TLV_RC_INVALID_ARG;
+	}
+
+	num = json_object_array_length(object);
+	if (!num) {
+		fprintf(stderr, "No tags defined in '%s'\n", file);
+		return TLV_RC_INVALID_ARG;
+	}
+
+	result = calloc(num, sizeof(struct tag_desc));
+	if (!result)
+		return TLV_RC_OUT_OF_MEMORY;
+
+	for (i = 0; i < num; i++) {
+		struct json_object *json_tag = NULL, *json_value = NULL;
+
+		json_tag = json_object_array_get_idx(object, i);
+		assert(json_tag);
+
+		if (!json_object_object_get_ex(json_tag, "tag", &json_value)) {
+			fprintf(stderr, "Mandatory attribute 'tag' missing.\n");
+			return TLV_RC_INVALID_ARG;
+		}
+
+		if (!json_object_is_type(json_value, json_type_string)) {
+			fprintf(stderr, "'tag' must be a string!\n");
+			return TLV_RC_INVALID_ARG;
+		}
+
+		rc = hex_to_binary(
+				  (uint8_t *)json_object_get_string(json_value),
+					 json_object_get_string_len(json_value),
+			     (uint8_t **)&result[i].tag, &result[i].tag_length);
+		assert(rc == TLV_RC_OK);
+
+		if (!json_object_object_get_ex(json_tag, "name", &json_value)) {
+			fprintf(stderr, "Mandatory attribute 'name' missing\n");
+			return TLV_RC_INVALID_ARG;
+		}
+
+		if (!json_object_is_type(json_value, json_type_string)) {
+			fprintf(stderr, "'name' must be a string!\n");
+			return TLV_RC_INVALID_ARG;
+		}
+
+		result[i].name = strdup(json_object_get_string(json_value));
+	}
+
+	*num_tags = num;
+	*tags = result;
+
+	return TLV_RC_OK;
+}
+
+static int encode_text_to_file(int fd, struct tlv *tlv, struct tag_desc *tags,
+								size_t num_tags)
+{
+	int depth = 0;
+
+	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
+		struct tag_desc *desc = NULL;
+		uint8_t buffer[256];
+		char line[256];
+		size_t size;
+		ssize_t rc = 0;
+		int i, j, len = 0;
+
+		for (i = 0, j = 0; i < depth; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "  ");
+		size = sizeof(buffer);
+		tlv_encode_identifier(tlv, buffer, &size);
+		for (i = 0; i < (int)size; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "%02X",
+								     buffer[i]);
+		len += snprintf(&line[len], sizeof(line) - len, " ");
+		for (i = 0; i < num_tags; i++)
+			if ((tags[i].tag_length == size) &&
+					     !memcmp(tags[i].tag, buffer, size))
+				desc = &tags[i];
+		size = sizeof(buffer);
+		tlv_encode_length(tlv, buffer, &size);
+		for (i = 0; i < (int)size; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "%02X",
+								     buffer[i]);
+		len += snprintf(&line[len], sizeof(line) - len, " ");
+		size = sizeof(buffer);
+		tlv_encode_value(tlv, buffer, &size);
+		for (i = 0; i < (int)size; i++, j += 2)
+			len += snprintf(&line[len], sizeof(line) - len, "%02X",
+								     buffer[i]);
+		if (desc) {
+			for (; j < 46; j++)
+				len += snprintf(&line[len], sizeof(line) - len,
+									   " ");
+			len += snprintf(&line[len], sizeof(line) - len, " # %s",
+								    desc->name);
+		}
+		len += snprintf(&line[len], sizeof(line) - len, "\n");
+
+		size = 0;
+		do {
+			rc = write(fd, &line[size], len - size);
+			if (rc < 0)
+				return TLV_RC_IO_ERROR;
+			size += rc;
+		} while (size < len);
+	}
+
+	return TLV_RC_OK;
+
+}
 
 int main(int argc, char **argv)
 {
 	struct tlv *tlv = NULL;
-	int rc = 0, fd_in = -1, fd_out = -1;
+	int rc = 0;
+	struct arguments arguments;
+	uint8_t *der = NULL;
+	size_t der_len = 0;
 
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s input-file output-file\n", argv[0]);
-		return EXIT_FAILURE;
+	memset(&arguments, 0, sizeof(arguments));
+	arguments.input_format = hex;
+	arguments.output_format = text;
+
+	argp_parse(&argp, argc, argv, 0, 0, &arguments);
+
+	if (arguments.input) {
+		arguments.fd_input = open(arguments.input, O_RDONLY);
+		if (arguments.fd_input < 0) {
+			fprintf(stderr, "open('%s') failed: %s\n",
+					      arguments.input, strerror(errno));
+			return EXIT_FAILURE;
+		}
+	} else {
+		arguments.fd_input = STDIN_FILENO;
 	}
 
-	fd_in = open(argv[1], O_RDONLY);
-	if (fd_in < 0) {
-		fprintf(stderr, "open('%s') failed: %s\n", argv[1],
-							       strerror(errno));
-		return EXIT_FAILURE;
+	if (arguments.output) {
+		arguments.fd_output = open(arguments.output, O_WRONLY | O_CREAT,
+			       S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH |
+								       S_IWOTH);
+		if (arguments.fd_output < 0) {
+			fprintf(stderr, "open('%s') failed: %s\n",
+					     arguments.output, strerror(errno));
+		}
+	} else {
+		arguments.fd_output = STDOUT_FILENO;
 	}
 
-	rc = tlv_parse_file(fd_in, &tlv);
+	rc = read_file(arguments.fd_input, &der, &der_len);
 	if (rc != TLV_RC_OK) {
-		close(fd_in);
-		return EXIT_FAILURE;
-	}
-	close(fd_in);
-
-	fd_out = open(argv[2], O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP |
-						   S_IWGRP | S_IROTH | S_IWOTH);
-	if (fd_out < 0) {
-		fprintf(stderr, "open('%s') failed: %s\n", argv[2],
-							       strerror(errno));
-		tlv_free(tlv);
+		fprintf(stderr, "Failed to read file '%s'\n",
+				   arguments.input ? arguments.input : "stdin");
 		return EXIT_FAILURE;
 	}
 
-	rc = tlv_encode_file(fd_out, tlv);
+	if (arguments.input_format == hex) {
+		uint8_t *temp = NULL;
+		size_t temp_len = 0;
+
+		rc = hex_to_binary(der, der_len, &temp, &temp_len);
+		if (rc != TLV_RC_OK) {
+			free(der);
+			fprintf(stderr, "Failed to parse input file '%s'.\n",
+				   arguments.input ? arguments.input : "stdin");
+			return EXIT_FAILURE;
+		}
+
+		free(der);
+		der = temp;
+		der_len = temp_len;
+	}
+
+	rc = tlv_parse(der, der_len, &tlv);
 	if (rc != TLV_RC_OK) {
-		close(fd_out);
-		tlv_free(tlv);
+		free(der);
+		fprintf(stderr, "Failed to parse input file '%s'.\n",
+				   arguments.input ? arguments.input : "stdin");
 		return EXIT_FAILURE;
 	}
-	close(fd_out);
 
+	free(der);
+	der = NULL;
+	der_len = 0;
+
+	if ((arguments.output_format == binary) ||
+					     (arguments.output_format == hex)) {
+		rc = tlv_encode(tlv, NULL, &der_len);
+		if (rc != TLV_RC_OK) {
+			fprintf(stderr, "Failed to encode output.\n");
+			return EXIT_FAILURE;
+		}
+
+		der = malloc(der_len);
+		if (!der) {
+			fprintf(stderr, "Out of memory error.\n");
+			return EXIT_FAILURE;
+		}
+
+		rc = tlv_encode(tlv, der, &der_len);
+		if (rc != TLV_RC_OK) {
+			fprintf(stderr, "Failed to encode output.\n");
+			return EXIT_FAILURE;
+		}
+
+		if (arguments.output_format == hex) {
+			uint8_t *temp = NULL;
+			size_t temp_len = 0;
+
+			rc = binary_to_hex(der, der_len, &temp, &temp_len);
+			if (rc != TLV_RC_OK) {
+				free(der);
+				fprintf(stderr, "Failed to encode output.\n");
+				return EXIT_FAILURE;
+			}
+
+			free(der);
+			der = temp;
+			der_len = temp_len;
+		}
+
+		rc = write_file(arguments.fd_output, der, der_len);
+		if (rc != TLV_RC_OK) {
+			fprintf(stderr, "Failed to write file '%s'\n",
+				arguments.output ? arguments.output : "stdout");
+			return EXIT_FAILURE;
+		}
+	} else if (arguments.output_format == text) {
+		struct tag_desc *tags = NULL;
+		size_t num_tags = 0;
+
+		if (arguments.tags) {
+			rc = read_tag_desc(arguments.tags, &tags, &num_tags);
+			if (rc != TLV_RC_OK) {
+				fprintf(stderr,
+				    "Failed to read tag definition file '%s'\n",
+								arguments.tags);
+				return EXIT_FAILURE;
+			}
+		}
+
+		rc = encode_text_to_file(arguments.fd_output, tlv, tags,
+								      num_tags);
+		if (rc != TLV_RC_OK) {
+			fprintf(stderr, "Failed to encode output file '%s'.\n",
+							      arguments.output);
+			tlv_free(tlv);
+			return EXIT_FAILURE;
+		}
+
+		free(tags);
+	}
+
+	tlv_free(tlv);
 	return EXIT_SUCCESS;
 }

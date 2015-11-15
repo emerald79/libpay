@@ -603,6 +603,11 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 		printf("\n");
 	}
 
+	if (!ep->candidates) {
+		printf("Outcome: End Application\n");
+		goto done;
+	}
+
 done:
 	if (tlv_fci)
 		tlv_free(tlv_fci);

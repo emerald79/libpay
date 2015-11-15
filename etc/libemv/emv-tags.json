@@ -1,0 +1,180 @@
+[
+  {
+    "tag"         : "4F",
+    "name"        : "Application Identifier (AID) - card",
+    "description" : "Identifies the application as described in ISO/IEC 7816-5",
+    "source"      : "ICC",
+    "format"      : "b",
+    "template"    : [ "61" ]
+  },
+  {
+    "tag"         : "50",
+    "name"        : "Application Label",
+    "description" : "Mnemonic associated with the AID according to ISO/IEC 7816-5",
+    "source"      : "ICC",
+    "format"      : "ans",
+    "template"    : [ "61", "A5" ]
+  },
+  {
+    "tag"         : "56",
+    "name"        : "Track 1 Data",
+    "description" : "Track 1 Data contains the data objects of the track 1 according to [ISO/IEC 7813] Structure B, excluding start sentinel, end sentinel and LRC. The Track 1 Data may be present in the file read using the READ RECORD command during a mag-stripe mode transaction.",
+    "source"      : "ICC",
+    "format"      : "b",
+  },
+  {
+    "tag"         : "61",
+    "name"        : "Application Template",
+    "description" : "Contains one or more data objects relevant to an application directory entry according to ISO/IEC 7816-5",
+    "source"      : "ICC",
+    "template"    : [ "70" ]
+  },
+  {
+    "tag"         : "6F",
+    "name"        : "File Control Information (FCI) Template",
+    "description" : "Identifies the FCI template according to ISO/IEC 7816-4",
+    "source"      : "ICC"
+  },
+  {
+    "tag"         : "70",
+    "name"        : "READ RECORD Response Message Template",
+    "description" : "Contains the contents of the record read. (Mandatory for SFIs 1-10. Response messages for SFIs 11-30 are outside the scope of EMV, but may use template '70')",
+    "source"      : "ICC"
+  },
+  {
+    "tag"         : "77",
+    "name"        : "Response Message Template Format 2",
+    "description" : "Contains the data objects (with tags and lengths) returned by the ICC in response to a command",
+    "source"      : "ICC"
+  },
+  {
+    "tag"         : "82",
+    "name"        : "Application Interchange Profile (AIP)",
+    "description" : "Indicates the capabilities of the card to support specific functions in the application",
+    "source"      : "ICC",
+    "format"      : "b",
+    "template"    : [ "77", "80" ]
+  },
+  {
+    "tag"         : "84",
+    "name"        : "Dedicated File (DF) Name",
+    "description" : "Identifies the name of the DF as described in ISO/IEC 7816-4",
+    "source"      : "ICC",
+    "format"      : "b",
+    "template"    : [ "6F" ]
+  },
+  {
+    "tag"         : "87",
+    "name"        : "Application Priority Indicator",
+    "description" : "Indicates the priority of a given application or group of applications in a directory",
+    "source"      : "ICC",
+    "format"      : "b",
+    "template"    : [ "61", "A5" ]
+  },
+  {
+    "tag"         : "94",
+    "name"        : "Application File Locator (AFL)",
+    "description" : "Indicates the location (SFI, range of records) of the AEFs related to a given application.",
+    "source"      : "ICC",
+    "format"      : "b",
+    "template"    : [ "77", "80" ]
+  },
+  {
+    "tag"         : "A5",
+    "name"        : "File Control Information (FCI) Proprietary Template",
+    "description" : "Identifies the data object proprietary to this specification in the FCI template according to ISO/IEC 7816-4",
+    "source"      : "ICC",
+    "template"    : [ "6F" ]
+  },
+  {
+    "tag"         : "9F36",
+    "name"        : "Application Transaction Counter (ATC)",
+    "description" : "Count of the number of transactions initiated since personalisation. Maintained by the application in the card.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F60",
+    "name"        : "CVC3 (Track1)",
+    "description" : "The CVC3 (Track1) is a 2-byte cryptogram returned by the Card in the response to the COMPUTE CRYPTOGRAPHIC CHECKSUM command.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F61",
+    "name"        : "CVC3 (Track2)",
+    "description" : "The CVC3 (Track2) is a 2-byte cryptogram returned by the Card in the response to the COMPUTE CRYPTOGRAPHIC CHECKSUM command",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F62",
+    "name"        : "PCVC3 (Track1)",
+    "description" : "PCVC3 (Track1) indicates to the Kernel the positions in the discretionary data field of the Track 1 Data where the CVC3 (Track1) digits must be copied.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F63",
+    "name"        : "PUNATC (Track1)",
+    "description" : "PUNATC(Track1) indicates to the Kernel the positions in the discretionary data field of Track 1 Data where the Unpredictable Number (Numeric) digits and Application Transaction Counter digits have to be copied.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F64",
+    "name"        : "NATC (Track1)",
+    "description" : "The value of NATC(Track1) represents the number of digits of the Application Transaction Counter to be included in the discretionary data field of Track 1 Data.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F65",
+    "name"        : "PCVC3 (Track2)",
+    "description" : "PCVC3(Track2) indicates to the Kernel the positions in the discretionary data field of the Track 2 Data where the CVC3 (Track2) digits must be copied.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F66",
+    "name"        : "PUNATC (Track2)",
+    "description" : "PUNATC(Track2) indicates to the Kernel the positions in the discretionary data field of Track 2 Data where the Unpredictable Number (Numeric) digits and Application Transaction Counter digits have to be copied.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F67",
+    "name"        : "NATC (Track2)",
+    "description" : "The value of NATC(Track2) represents the number of digits of the Application Transaction Counter to be included in the discretionary data field of Track 2 Data.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F68",
+    "name"        : "Card Additional Processes",
+    "description" : "",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F6B",
+    "name"        : "Track 2 Data",
+    "description" : "Track 2 Data contains the data objects of the track 2 according to [ISO/IEC 7813], excluding start sentinel, end sentinel and LRC. The Track 2 Data is present in the file read using the READ RECORD command during a mag-stripe mode transaction.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "9F6C",
+    "name"        : "Card Transaction Qualifiers (CTQ)",
+    "description" : "In this version of the specification, used to indicate to the device the card CVM requirements, issuer preferences, and card capabilities.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
+    "tag"         : "BF0C",
+    "name"        : "File Control Information (FCI) Issuer Discretionary Data",
+    "description" : "Issuer discretionary part of the FCI",
+    "source"      : "ICC",
+    "template"    : [ "A5" ]
+  }
+]
