@@ -69,24 +69,25 @@ static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
 }
 #endif
 
-static int get_tx_type_idx(struct emv_transaction_data *tx, int *type_idx)
+static int get_txn_type(struct emv_transaction_data *txn,
+						   enum emv_txn_type *txn_type)
 {
 	/* See EMV Contactless Book A v2.5, Table 5-6: Type of Transaction.   */
-	switch (tx->transaction_type) {
+	switch (txn->transaction_type) {
 	case 0x00:
-		if (tx->amount_other)
-			*type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE_WITH_CASHBACK;
+		if (txn->amount_other)
+			*txn_type = txn_purchase_with_cashback;
 		else
-			*type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE;
+			*txn_type = txn_purchase;
 		break;
 	case 0x09:
-		*type_idx = EMV_EP_TX_TYPE_IDX_PURCHASE_WITH_CASHBACK;
+		*txn_type = txn_purchase_with_cashback;
 		break;
 	case 0x01:
-		*type_idx = EMV_EP_TX_TYPE_IDX_CASH_ADVANCE;
+		*txn_type = txn_cash_advance;
 		break;
 	case 0x20:
-		*type_idx = EMV_EP_TX_TYPE_IDX_REFUND;
+		*txn_type = txn_refund;
 		break;
 	default:
 		return EMV_RC_UNSUPPORTED_TRANSACTION_TYPE;
@@ -100,13 +101,13 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 {
 	uint64_t amount_authorised = 0, unit_of_currency = 0;
 	bool ctls_app_allowed = 0;
-	int i = 0, tx_type_idx = 0, rc = EMV_RC_OK;
+	int i = 0, rc = EMV_RC_OK;
 
 	amount_authorised = bcd_to_u64(tx->amount_authorised, 6);
 	unit_of_currency  = bcd_to_u64(
 				 single_unit_of_currency(tx->currency_code), 6);
 
-	rc = get_tx_type_idx(tx, &tx_type_idx);
+	rc = get_txn_type(tx, &ep->txn_type);
 	if (rc != EMV_RC_OK)
 		return rc;
 
@@ -120,7 +121,7 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 		uint64_t floor_limit = 0, cvm_reqd_limit = 0;
 		uint32_t *ttq = NULL;
 
-		cfg	   = &ep->combinations[i].config[tx_type_idx];
+		cfg	   = &ep->combinations[i].config[ep->txn_type];
 		indicators = &ep->combinations[i].indicators;
 
 		ctls_tx_limit	 = bcd_to_u64(cfg->reader_ctls_floor_limit, 6);
@@ -250,17 +251,13 @@ int emv_ep_protocol_activation(struct emv_ep *ep,
 
 	if (!ep->restart) {
 		if (started_by_reader) {
-			int i, tx_type_idx, rc;
-
-			rc = get_tx_type_idx(tx, &tx_type_idx);
-			if (rc != EMV_RC_OK)
-				return rc;
+			int i;
 
 			for (i = 0; i < ep->num_combinations; i++) {
 				struct emv_ep_config *cfg = NULL;
 				struct emv_ep_preproc_indicators *indicators;
 
-				cfg = &ep->combinations[i].config[tx_type_idx];
+				cfg = &ep->combinations[i].config[ep->txn_type];
 				indicators = &ep->combinations[i].indicators;
 
 				memset(indicators, 0, sizeof(*indicators));
@@ -298,18 +295,6 @@ void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal)
 {
 	ep->hal = hal;
 }
-
-struct emv_candidate {
-	uint8_t adf_name[16];
-	size_t	adf_name_len;
-	char	label[16];
-	size_t	label_len;
-	uint8_t	prio;
-	uint8_t kernel_identifier[8];
-	size_t	kernel_identifier_len;
-	uint8_t extended_selection[16];
-	size_t	extended_selection_len;
-};
 
 static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
 		      uint8_t p1, uint8_t p2, const void *data, size_t data_len,
@@ -509,6 +494,36 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 	return true;
 }
 
+static int compare_candidates(const void *candidate_a, const void *candidate_b)
+{
+	const struct emv_ep_candidate *a = NULL, *b = NULL;
+
+	a = (const struct emv_ep_candidate *)candidate_a;
+	b = (const struct emv_ep_candidate *)candidate_b;
+
+	if (a->application_priority_indicator ==
+					    b->application_priority_indicator) {
+		if (a->order == b->order)
+			return 0;
+		if (a->order < b->order)
+			return -1;
+		else
+			return 1;
+	}
+
+	if (!a->application_priority_indicator)
+		return -1;
+
+	if (!b->application_priority_indicator)
+		return 1;
+
+	if (a->application_priority_indicator <
+					      b->application_priority_indicator)
+		return -1;
+
+	return 1;
+}
+
 int emv_ep_combination_selection(struct emv_ep *ep)
 {
 	struct ppse_dir_entry dir_entry[32];
@@ -518,7 +533,6 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	uint8_t sw[2];
 	int rc = EMV_RC_OK, i_comb, i_dir;
 	struct tlv *tlv_fci = NULL;
-	struct emv_ep_candidate *i_cand = NULL;
 
 
 
@@ -546,6 +560,15 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	rc = emv_ep_parse_ppse(tlv_fci, dir_entry, &num_dir_entries);
 	assert(rc == EMV_RC_OK);
 
+	ep->num_candidates = 0;
+	ep->candidates = (struct emv_ep_candidate *)
+				  calloc(ep->num_combinations * num_dir_entries,
+					       sizeof(struct emv_ep_candidate));
+	if (!ep->candidates) {
+		rc = EMV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
 	for (i_comb = 0; i_comb < ep->num_combinations; i_comb++) {
 		struct emv_ep_combination *comb = &ep->combinations[i_comb];
 
@@ -564,10 +587,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 E");
 
-			candidate = malloc(sizeof(*candidate));
-			if (!candidate)
-				return EMV_RC_OUT_OF_MEMORY;
-
+			candidate = &ep->candidates[ep->num_candidates++];
 			memcpy(candidate->adf_name, entry->adf_name,
 							   entry->adf_name_len);
 			candidate->adf_name_len = entry->adf_name_len;
@@ -578,39 +598,54 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 						 entry->extended_selection_len);
 			candidate->extended_selection_len =
 						  entry->extended_selection_len;
+			candidate->order = (uint8_t)i_dir;
 			candidate->combination = comb;
-			candidate->next = ep->candidates;
-			ep->candidates = candidate;
 		}
 	}
 
-	for (i_cand = ep->candidates; i_cand; i_cand = i_cand->next) {
-		int j;
-
-		for (j = 0; j < i_cand->adf_name_len; j++)
-			printf("%02X", i_cand->adf_name[j]);
-
-		printf(" %hhu ", i_cand->application_priority_indicator);
-
-		for (j = 0; j < i_cand->combination->kernel_id_len; j++)
-			printf("%02X", i_cand->combination->kernel_id[j]);
-
-		printf(" ");
-
-		for (j = 0; j < i_cand->extended_selection_len; j++)
-			printf("%02X", i_cand->extended_selection[j]);
-
-		printf("\n");
-	}
-
-	if (!ep->candidates) {
-		printf("Outcome: End Application\n");
-		goto done;
-	}
+	qsort(ep->candidates, ep->num_candidates,
+			   sizeof(struct emv_ep_candidate), compare_candidates);
 
 done:
 	if (tlv_fci)
 		tlv_free(tlv_fci);
+
+	return rc;
+}
+
+int emv_ep_final_combination_selection(struct emv_ep *ep)
+{
+	struct emv_ep_candidate *candidate = NULL;
+	struct emv_ep_config *config = NULL;
+	uint8_t adf[32];
+	size_t adf_len = 0;
+	uint8_t fci[256];
+	size_t fci_len = sizeof(fci);
+	uint8_t sw[2];
+	int rc = EMV_RC_OK, i;
+
+	candidate = &ep->candidates[ep->num_candidates - 1];
+	config = &candidate->combination->config[ep->txn_type];
+
+	adf_len = candidate->adf_name_len;
+	memcpy(adf, candidate->adf_name, adf_len);
+
+	if (candidate->extended_selection_len &&
+					config->present.ext_selection_support &&
+				      config->supported.ext_selection_support) {
+		memcpy(&adf[adf_len], candidate->extended_selection,
+					     candidate->extended_selection_len);
+		adf_len += candidate->extended_selection_len;
+	}
+
+	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
+				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
+					  EMV_CMD_SELECT_P2_FIRST, adf, adf_len,
+							     fci, &fci_len, sw);
+	printf("sw: %02x%02x\n", sw[0], sw[1]);
+	for (i = 0; i < fci_len; i++)
+		printf("%02X", fci[i]);
+	printf("\n");
 
 	return rc;
 }

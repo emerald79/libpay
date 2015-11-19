@@ -75,17 +75,20 @@ struct emv_ep_preproc_indicators {
 	uint32_t copy_of_ttq;
 };
 
-#define EMV_EP_TX_TYPE_IDX_PURCHASE			0
-#define EMV_EP_TX_TYPE_IDX_PURCHASE_WITH_CASHBACK	1
-#define EMV_EP_TX_TYPE_IDX_CASH_ADVANCE			2
-#define EMV_EP_TX_TYPE_IDX_REFUND			3
+enum emv_txn_type {
+	txn_purchase		   = 0,
+	txn_purchase_with_cashback = 1,
+	txn_cash_advance	   = 2,
+	txn_refund		   = 3,
+	num_txn_types		   = 4
+};
 
 struct emv_ep_combination {
 	uint8_t					aid[16];
 	size_t					aid_len;
 	uint8_t					kernel_id[8];
 	size_t					kernel_id_len;
-	struct emv_ep_config			config[4];
+	struct emv_ep_config			config[num_txn_types];
 	struct emv_ep_preproc_indicators	indicators;
 };
 
@@ -95,8 +98,8 @@ struct emv_ep_candidate {
 	uint8_t	application_priority_indicator;
 	uint8_t	extended_selection[16];
 	size_t	extended_selection_len;
+	uint8_t order;
 	struct	emv_ep_combination *combination;
-	struct	emv_ep_candidate *next;
 };
 
 struct emv_transaction_data {
@@ -117,11 +120,13 @@ struct emv_hal {
 };
 
 struct emv_ep {
+	enum emv_txn_type		txn_type;
 	struct emv_hal			*hal;
 	bool				restart;
 	struct emv_ep_combination	*combinations;
 	int				num_combinations;
 	struct emv_ep_candidate		*candidates;
+	int				num_candidates;
 };
 
 #define EMV_MAX_ONLINE_RESPONSE_LEN	256
@@ -259,6 +264,8 @@ int emv_ep_protocol_activation(struct emv_ep *ep,
 		       struct emv_transaction_data *tx, bool started_by_reader);
 
 int emv_ep_combination_selection(struct emv_ep *ep);
+
+int emv_ep_final_combination_selection(struct emv_ep *ep);
 
 void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
 

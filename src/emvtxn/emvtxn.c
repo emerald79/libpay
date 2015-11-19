@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 			.aid_len = 5,
 			.kernel_id = { 0x02 },
 			.kernel_id_len = 1,
-			.config[EMV_EP_TX_TYPE_IDX_PURCHASE] = {
+			.config[txn_purchase] = {
 				.present = {
 					.reader_ctls_tx_limit = true,
 					.reader_ctls_floor_limit = true,
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 			.aid_len = 9,
 			.kernel_id = { 0xc0, 0x61, 0x50 },
 			.kernel_id_len = 3,
-			.config[EMV_EP_TX_TYPE_IDX_PURCHASE] = {
+			.config[txn_purchase] = {
 				.present = {
 					.reader_ctls_tx_limit = true,
 				},
@@ -164,6 +164,13 @@ int main(int argc, char **argv)
 	rc = emv_ep_combination_selection(&emv_ep);
 	if (rc != EMV_RC_OK) {
 		fprintf(stderr, "Combination Selection failed. rc %d\n", rc);
+		goto error;
+	}
+
+	rc = emv_ep_final_combination_selection(&emv_ep);
+	if (rc != EMV_RC_OK) {
+		fprintf(stderr, "Final Combination Selection failed. rc %d\n",
+									    rc);
 		goto error;
 	}
 
