@@ -8,22 +8,22 @@
 #include <feig/feclr.h>
 #include <emv.h>
 
-struct feclr_emv_hal_priv {
+struct cvend_hal {
+	const struct emv_hal_ops *ops;
 	int fd_feclr;
 };
 
-int feclr_emv_transceive(struct emv_hal *hal, const uint8_t *capdu,
+int cvend_hal_transceive(struct emv_hal *emv_hal, const uint8_t *capdu,
 			    size_t capdu_len, uint8_t *rapdu, size_t *rapdu_len)
 {
-	int fd = -1, rc = 0;
+	struct cvend_hal *hal = (struct cvend_hal *)emv_hal;
+	int rc = 0;
 	uint64_t status = FECLR_STS_OK;
 	uint8_t rx_last_bits;
 	size_t buffer_len = *rapdu_len;
 
-	fd = ((struct feclr_emv_hal_priv *)(hal->priv))->fd_feclr;
-
-	rc = feclr_transceive(fd, 0, capdu, capdu_len, 0, rapdu, buffer_len,
-					  rapdu_len, &rx_last_bits, 0, &status);
+	rc = feclr_transceive(hal->fd_feclr, 0, capdu, capdu_len, 0, rapdu,
+			      buffer_len, rapdu_len, &rx_last_bits, 0, &status);
 	if (rc < 0) {
 		fprintf(stderr, "feclr_transceive failed: %s\n",
 							       strerror(errno));
@@ -44,10 +44,19 @@ int feclr_emv_transceive(struct emv_hal *hal, const uint8_t *capdu,
 	return EMV_RC_OK;
 }
 
+void cvend_hal_ui_request(struct emv_hal *emv_hal,
+					      struct emv_ui_request *ui_request)
+{
+}
+
+const struct emv_hal_ops cvend_hal_ops = {
+	.transceive = cvend_hal_transceive,
+	.ui_request = cvend_hal_ui_request
+};
+
 int main(int argc, char **argv)
 {
-	struct feclr_emv_hal_priv emv_priv;
-	struct emv_hal feclr_hal;
+	struct cvend_hal hal;
 	struct emv_ep emv_ep;
 	union tech_data tech_data;
 	uint64_t status = FECLR_STS_OK, tech = 0;
@@ -85,14 +94,15 @@ int main(int argc, char **argv)
 		}
 	};
 
-	fd = open("/dev/feclr0", O_RDWR);
-	if (fd < 0) {
+	hal.ops = &cvend_hal_ops;
+	hal.fd_feclr = open("/dev/feclr0", O_RDWR);
+	if (hal.fd_feclr < 0) {
 		fprintf(stderr, "open('/dev/feclr0') failed: %s\n",
 							       strerror(errno));
 		goto error;
 	}
 
-	rc = feclr_start_polling(fd, FECLR_LOOP_EMVCO,
+	rc = feclr_start_polling(hal.fd_feclr, FECLR_LOOP_EMVCO,
 				    FECLR_TECH_ISO14443A | FECLR_TECH_ISO14443B,
 					      FECLR_FLAG_DISABLE_LPCD, &status);
 	if (rc < 0) {
@@ -110,8 +120,8 @@ int main(int argc, char **argv)
 	/* FIXME: REQUIREMENT(EMVCO_BOOK_B_V2_5, "3.2.1.2"): PRESENT CARD     */
 	printf("PLEASE PRESENT CARD\n");
 
-	rc = feclr_wait_for_card(fd, 60000000 /* us */, &tech, &tech_data, NULL,
-								       &status);
+	rc = feclr_wait_for_card(hal.fd_feclr, 60000000 /* us */, &tech,
+						     &tech_data, NULL, &status);
 	if (rc < 0) {
 		fprintf(stderr, "feclr_wait_for_card failed: %s\n",
 							       strerror(errno));
@@ -139,7 +149,8 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
-	rc = feclr_select_protocol(fd, FECLR_PROTO_ISO14443_4, &status);
+	rc = feclr_select_protocol(hal.fd_feclr, FECLR_PROTO_ISO14443_4,
+								       &status);
 	if (rc < 0) {
 		fprintf(stderr, "feclr_select_protocol failed: %s\n",
 							       strerror(errno));
@@ -152,11 +163,8 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
-	emv_priv.fd_feclr = fd;
-	feclr_hal.priv = &emv_priv;
-	feclr_hal.emv_transceive = feclr_emv_transceive;
 	memset(&emv_ep, 0, sizeof(emv_ep));
-	emv_ep.hal = &feclr_hal;
+	emv_ep.hal = (struct emv_hal *)&hal;
 	emv_ep.restart = false;
 	emv_ep.combinations = combinations;
 	emv_ep.num_combinations = 2;
@@ -176,7 +184,8 @@ int main(int argc, char **argv)
 
 	printf("REMOVE CARD\n");
 
-	rc = feclr_wait_for_card_removal(fd, 60000000 /*us*/, &status);
+	rc = feclr_wait_for_card_removal(hal.fd_feclr, 60000000 /*us*/,
+								       &status);
 	if (rc < 0) {
 		fprintf(stderr, "feclr_wait_for_card_removal failed: %s\n",
 							       strerror(errno));
@@ -189,16 +198,16 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
-	rc = feclr_stop_polling(fd);
+	rc = feclr_stop_polling(hal.fd_feclr);
 	if (rc < 0)
 		fprintf(stderr, "feclr_stop_polling failed: %s\n",
 							       strerror(errno));
-	close(fd);
+	close(hal.fd_feclr);
 
 	return EXIT_SUCCESS;
 
 error:
-	if (fd >= 0)
+	if (hal.fd_feclr >= 0)
 		close(fd);
 
 	return EXIT_FAILURE;

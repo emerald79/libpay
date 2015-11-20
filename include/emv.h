@@ -32,6 +32,13 @@
 #define EMV_RC_OUT_OF_MEMORY			6
 #define EMV_RC_SYNTAX_ERROR			7
 
+#define EMV_MAX_ONLINE_RESPONSE_LEN	256
+#define EMV_MAX_DATA_RECORD_LEN		512
+#define	EMV_MAX_DISCRETIONARY_DATA_LEN	1024
+
+#define ISO4217_USD	((const uint8_t []){ '\x08', '\x40' })
+#define ISO4217_EUR	((const uint8_t []){ '\x09', '\x78' })
+
 #define TTQ_MAG_STRIPE_MODE_SUPPORTED		0x80000000u
 #define TTQ_EMV_MODE_SUPPORTED			0x20000000u
 #define TTQ_EMV_CONTACT_CHIP_SUPPORTED		0x10000000u
@@ -110,32 +117,6 @@ struct emv_transaction_data {
 	uint8_t	 currency_code[2];
 };
 
-struct emv_hal {
-	void	*priv;
-	int	(*emv_transceive)(struct emv_hal *hal,
-				  const uint8_t	 *capdu,
-				  size_t	 capdu_len,
-				  uint8_t	 *rapdu,
-				  size_t	 *rapdu_len);
-};
-
-struct emv_ep {
-	enum emv_txn_type		txn_type;
-	struct emv_hal			*hal;
-	bool				restart;
-	struct emv_ep_combination	*combinations;
-	int				num_combinations;
-	struct emv_ep_candidate		*candidates;
-	int				num_candidates;
-};
-
-#define EMV_MAX_ONLINE_RESPONSE_LEN	256
-#define EMV_MAX_DATA_RECORD_LEN		512
-#define	EMV_MAX_DISCRETIONARY_DATA_LEN	1024
-
-#define ISO4217_USD	((const uint8_t []){ '\x08', '\x40' })
-#define ISO4217_EUR	((const uint8_t []){ '\x09', '\x78' })
-
 enum emv_message_identifier {
 	msg_approved			= 0x03,
 	msg_not_authorized		= 0x07,
@@ -181,6 +162,33 @@ struct emv_ui_request {
 	enum	emv_value_qualifier	value_qualifier;
 	uint8_t				value[6];
 	uint8_t				currency_code[2];
+};
+
+struct emv_hal;
+
+struct emv_hal_ops {
+	int	(*transceive)(struct emv_hal *hal,
+			      const uint8_t  *capdu,
+			      size_t	     capdu_len,
+			      uint8_t	     *rapdu,
+			      size_t	     *rapdu_len);
+
+	void	(*ui_request)(struct emv_hal	    *hal,
+			      struct emv_ui_request *ui_request);
+};
+
+struct emv_hal {
+	const struct emv_hal_ops *ops;
+};
+
+struct emv_ep {
+	enum emv_txn_type		txn_type;
+	struct emv_hal			*hal;
+	bool				restart;
+	struct emv_ep_combination	*combinations;
+	int				num_combinations;
+	struct emv_ep_candidate		*candidates;
+	int				num_candidates;
 };
 
 enum emv_outcome {

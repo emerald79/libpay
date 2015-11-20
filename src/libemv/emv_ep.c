@@ -304,7 +304,7 @@ static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
 	size_t capdu_len = 0, rapdu_len = sizeof(rapdu);
 	int rc = EMV_RC_OK;
 
-	assert(hal && hal->emv_transceive);
+	assert(hal && hal->ops && hal->ops->transceive);
 	assert(!response || response_length);
 	assert(!data_len || data);
 	assert(!response_length || (*response_length <= 256));
@@ -325,7 +325,7 @@ static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
 	if (response_length && *response_length)
 		capdu[capdu_len++] = (uint8_t)*response_length;
 
-	rc = hal->emv_transceive(hal, capdu, capdu_len, rapdu, &rapdu_len);
+	rc = hal->ops->transceive(hal, capdu, capdu_len, rapdu, &rapdu_len);
 	if (rc != EMV_RC_OK)
 		return rc;
 
