@@ -52,63 +52,6 @@
 #define TTQ_ISSUER_UPDATE_PROCESSING_SUPPORTED	0x00008000u
 #define TTQ_CONSUMER_DEVICE_CVM_SUPPORTED	0x00004000u
 
-struct emv_ep_config_flags {
-	bool	status_check_support:1;
-	bool	zero_amount_allowed:1;
-	bool	reader_ctls_tx_limit:1;
-	bool	reader_ctls_floor_limit:1;
-	bool	terminal_floor_limit:1;
-	bool	reader_cvm_reqd_limit:1;
-	bool	ttq:1;
-	bool	ext_selection_support:1;
-};
-
-struct emv_ep_config {
-	struct emv_ep_config_flags	present;
-	struct emv_ep_config_flags	supported;
-	uint8_t				reader_ctls_tx_limit[6];
-	uint8_t				reader_ctls_floor_limit[6];
-	uint8_t				terminal_floor_limit[6];
-	uint8_t				reader_cvm_reqd_limit[6];
-	uint32_t			ttq;
-};
-
-struct emv_ep_preproc_indicators {
-	bool	 status_check_requested:1;
-	bool	 ctls_app_not_allowed:1;
-	bool	 zero_amount:1;
-	bool	 cvm_reqd_limit_exceeded:1;
-	bool	 floor_limit_exceeded:1;
-	uint32_t copy_of_ttq;
-};
-
-enum emv_txn_type {
-	txn_purchase		   = 0,
-	txn_purchase_with_cashback = 1,
-	txn_cash_advance	   = 2,
-	txn_refund		   = 3,
-	num_txn_types		   = 4
-};
-
-struct emv_ep_combination {
-	uint8_t					aid[16];
-	size_t					aid_len;
-	uint8_t					kernel_id[8];
-	size_t					kernel_id_len;
-	struct emv_ep_config			config[num_txn_types];
-	struct emv_ep_preproc_indicators	indicators;
-};
-
-struct emv_ep_candidate {
-	uint8_t	adf_name[16];
-	size_t	adf_name_len;
-	uint8_t	application_priority_indicator;
-	uint8_t	extended_selection[16];
-	size_t	extended_selection_len;
-	uint8_t order;
-	struct	emv_ep_combination *combination;
-};
-
 struct emv_transaction_data {
 	uint8_t	 transaction_type;
 	uint8_t	 amount_authorised[6];
@@ -162,33 +105,6 @@ struct emv_ui_request {
 	enum	emv_value_qualifier	value_qualifier;
 	uint8_t				value[6];
 	uint8_t				currency_code[2];
-};
-
-struct emv_hal;
-
-struct emv_hal_ops {
-	int	(*transceive)(struct emv_hal *hal,
-			      const uint8_t  *capdu,
-			      size_t	     capdu_len,
-			      uint8_t	     *rapdu,
-			      size_t	     *rapdu_len);
-
-	void	(*ui_request)(struct emv_hal	    *hal,
-			      struct emv_ui_request *ui_request);
-};
-
-struct emv_hal {
-	const struct emv_hal_ops *ops;
-};
-
-struct emv_ep {
-	enum emv_txn_type		txn_type;
-	struct emv_hal			*hal;
-	bool				restart;
-	struct emv_ep_combination	*combinations;
-	int				num_combinations;
-	struct emv_ep_candidate		*candidates;
-	int				num_candidates;
 };
 
 enum emv_outcome {
@@ -263,6 +179,116 @@ struct emv_outcome_parms {
 	bool					receipt;
 	struct	emv_field_off_request		field_off_request;
 	int					removal_timeout;
+};
+
+struct emv_ep_preproc_indicators {
+	bool	 status_check_requested:1;
+	bool	 ctls_app_not_allowed:1;
+	bool	 zero_amount:1;
+	bool	 cvm_reqd_limit_exceeded:1;
+	bool	 floor_limit_exceeded:1;
+	uint32_t copy_of_ttq;
+};
+
+struct emv_hal;
+
+struct emv_hal_ops {
+	int	(*transceive)(struct emv_hal *hal,
+			      const uint8_t  *capdu,
+			      size_t	     capdu_len,
+			      uint8_t	     *rapdu,
+			      size_t	     *rapdu_len);
+
+	void	(*ui_request)(struct emv_hal	    *hal,
+			      struct emv_ui_request *ui_request);
+};
+
+struct emv_hal {
+	const struct emv_hal_ops *ops;
+};
+
+struct emv_kernel;
+
+struct emv_kernel_ops {
+	void (*activate)(struct emv_kernel		  *kernel,
+			 struct emv_hal			  *hal,
+			 struct emv_ep_preproc_indicators *prepoc_indicators,
+			 void				  *fci,
+			 size_t				   fci_len,
+			 uint8_t			   sw[2],
+			 struct emv_outcome_parms	  *outcome,
+			 void				  *txn_data,
+			 size_t				  *txn_data_len);
+};
+
+struct emv_kernel {
+	const struct emv_kernel_ops *ops;
+};
+
+struct emv_ep_config_flags {
+	bool	status_check_support:1;
+	bool	zero_amount_allowed:1;
+	bool	reader_ctls_tx_limit:1;
+	bool	reader_ctls_floor_limit:1;
+	bool	terminal_floor_limit:1;
+	bool	reader_cvm_reqd_limit:1;
+	bool	ttq:1;
+	bool	ext_selection_support:1;
+};
+
+struct emv_ep_config {
+	struct emv_ep_config_flags	present;
+	struct emv_ep_config_flags	supported;
+	uint8_t				reader_ctls_tx_limit[6];
+	uint8_t				reader_ctls_floor_limit[6];
+	uint8_t				terminal_floor_limit[6];
+	uint8_t				reader_cvm_reqd_limit[6];
+	uint32_t			ttq;
+};
+
+enum emv_txn_type {
+	txn_purchase		   = 0,
+	txn_purchase_with_cashback = 1,
+	txn_cash_advance	   = 2,
+	txn_refund		   = 3,
+	num_txn_types		   = 4
+};
+
+struct emv_ep_combination {
+	uint8_t					aid[16];
+	size_t					aid_len;
+	uint8_t					kernel_id[8];
+	size_t					kernel_id_len;
+	struct emv_ep_config			config[num_txn_types];
+	struct emv_ep_preproc_indicators	indicators;
+};
+
+struct emv_ep_candidate {
+	uint8_t	adf_name[16];
+	size_t	adf_name_len;
+	uint8_t	application_priority_indicator;
+	uint8_t	extended_selection[16];
+	size_t	extended_selection_len;
+	uint8_t order;
+	struct	emv_ep_combination *combination;
+};
+
+struct emv_ep_reg_kernel {
+	uint8_t		   kernel_id[8];
+	size_t		   kernel_id_len;
+	struct emv_kernel *kernel;
+};
+
+struct emv_ep {
+	enum emv_txn_type		txn_type;
+	struct emv_hal			*hal;
+	bool				restart;
+	struct emv_ep_combination	*combinations;
+	int				num_combinations;
+	struct emv_ep_candidate		*candidates;
+	int				num_candidates;
+	struct emv_ep_reg_kernel	*reg_kernels;
+	int				num_reg_kernels;
 };
 
 int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
