@@ -649,3 +649,20 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 
 	return rc;
 }
+
+int emv_ep_activate(struct emv_ep *ep, enum emv_txn_type txn_type,
+			   uint8_t amount_authorise[6], uint8_t amount_other[6],
+			uint8_t currency_code[2], uint32_t unpredictable_number)
+{
+	int rc = EMV_RC_OK;
+
+	rc = emv_ep_combination_selection(ep);
+	if (rc != EMV_RC_OK)
+		return rc;
+
+	rc = emv_ep_final_combination_selection(ep);
+	if (rc != EMV_RC_OK)
+		return rc;
+
+	return rc;
+}

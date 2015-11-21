@@ -52,14 +52,6 @@
 #define TTQ_ISSUER_UPDATE_PROCESSING_SUPPORTED	0x00008000u
 #define TTQ_CONSUMER_DEVICE_CVM_SUPPORTED	0x00004000u
 
-struct emv_transaction_data {
-	uint8_t	 transaction_type;
-	uint8_t	 amount_authorised[6];
-	uint8_t	 amount_other[6];
-	uint32_t unpredictable_number;
-	uint8_t	 currency_code[2];
-};
-
 enum emv_message_identifier {
 	msg_approved			= 0x03,
 	msg_not_authorized		= 0x07,
@@ -291,18 +283,29 @@ struct emv_ep {
 	int				num_reg_kernels;
 };
 
-int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
-					     struct emv_outcome_parms *outcome);
 
-int emv_ep_protocol_activation(struct emv_ep *ep,
-		       struct emv_transaction_data *tx, bool started_by_reader);
 
-int emv_ep_combination_selection(struct emv_ep *ep);
-
-int emv_ep_final_combination_selection(struct emv_ep *ep);
+struct emv_transaction_data {
+	uint8_t	 transaction_type;
+	uint8_t	 amount_authorised[6];
+	uint8_t	 amount_other[6];
+	uint32_t unpredictable_number;
+	uint8_t	 currency_code[2];
+};
 
 void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
 
+int emv_ep_activate(struct emv_ep *ep,
+		    enum emv_txn_type txn_type,
+		    uint8_t amount_authorise[6],
+		    uint8_t amount_other[6],
+		    uint8_t currency_code[2],
+		    uint32_t unpredictable_number);
+
+
+/*-----------------------------------------------------------------------------+
+| EMV TLV Tag Description Handling					       |
++-----------------------------------------------------------------------------*/
 
 enum emv_tag_format {
 	fmt_a	= 0,

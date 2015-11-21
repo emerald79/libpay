@@ -3,4 +3,5 @@ emv_ep_protocol_activation
 emv_ep_combination_selection
 emv_ep_final_combination_selection
 emv_ep_register_hal
+emv_ep_activate
 emv_tag_parse_descriptors

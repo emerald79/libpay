@@ -169,16 +169,9 @@ int main(int argc, char **argv)
 	emv_ep.combinations = combinations;
 	emv_ep.num_combinations = 2;
 
-	rc = emv_ep_combination_selection(&emv_ep);
+	rc = emv_ep_activate(&emv_ep, 0, NULL, NULL, NULL, 0x12345678u);
 	if (rc != EMV_RC_OK) {
-		fprintf(stderr, "Combination Selection failed. rc %d\n", rc);
-		goto error;
-	}
-
-	rc = emv_ep_final_combination_selection(&emv_ep);
-	if (rc != EMV_RC_OK) {
-		fprintf(stderr, "Final Combination Selection failed. rc %d\n",
-									    rc);
+		fprintf(stderr, "emv_ep_activate failed. rc %d\n", rc);
 		goto error;
 	}
 
