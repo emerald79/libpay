@@ -140,52 +140,23 @@ int get_config(void *config, size_t *size)
 int main(int argc, char **argv)
 {
 	struct cvend_hal hal;
-	struct emv_ep emv_ep;
+	struct emv_ep *emv_ep = emv_ep_new();
 	union tech_data tech_data;
 	uint64_t status = FECLR_STS_OK, tech = 0;
-	int fd = -1, rc = 0, i;
-	uint8_t ber_config[512];
-	size_t ber_config_size = sizeof(ber_config);
-	struct emv_ep_combination combinations[2] = {
-		{
-			.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04 },
-			.aid_len = 5,
-			.kernel_id = { 0x02 },
-			.kernel_id_len = 1,
-			.config = {
-				.present = {
-					.reader_ctls_tx_limit = true,
-					.reader_ctls_floor_limit = true,
-				},
-				.reader_ctls_tx_limit = {
-					0x00, 0x00, 0x00, 0x05, 0x00, 0x00 },
-				.reader_ctls_floor_limit = {
-					0x00, 0x00, 0x00, 0x00, 0x25, 0x00 }
-			}
-		},
-		{
-			.aid = { 0xD2, 0x76, 0x00, 0x00, 0x25, 0x45, 0x50, 0x02,
-									 0x00 },
-			.aid_len = 9,
-			.kernel_id = { 0xc0, 0x61, 0x50 },
-			.kernel_id_len = 3,
-			.config = {
-				.present = {
-					.reader_ctls_tx_limit = true,
-				},
-				.reader_ctls_tx_limit = {
-					0x00, 0x00, 0x00, 0x01, 0x00, 0x00 },
-			}
-		}
-	};
+	int fd = -1, rc = 0;
+	uint8_t config[512];
+	size_t config_size = sizeof(config);
 
-	get_config(ber_config, &ber_config_size);
-	printf("config: ");
-	for (i = 0; i < ber_config_size; i++)
-		printf("%02X", ber_config[i]);
-	printf("\n");
+	get_config(config, &config_size);
+	rc = emv_ep_configure(emv_ep, config, config_size);
+	if (rc != EMV_RC_OK) {
+		fprintf(stderr, "emv_ep_configure failed. rc %d\n", rc);
+		goto error;
+	}
 
 	hal.ops = &cvend_hal_ops;
+	emv_ep_register_hal(emv_ep, (struct emv_hal *)&hal);
+
 	hal.fd_feclr = open("/dev/feclr0", O_RDWR);
 	if (hal.fd_feclr < 0) {
 		fprintf(stderr, "open('/dev/feclr0') failed: %s\n",
@@ -254,13 +225,7 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
-	memset(&emv_ep, 0, sizeof(emv_ep));
-	emv_ep.hal = (struct emv_hal *)&hal;
-	emv_ep.restart = false;
-	emv_ep.combination_set[txn_purchase].combinations = combinations;
-	emv_ep.combination_set[txn_purchase].size	  = 2;
-
-	rc = emv_ep_activate(&emv_ep, start_a, 0, NULL, NULL, NULL, 0x1234567u);
+	rc = emv_ep_activate(emv_ep, start_a, 0, NULL, NULL, NULL, 0x1234567u);
 	if (rc != EMV_RC_OK) {
 		fprintf(stderr, "emv_ep_activate failed. rc %d\n", rc);
 		goto error;

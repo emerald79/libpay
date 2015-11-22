@@ -26,6 +26,94 @@
 #define REQUIREMENT(book, id)
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
 
+#define TTQ_B1_MAG_STRIPE_MODE_SUPPORTED	  0x80u
+#define TTQ_B1_EMV_MODE_SUPPORTED		  0x20u
+#define TTQ_B1_EMV_CONTACT_CHIP_SUPPORTED	  0x10u
+#define TTQ_B1_OFFLINE_ONLY_READER		  0x08u
+#define TTQ_B1_ONLINE_PIN_SUPPORTED		  0x04u
+#define TTQ_B1_SIGNATURE_SUPPORTED		  0x02u
+#define TTQ_B1_ODA_FOR_ONLINE_AUTH_SUPPORTED	  0x01u
+#define TTQ_B2_ONLINE_CRYPTOGRAM_REQUIRED	  0x80u
+#define TTQ_B2_CVM_REQUIRED			  0x40u
+#define TTQ_B2_OFFLINE_PIN_SUPPORTED		  0x20u
+#define TTQ_B3_ISSUER_UPDATE_PROCESSING_SUPPORTED 0x80u
+#define TTQ_B3_CONSUMER_DEVICE_CVM_SUPPORTED	  0x40u
+
+struct emv_ep_config_flags {
+	bool	status_check_support:1;
+	bool	zero_amount_allowed:1;
+	bool	reader_ctls_txn_limit:1;
+	bool	reader_ctls_floor_limit:1;
+	bool	terminal_floor_limit:1;
+	bool	reader_cvm_reqd_limit:1;
+	bool	ttq:1;
+	bool	ext_selection_support:1;
+};
+
+struct emv_ep_config {
+	struct emv_ep_config_flags	present;
+	struct emv_ep_config_flags	enabled;
+	uint8_t				reader_ctls_txn_limit[6];
+	uint8_t				reader_ctls_floor_limit[6];
+	uint8_t				terminal_floor_limit[6];
+	uint8_t				reader_cvm_reqd_limit[6];
+	uint8_t				ttq[4];
+};
+
+struct emv_ep_combination {
+	uint8_t					aid[16];
+	size_t					aid_len;
+	uint8_t					kernel_id[8];
+	size_t					kernel_id_len;
+	struct emv_ep_config			config;
+	struct emv_ep_preproc_indicators	indicators;
+};
+
+struct emv_ep_combination_set {
+	struct emv_ep_combination *combinations;
+	size_t			   size;
+};
+
+
+struct emv_ep_candidate {
+	uint8_t	adf_name[16];
+	size_t	adf_name_len;
+	uint8_t	application_priority_indicator;
+	uint8_t	extended_selection[16];
+	size_t	extended_selection_len;
+	uint8_t order;
+	struct	emv_ep_combination *combination;
+};
+
+struct emv_ep_reg_kernel {
+	uint8_t		   kernel_id[8];
+	size_t		   kernel_id_len;
+	struct emv_kernel *kernel;
+};
+
+struct emv_txn_data {
+	enum emv_txn_type type;
+	uint8_t		  amount_authorised[6];
+	uint8_t		  amount_other[6];
+	uint8_t		  currency_code[2];
+	uint32_t	  unpredictable_number;
+};
+
+struct emv_ep {
+	struct emv_hal			*hal;
+	struct emv_txn_data		txn_data;
+	bool				restart;
+	struct emv_ep_combination_set	combination_set[num_txn_types];
+	struct emv_ep_candidate		*candidates;
+	int				num_candidates;
+	struct emv_ep_reg_kernel	*reg_kernels;
+	int				num_reg_kernels;
+};
+
+
+
+
+
 static bool is_currency_code_supported(const uint8_t *currency_code)
 {
 	if (!memcmp(ISO4217_USD, currency_code, sizeof(ISO4217_USD)) ||
@@ -38,6 +126,22 @@ static bool is_currency_code_supported(const uint8_t *currency_code)
 static const uint8_t *single_unit_of_currency(const uint8_t *currency_code)
 {
 	return (uint8_t [6]) { '\x00', '\x00', '\x00', '\x00', '\x01', '\x00' };
+}
+
+static enum emv_txn_type get_emv_txn_type(uint8_t txn_type)
+{
+	switch (txn_type) {
+	case 0x00:
+		return txn_purchase;
+	case 0x01:
+		return txn_cash_advance;
+	case 0x09:
+		return txn_purchase_with_cashback;
+	case 0x20:
+		return txn_refund;
+	default:
+		return num_txn_types;
+	}
 }
 
 static uint64_t bcd_to_u64(const uint8_t *bcd, size_t len)
@@ -92,7 +196,6 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 		struct emv_ep_config *cfg = NULL;
 		uint64_t ctls_tx_limit = 0, ctls_floor_limit = 0;
 		uint64_t floor_limit = 0, cvm_reqd_limit = 0;
-		uint32_t *ttq = NULL;
 
 		combination = &combination_set->combinations[i];
 		cfg	    = &combination->config;
@@ -113,16 +216,17 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.2");
 
 		if (cfg->present.ttq) {
-			ttq = &indicators->copy_of_ttq;
-			*ttq = cfg->ttq & ~(TTQ_ONLINE_CRYPTOGRAM_REQUIRED |
-							      TTQ_CVM_REQUIRED);
+			memcpy(indicators->ttq, cfg->ttq, sizeof(cfg->ttq));
+			indicators->ttq[1] = indicators->ttq[1] &
+					   ~(TTQ_B2_ONLINE_CRYPTOGRAM_REQUIRED |
+							   TTQ_B2_CVM_REQUIRED);
 		}
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.3");
 
 		if (cfg->present.status_check_support &&
-		    cfg->supported.status_check_support &&
+		    cfg->enabled.status_check_support &&
 		    (amount_authorised == unit_of_currency))
 			indicators->status_check_requested = true;
 
@@ -131,7 +235,7 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 		if (!amount_authorised) {
 			if (cfg->present.zero_amount_allowed &&
-			    !cfg->supported.zero_amount_allowed)
+			    !cfg->enabled.zero_amount_allowed)
 				indicators->ctls_app_not_allowed = true;
 			else
 				indicators->zero_amount = true;
@@ -140,7 +244,7 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.5");
 
-		if (cfg->present.reader_ctls_tx_limit &&
+		if (cfg->present.reader_ctls_txn_limit &&
 		    (amount_authorised >= ctls_tx_limit))
 			indicators->ctls_app_not_allowed = true;
 
@@ -173,29 +277,32 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.9");
 
 			if (indicators->floor_limit_exceeded)
-				*ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
+				indicators->ttq[1] |=
+					      TTQ_B2_ONLINE_CRYPTOGRAM_REQUIRED;
 
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.10");
 
 			if (indicators->status_check_requested)
-				*ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
-
+				indicators->ttq[1] |=
+					      TTQ_B2_ONLINE_CRYPTOGRAM_REQUIRED;
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.11");
 
 			if (indicators->zero_amount) {
-				if (*ttq & TTQ_OFFLINE_ONLY_READER)
+				if (indicators->ttq[0] &
+						     TTQ_B1_OFFLINE_ONLY_READER)
 					indicators->ctls_app_not_allowed = true;
 				else
-					*ttq |= TTQ_ONLINE_CRYPTOGRAM_REQUIRED;
+					indicators->ttq[1] |=
+					      TTQ_B2_ONLINE_CRYPTOGRAM_REQUIRED;
 			}
 
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.12");
 
 			if (indicators->cvm_reqd_limit_exceeded)
-				*ttq |= TTQ_CVM_REQUIRED;
+				indicators->ttq[1] |= TTQ_B2_CVM_REQUIRED;
 		}
 
 		if (!indicators->ctls_app_not_allowed)
@@ -242,7 +349,8 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 				memset(indicators, 0, sizeof(*indicators));
 
 				if (config->present.ttq)
-					indicators->copy_of_ttq = config->ttq;
+					memcpy(indicators->ttq, config->ttq,
+						       sizeof(indicators->ttq));
 			}
 		}
 
@@ -614,7 +722,7 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 
 	if (candidate->extended_selection_len &&
 					config->present.ext_selection_support &&
-				      config->supported.ext_selection_support) {
+					config->enabled.ext_selection_support) {
 		memcpy(&adf[adf_len], candidate->extended_selection,
 					     candidate->extended_selection_len);
 		adf_len += candidate->extended_selection_len;
@@ -648,4 +756,265 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 		return rc;
 
 	return rc;
+}
+
+static int parse_combination(struct tlv *tlv_combination,
+						struct emv_ep_combination *comb)
+{
+	int rc = EMV_RC_OK;
+	struct tlv *tlv_attr = NULL;
+
+	for (tlv_attr = tlv_get_child(tlv_combination);
+	     tlv_attr;
+	     tlv_attr = tlv_get_next(tlv_attr)) {
+		uint8_t tag[4];
+		size_t tag_size = sizeof(tag);
+		struct emv_ep_config *cfg = &comb->config;
+
+		rc = tlv_encode_identifier(tlv_attr, tag, &tag_size);
+		if ((rc != TLV_RC_OK) || (tag_size != sizeof(tag)))
+			return EMV_RC_SYNTAX_ERROR;
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_AID, tag_size)) {
+			comb->aid_len = sizeof(comb->aid);
+			rc = tlv_encode_value(tlv_attr, comb->aid,
+								&comb->aid_len);
+			if (rc != TLV_RC_OK)
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_KERNEL_ID, tag_size)) {
+			comb->kernel_id_len = sizeof(comb->kernel_id);
+			rc = tlv_encode_value(tlv_attr, comb->kernel_id,
+							  &comb->kernel_id_len);
+			if (rc != TLV_RC_OK)
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED,
+								    tag_size)) {
+			uint8_t enabled;
+			size_t enabled_sz = sizeof(enabled);
+
+			rc = tlv_encode_value(tlv_attr, &enabled, &enabled_sz);
+			if ((rc != TLV_RC_OK) || (!enabled_sz))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.status_check_support = 1;
+			cfg->enabled.status_check_support = !!enabled;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED, tag_size)) {
+			uint8_t enabled;
+			size_t enabled_sz = sizeof(enabled);
+
+			rc = tlv_encode_value(tlv_attr, &enabled, &enabled_sz);
+			if ((rc != TLV_RC_OK) || (!enabled_sz))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.zero_amount_allowed = 1;
+			cfg->enabled.zero_amount_allowed = !!enabled;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED,
+								    tag_size)) {
+			uint8_t enabled;
+			size_t enabled_sz = sizeof(enabled);
+
+			rc = tlv_encode_value(tlv_attr, &enabled, &enabled_sz);
+			if ((rc != TLV_RC_OK) || (!enabled_sz))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.ext_selection_support = 1;
+			cfg->enabled.ext_selection_support = !!enabled;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT, tag_size)) {
+			size_t size = 0;
+
+			cfg->present.reader_ctls_txn_limit = 1;
+
+			size = sizeof(cfg->reader_ctls_txn_limit);
+			rc = tlv_encode_value(tlv_attr,
+					     cfg->reader_ctls_txn_limit, &size);
+			if ((rc != TLV_RC_OK) ||
+			    (size != sizeof(cfg->reader_ctls_txn_limit)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT,
+								    tag_size)) {
+			size_t size = 0;
+
+			cfg->present.reader_ctls_floor_limit = 1;
+
+			size = sizeof(cfg->reader_ctls_floor_limit);
+			rc = tlv_encode_value(tlv_attr,
+					   cfg->reader_ctls_floor_limit, &size);
+			if ((rc != TLV_RC_OK) ||
+			    (size != sizeof(cfg->reader_ctls_floor_limit)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT,
+								    tag_size)) {
+			size_t size = sizeof(cfg->terminal_floor_limit);
+
+			cfg->present.terminal_floor_limit = 1;
+
+			rc = tlv_encode_value(tlv_attr,
+					      cfg->terminal_floor_limit, &size);
+			if ((rc != TLV_RC_OK) ||
+			    (size != sizeof(cfg->terminal_floor_limit)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT,
+								    tag_size)) {
+			size_t size = sizeof(cfg->reader_cvm_reqd_limit);
+
+			cfg->present.reader_cvm_reqd_limit = 1;
+
+			rc = tlv_encode_value(tlv_attr,
+					     cfg->reader_cvm_reqd_limit, &size);
+			if ((rc != TLV_RC_OK) ||
+			    (size != sizeof(cfg->reader_cvm_reqd_limit)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_TTQ, tag_size)) {
+			size_t size = sizeof(cfg->ttq);
+
+			cfg->present.ttq = 1;
+
+			rc = tlv_encode_value(tlv_attr, cfg->ttq, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(cfg->ttq)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_TRANSACTION_TYPE, tag_size))
+			return EMV_RC_SYNTAX_ERROR;
+	}
+
+	return EMV_RC_OK;
+}
+
+static int parse_combination_set(struct tlv *tlv_set,
+				 struct emv_ep_combination_set *set)
+{
+	struct tlv *tlv_comb = NULL;
+	int rc = EMV_RC_OK;
+
+	for (tlv_comb = tlv_find(tlv_get_child(tlv_set),
+						     TLV_ID_LIBEMV_COMBINATION);
+	     tlv_comb;
+	     tlv_comb = tlv_find(tlv_get_next(tlv_comb),
+						   TLV_ID_LIBEMV_COMBINATION)) {
+
+		set->combinations = (struct emv_ep_combination *)realloc(
+							      set->combinations,
+			   sizeof(struct emv_ep_combination) * (set->size + 1));
+
+		rc = parse_combination(tlv_comb, &set->combinations[set->size]);
+		if (rc != TLV_RC_OK) {
+			rc = EMV_RC_SYNTAX_ERROR;
+			goto error;
+		}
+
+		set->size++;
+	}
+
+	return EMV_RC_OK;
+
+error:
+	if (set->combinations)
+		free(set->combinations);
+	set->size = 0;
+	return rc;
+}
+
+int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
+{
+	struct tlv *tlv_config = NULL;
+	struct tlv *tlv_combination_set = NULL;
+	int rc = EMV_RC_OK;
+
+	rc = tlv_parse(config, len, &tlv_config);
+	if (rc != TLV_RC_OK) {
+		rc = EMV_RC_SYNTAX_ERROR;
+		goto error;
+	}
+
+	for (tlv_combination_set = tlv_find(tlv_get_child(tlv_find(tlv_config,
+		  TLV_ID_LIBEMV_CONFIGURATION)), TLV_ID_LIBEMV_COMBINATION_SET);
+	     tlv_combination_set;
+	     tlv_combination_set = tlv_find(tlv_get_next(tlv_combination_set),
+					       TLV_ID_LIBEMV_COMBINATION_SET)) {
+		enum emv_txn_type emv_txn_type = num_txn_types;
+		uint8_t txn_type = 0;
+		size_t txn_type_size = sizeof(txn_type);
+		struct tlv *tlv_txn_type = NULL;
+
+		tlv_txn_type = tlv_find(tlv_get_child(tlv_combination_set),
+						TLV_ID_LIBEMV_TRANSACTION_TYPE);
+		if (!tlv_txn_type) {
+			rc = EMV_RC_SYNTAX_ERROR;
+			goto error;
+		}
+
+		rc = tlv_encode_value(tlv_txn_type, &txn_type, &txn_type_size);
+		if ((rc != TLV_RC_OK) || (txn_type_size != 1)) {
+			rc = EMV_RC_SYNTAX_ERROR;
+			goto error;
+		}
+
+		emv_txn_type = get_emv_txn_type(txn_type);
+		if (emv_txn_type >= num_txn_types) {
+			rc = EMV_RC_SYNTAX_ERROR;
+			goto error;
+		}
+
+		rc = parse_combination_set(tlv_combination_set,
+					    &ep->combination_set[emv_txn_type]);
+		if (rc != EMV_RC_OK)
+			goto error;
+	}
+
+	return EMV_RC_OK;
+
+error:
+	if (tlv_config)
+		tlv_free(tlv_config);
+
+	return rc;
+}
+
+struct emv_ep *emv_ep_new(void)
+{
+	return (struct emv_ep *)calloc(1, sizeof(struct emv_ep));
+}
+
+void emv_ep_free(struct emv_ep *ep)
+{
+	free(ep);
 }

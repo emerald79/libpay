@@ -39,19 +39,6 @@
 #define ISO4217_USD	((const uint8_t []){ '\x08', '\x40' })
 #define ISO4217_EUR	((const uint8_t []){ '\x09', '\x78' })
 
-#define TTQ_MAG_STRIPE_MODE_SUPPORTED		0x80000000u
-#define TTQ_EMV_MODE_SUPPORTED			0x20000000u
-#define TTQ_EMV_CONTACT_CHIP_SUPPORTED		0x10000000u
-#define TTQ_OFFLINE_ONLY_READER			0x08000000u
-#define TTQ_ONLINE_PIN_SUPPORTED		0x04000000u
-#define TTQ_SIGNATURE_SUPPORTED			0x02000000u
-#define TTQ_ODA_FOR_ONLINE_AUTH_SUPPORTED	0x01000000u
-#define TTQ_ONLINE_CRYPTOGRAM_REQUIRED		0x00800000u
-#define TTQ_CVM_REQUIRED			0x00400000u
-#define TTQ_OFFLINE_PIN_SUPPORTED		0x00200000u
-#define TTQ_ISSUER_UPDATE_PROCESSING_SUPPORTED	0x00008000u
-#define TTQ_CONSUMER_DEVICE_CVM_SUPPORTED	0x00004000u
-
 enum emv_message_identifier {
 	msg_approved			= 0x03,
 	msg_not_authorized		= 0x07,
@@ -174,12 +161,12 @@ struct emv_outcome_parms {
 };
 
 struct emv_ep_preproc_indicators {
-	bool	 status_check_requested:1;
-	bool	 ctls_app_not_allowed:1;
-	bool	 zero_amount:1;
-	bool	 cvm_reqd_limit_exceeded:1;
-	bool	 floor_limit_exceeded:1;
-	uint32_t copy_of_ttq;
+	bool	status_check_requested:1;
+	bool	ctls_app_not_allowed:1;
+	bool	zero_amount:1;
+	bool	cvm_reqd_limit_exceeded:1;
+	bool	floor_limit_exceeded:1;
+	uint8_t ttq[4];
 };
 
 struct emv_hal;
@@ -202,6 +189,10 @@ struct emv_hal {
 struct emv_kernel;
 
 struct emv_kernel_ops {
+	int (*configure)(struct emv_kernel *kernel,
+			 const void	   *configuration,
+			 size_t		    length);
+
 	void (*activate)(struct emv_kernel		  *kernel,
 			 struct emv_hal			  *hal,
 			 struct emv_ep_preproc_indicators *prepoc_indicators,
@@ -217,27 +208,6 @@ struct emv_kernel {
 	const struct emv_kernel_ops *ops;
 };
 
-struct emv_ep_config_flags {
-	bool	status_check_support:1;
-	bool	zero_amount_allowed:1;
-	bool	reader_ctls_tx_limit:1;
-	bool	reader_ctls_floor_limit:1;
-	bool	terminal_floor_limit:1;
-	bool	reader_cvm_reqd_limit:1;
-	bool	ttq:1;
-	bool	ext_selection_support:1;
-};
-
-struct emv_ep_config {
-	struct emv_ep_config_flags	present;
-	struct emv_ep_config_flags	supported;
-	uint8_t				reader_ctls_tx_limit[6];
-	uint8_t				reader_ctls_floor_limit[6];
-	uint8_t				terminal_floor_limit[6];
-	uint8_t				reader_cvm_reqd_limit[6];
-	uint32_t			ttq;
-};
-
 enum emv_txn_type {
 	txn_purchase		   = 0,
 	txn_purchase_with_cashback = 1,
@@ -246,56 +216,15 @@ enum emv_txn_type {
 	num_txn_types		   = 4
 };
 
-struct emv_ep_combination {
-	uint8_t					aid[16];
-	size_t					aid_len;
-	uint8_t					kernel_id[8];
-	size_t					kernel_id_len;
-	struct emv_ep_config			config;
-	struct emv_ep_preproc_indicators	indicators;
-};
+struct emv_ep;
 
-struct emv_ep_combination_set {
-	struct emv_ep_combination *combinations;
-	size_t			   size;
-};
+struct emv_ep *emv_ep_new(void);
 
-struct emv_ep_candidate {
-	uint8_t	adf_name[16];
-	size_t	adf_name_len;
-	uint8_t	application_priority_indicator;
-	uint8_t	extended_selection[16];
-	size_t	extended_selection_len;
-	uint8_t order;
-	struct	emv_ep_combination *combination;
-};
-
-struct emv_ep_reg_kernel {
-	uint8_t		   kernel_id[8];
-	size_t		   kernel_id_len;
-	struct emv_kernel *kernel;
-};
-
-struct emv_txn_data {
-	enum emv_txn_type type;
-	uint8_t		  amount_authorised[6];
-	uint8_t		  amount_other[6];
-	uint8_t		  currency_code[2];
-	uint32_t	  unpredictable_number;
-};
-
-struct emv_ep {
-	struct emv_hal			*hal;
-	struct emv_txn_data		txn_data;
-	bool				restart;
-	struct emv_ep_combination_set	combination_set[num_txn_types];
-	struct emv_ep_candidate		*candidates;
-	int				num_candidates;
-	struct emv_ep_reg_kernel	*reg_kernels;
-	int				num_reg_kernels;
-};
+void emv_ep_free(struct emv_ep *ep);
 
 void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
+
+int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 
 int emv_ep_activate(struct emv_ep    *ep,
 		    enum emv_start    start,
