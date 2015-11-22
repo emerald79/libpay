@@ -276,9 +276,17 @@ struct emv_ep_reg_kernel {
 	struct emv_kernel *kernel;
 };
 
+struct emv_txn_data {
+	enum emv_txn_type type;
+	uint8_t		  amount_authorised[6];
+	uint8_t		  amount_other[6];
+	uint8_t		  currency_code[2];
+	uint32_t	  unpredictable_number;
+};
+
 struct emv_ep {
-	enum emv_txn_type		txn_type;
 	struct emv_hal			*hal;
+	struct emv_txn_data		txn_data;
 	bool				restart;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_candidate		*candidates;
@@ -287,24 +295,15 @@ struct emv_ep {
 	int				num_reg_kernels;
 };
 
-
-
-struct emv_transaction_data {
-	uint8_t	 transaction_type;
-	uint8_t	 amount_authorised[6];
-	uint8_t	 amount_other[6];
-	uint32_t unpredictable_number;
-	uint8_t	 currency_code[2];
-};
-
 void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
 
-int emv_ep_activate(struct emv_ep *ep,
+int emv_ep_activate(struct emv_ep    *ep,
+		    enum emv_start    start,
 		    enum emv_txn_type txn_type,
-		    uint8_t amount_authorise[6],
-		    uint8_t amount_other[6],
-		    uint8_t currency_code[2],
-		    uint32_t unpredictable_number);
+		    uint8_t	      amount_authorised[6],
+		    uint8_t	      amount_other[6],
+		    uint8_t	      currency_code[2],
+		    uint32_t	      unpredictable_number);
 
 
 /*-----------------------------------------------------------------------------+

@@ -69,53 +69,21 @@ static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
 }
 #endif
 
-static int get_txn_type(struct emv_transaction_data *txn,
-						   enum emv_txn_type *txn_type)
-{
-	/* See EMV Contactless Book A v2.5, Table 5-6: Type of Transaction.   */
-	switch (txn->transaction_type) {
-	case 0x00:
-		if (txn->amount_other)
-			*txn_type = txn_purchase_with_cashback;
-		else
-			*txn_type = txn_purchase;
-		break;
-	case 0x09:
-		*txn_type = txn_purchase_with_cashback;
-		break;
-	case 0x01:
-		*txn_type = txn_cash_advance;
-		break;
-	case 0x20:
-		*txn_type = txn_refund;
-		break;
-	default:
-		return EMV_RC_UNSUPPORTED_TRANSACTION_TYPE;
-	}
-
-	return EMV_RC_OK;
-}
-
-int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
-					      struct emv_outcome_parms *outcome)
+int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 {
 	struct emv_ep_combination_set *combination_set = NULL;
 	uint64_t amount_authorised = 0, unit_of_currency = 0;
 	bool ctls_app_allowed = 0;
-	int i = 0, rc = EMV_RC_OK;
+	int i = 0;
 
-	amount_authorised = bcd_to_u64(tx->amount_authorised, 6);
+	amount_authorised = bcd_to_u64(ep->txn_data.amount_authorised, 6);
 	unit_of_currency  = bcd_to_u64(
-				 single_unit_of_currency(tx->currency_code), 6);
+			single_unit_of_currency(ep->txn_data.currency_code), 6);
 
-	rc = get_txn_type(tx, &ep->txn_type);
-	if (rc != EMV_RC_OK)
-		return rc;
+	assert(ep->txn_data.type < num_txn_types);
+	combination_set = &ep->combination_set[ep->txn_data.type];
 
-	assert(ep->txn_type < num_txn_types);
-	combination_set = &ep->combination_set[ep->txn_type];
-
-	if (!is_currency_code_supported(tx->currency_code))
+	if (!is_currency_code_supported(ep->txn_data.currency_code))
 		return EMV_RC_UNSUPPORTED_CURRENCY_CODE;
 
 	for (i = 0; i < combination_set->size; i++) {
@@ -250,8 +218,7 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 	return EMV_RC_OK;
 }
 
-int emv_ep_protocol_activation(struct emv_ep *ep,
-			struct emv_transaction_data *tx, bool started_by_reader)
+int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 {
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.1");
 
@@ -260,7 +227,8 @@ int emv_ep_protocol_activation(struct emv_ep *ep,
 			struct emv_ep_combination_set *combination_set = NULL;
 			int i = 0;
 
-			combination_set = &ep->combination_set[ep->txn_type];
+			combination_set =
+					&ep->combination_set[ep->txn_data.type];
 
 			for (i = 0; i < combination_set->size; i++) {
 				struct emv_ep_combination *combination = NULL;
@@ -546,7 +514,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	int rc = EMV_RC_OK, i_comb, i_dir;
 	struct tlv *tlv_fci = NULL;
 
-	combination_set = &ep->combination_set[ep->txn_type];
+	combination_set = &ep->combination_set[ep->txn_data.type];
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.1");
@@ -664,9 +632,10 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	return rc;
 }
 
-int emv_ep_activate(struct emv_ep *ep, enum emv_txn_type txn_type,
-			   uint8_t amount_authorise[6], uint8_t amount_other[6],
-			uint8_t currency_code[2], uint32_t unpredictable_number)
+int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
+			enum emv_txn_type txn_type, uint8_t amount_authorise[6],
+			      uint8_t amount_other[6], uint8_t currency_code[2],
+						  uint32_t unpredictable_number)
 {
 	int rc = EMV_RC_OK;
 

@@ -169,7 +169,7 @@ int main(int argc, char **argv)
 	emv_ep.combination_set[txn_purchase].combinations = combinations;
 	emv_ep.combination_set[txn_purchase].size	  = 2;
 
-	rc = emv_ep_activate(&emv_ep, 0, NULL, NULL, NULL, 0x12345678u);
+	rc = emv_ep_activate(&emv_ep, start_a, 0, NULL, NULL, NULL, 0x1234567u);
 	if (rc != EMV_RC_OK) {
 		fprintf(stderr, "emv_ep_activate failed. rc %d\n", rc);
 		goto error;
