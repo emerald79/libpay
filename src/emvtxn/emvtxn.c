@@ -7,6 +7,7 @@
 
 #include <feig/feclr.h>
 #include <emv.h>
+#include <tlv.h>
 
 struct cvend_hal {
 	const struct emv_hal_ops *ops;
@@ -54,13 +55,97 @@ const struct emv_hal_ops cvend_hal_ops = {
 	.ui_request = cvend_hal_ui_request
 };
 
+#define TXN_PURCHASE	((const uint8_t []) { 0x00 })
+#define AID_MASTERCARD  ((const uint8_t []) { 0xA0, 0x00, 0x00, 0x00, 0x04 })
+#define AID_GELDKARTE	((const uint8_t [])				       \
+		       { 0xD2, 0x76, 0x00, 0x00, 0x25, 0x45, 0x50, 0x02, 0x00 })
+#define KERNEL_ID_C2	((const uint8_t []) { 0x2 })
+#define KERNEL_ID_GELDKARTE ((const uint8_t []) { 0xc0, 0x61, 0x50 })
+
+static const uint8_t *amount(uint64_t amount)
+{
+	static uint8_t result[6];
+
+	result[0]  = (uint8_t)(((amount / 100000000000) % 10) << 4);
+	result[0] |= (uint8_t) ((amount / 10000000000) % 10);
+	result[1]  = (uint8_t)(((amount / 1000000000) % 10) << 4);
+	result[1] |= (uint8_t) ((amount / 100000000) % 10);
+	result[2]  = (uint8_t)(((amount / 10000000) % 10) << 4);
+	result[2] |= (uint8_t) ((amount / 1000000) % 10);
+	result[3]  = (uint8_t)(((amount / 100000) % 10) << 4);
+	result[3] |= (uint8_t) ((amount / 10000) % 10);
+	result[4]  = (uint8_t)(((amount / 1000) % 10) << 4);
+	result[4] |= (uint8_t) ((amount / 100) % 10);
+	result[5]  = (uint8_t)(((amount / 10) % 10) << 4);
+	result[5] |= (uint8_t) ((amount / 1) % 10);
+
+	return result;
+}
+
+int get_config(void *config, size_t *size)
+{
+	struct tlv *tlv_config = NULL;
+	struct tlv *tlv_aid = NULL;
+	struct tlv *tlv_kernel_id = NULL;
+	struct tlv *tlv_rdr_ctls_txn_limit = NULL;
+	struct tlv *tlv_rdr_ctls_floor_limit = NULL;
+	struct tlv *tlv_txn_type = NULL;
+	struct tlv *tlv_combination = NULL;
+	struct tlv *tlv_combination_set;
+
+	tlv_config = tlv_new(TLV_ID_LIBEMV_CONFIGURATION, 0, NULL);
+
+	tlv_combination_set = tlv_new(TLV_ID_LIBEMV_COMBINATION_SET, 0, NULL);
+	tlv_insert_below(tlv_config, tlv_combination_set);
+
+	tlv_txn_type = tlv_new(TLV_ID_LIBEMV_TRANSACTION_TYPE,
+					    sizeof(TXN_PURCHASE), TXN_PURCHASE);
+
+	tlv_insert_below(tlv_combination_set, tlv_txn_type);
+
+	tlv_combination = tlv_new(TLV_ID_LIBEMV_COMBINATION, 0, NULL);
+	tlv_insert_after(tlv_txn_type, tlv_combination);
+	tlv_aid = tlv_new(TLV_ID_LIBEMV_AID, sizeof(AID_MASTERCARD),
+								AID_MASTERCARD);
+	tlv_insert_below(tlv_combination, tlv_aid);
+	tlv_kernel_id = tlv_new(TLV_ID_LIBEMV_KERNEL_ID, sizeof(KERNEL_ID_C2),
+								  KERNEL_ID_C2);
+	tlv_insert_after(tlv_aid, tlv_kernel_id);
+	tlv_rdr_ctls_txn_limit = tlv_new(TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT, 6,
+								 amount(50000));
+	tlv_insert_after(tlv_kernel_id, tlv_rdr_ctls_txn_limit);
+	tlv_rdr_ctls_floor_limit = tlv_new(TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT,
+							       6, amount(2500));
+	tlv_insert_after(tlv_rdr_ctls_txn_limit, tlv_rdr_ctls_floor_limit);
+
+	tlv_combination = tlv_new(TLV_ID_LIBEMV_COMBINATION, 0, NULL);
+	tlv_insert_after(tlv_txn_type, tlv_combination);
+	tlv_aid = tlv_new(TLV_ID_LIBEMV_AID, sizeof(AID_GELDKARTE),
+								 AID_GELDKARTE);
+	tlv_insert_below(tlv_combination, tlv_aid);
+	tlv_kernel_id = tlv_new(TLV_ID_LIBEMV_KERNEL_ID,
+			      sizeof(KERNEL_ID_GELDKARTE), KERNEL_ID_GELDKARTE);
+	tlv_insert_after(tlv_aid, tlv_kernel_id);
+	tlv_rdr_ctls_txn_limit = tlv_new(TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT, 6,
+								 amount(10000));
+	tlv_insert_after(tlv_kernel_id, tlv_rdr_ctls_txn_limit);
+
+	tlv_encode(tlv_config, config, size);
+	tlv_free(tlv_config);
+
+	return 0;
+}
+
+
 int main(int argc, char **argv)
 {
 	struct cvend_hal hal;
 	struct emv_ep emv_ep;
 	union tech_data tech_data;
 	uint64_t status = FECLR_STS_OK, tech = 0;
-	int fd = -1, rc = 0;
+	int fd = -1, rc = 0, i;
+	uint8_t ber_config[512];
+	size_t ber_config_size = sizeof(ber_config);
 	struct emv_ep_combination combinations[2] = {
 		{
 			.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04 },
@@ -93,6 +178,12 @@ int main(int argc, char **argv)
 			}
 		}
 	};
+
+	get_config(ber_config, &ber_config_size);
+	printf("config: ");
+	for (i = 0; i < ber_config_size; i++)
+		printf("%02X", ber_config[i]);
+	printf("\n");
 
 	hal.ops = &cvend_hal_ops;
 	hal.fd_feclr = open("/dev/feclr0", O_RDWR);

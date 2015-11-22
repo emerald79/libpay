@@ -1,6 +1,7 @@
+tlv_new
 tlv_parse
-tlv_encode
 tlv_free
+tlv_encode
 tlv_encode_identifier
 tlv_encode_length
 tlv_encode_value
@@ -10,5 +11,6 @@ tlv_get_parent
 tlv_get_child
 tlv_find
 tlv_insert_after
+tlv_insert_below
 tlv_parse_file
 tlv_encode_file

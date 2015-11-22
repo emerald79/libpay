@@ -607,6 +607,20 @@ int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
 	return TLV_RC_OK;
 }
 
+int tlv_insert_below(struct tlv *parent, struct tlv *child)
+{
+	if (!parent || !child || child->parent)
+		return TLV_RC_INVALID_ARG;
+
+	if (parent->child)
+		return tlv_insert_after(parent->child, child);
+
+	parent->child = child;
+	child->parent = parent;
+
+	return TLV_RC_OK;
+}
+
 int tlv_parse_file(int fd, struct tlv **tlv)
 {
 	ssize_t rc = 0;
@@ -821,4 +835,34 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag)
 	}
 
 	return tlv_i;
+}
+
+struct tlv *tlv_new(const void *tag, size_t length, const void *value)
+{
+	struct tlv *tlv = NULL;
+	int rc = TLV_RC_OK;
+
+	tlv = (struct tlv *)calloc(1, sizeof(struct tlv));
+	if (!tlv)
+		goto error;
+
+	rc = tlv_parse_identifier(&tag, tlv_get_tag_length(tag), tlv);
+	if (rc != TLV_RC_OK)
+		goto error;
+
+	tlv->length = length;
+	tlv->value = malloc(length);
+	if (!tlv->value)
+		goto error;
+	memcpy(tlv->value, value, length);
+
+	return tlv;
+
+error:
+	if (tlv) {
+		if (tlv->value)
+			free(tlv->value);
+		free(tlv);
+	}
+	return NULL;
 }

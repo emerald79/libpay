@@ -176,5 +176,90 @@
     "description" : "Issuer discretionary part of the FCI",
     "source"      : "ICC",
     "template"    : [ "A5" ]
+  },
+  {
+    "tag"         : "FF81E371",
+    "name"        : "Configuration (libemv)",
+    "description" : "Libemv configuration",
+    "source"      : "Terminal"
+  },
+  {
+    "tag"         : "FF82E371",
+    "name"        : "Set of Configurations for Combinations of AID and Kernel ID (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF81E371" ]
+  },
+  {
+    "tag"         : "DF83E371",
+    "name"        : "Transaction Type (libemv)",
+    "description" : "Transaction Type ('00' = Purchase, '01' = Cash Advance, '09' = Purchase with Cashback, '20' = Refund)",
+    "source"      : "Terminal",
+    "template"    : [ "FF82E371" ]
+  },
+  {
+    "tag"         : "FF84E371",
+    "name"        : "Configuration for a Combination of AID and Kernel ID (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF82E371" ]
+  },
+  {
+    "tag"         : "DF85E371",
+    "name"        : "Application Identifier (AID) (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF86E371",
+    "name"        : "Kernel ID (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF87E371",
+    "name"        : "Status Check Supported (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF88E371",
+    "name"        : "Zero Amount Allowed (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF89E371",
+    "name"        : "Extended Selection Supported (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF8AE371",
+    "name"        : "Reader Contactless Transaction Limit (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF8BE371",
+    "name"        : "Reader Contactless Floor Limit (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF8CE371",
+    "name"        : "Terminal Floor Limit (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF8DE371",
+    "name"        : "Reader CVM Required Limit (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
+  },
+  {
+    "tag"         : "DF8EE371",
+    "name"        : "Terminal Transaction Qualifiers (TTQ) (libemv)",
+    "source"      : "Terminal",
+    "template"    : [ "FF84E371" ]
   }
 ]

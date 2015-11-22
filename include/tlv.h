@@ -58,6 +58,21 @@
 #define TLV_ID_KERNEL_IDENTIFIER		TLV_ID_2(0x9F, 0x2A)
 #define TLV_ID_EXTENDED_SELECTION		TLV_ID_2(0x9F, 0x29)
 
+#define TLV_ID_LIBEMV_CONFIGURATION		TLV_ID_4(0xFF, 0x81, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_COMBINATION_SET		TLV_ID_4(0xFF, 0x82, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_TRANSACTION_TYPE		TLV_ID_4(0xDF, 0x83, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_COMBINATION		TLV_ID_4(0xFF, 0x84, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_AID			TLV_ID_4(0xDF, 0x85, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_KERNEL_ID			TLV_ID_4(0xDF, 0x86, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED	TLV_ID_4(0xDF, 0x87, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED	TLV_ID_4(0xDF, 0x88, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_EXT_SELECTION_SUPPORTED	TLV_ID_4(0xDF, 0x89, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT	TLV_ID_4(0xDF, 0x8A, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8B, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8C, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT	TLV_ID_4(0xDF, 0x8D, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_TTQ			TLV_ID_4(0xDF, 0x8E, 0xE3, 0x71)
+
 struct tlv;
 
 /**
@@ -83,6 +98,8 @@ int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
  *         codes on failure.
  */
 int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
+
+struct tlv *tlv_new(const void *tag, size_t length, const void *value);
 
 /**
  * Free resources allocated by a TLV data structure
@@ -196,5 +213,7 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag);
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
 int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
+
+int tlv_insert_below(struct tlv *parent, struct tlv *child);
 
 #endif /* ndef __TLV_H__ */
