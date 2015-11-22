@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 			.aid_len = 5,
 			.kernel_id = { 0x02 },
 			.kernel_id_len = 1,
-			.config[txn_purchase] = {
+			.config = {
 				.present = {
 					.reader_ctls_tx_limit = true,
 					.reader_ctls_floor_limit = true,
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 			.aid_len = 9,
 			.kernel_id = { 0xc0, 0x61, 0x50 },
 			.kernel_id_len = 3,
-			.config[txn_purchase] = {
+			.config = {
 				.present = {
 					.reader_ctls_tx_limit = true,
 				},
@@ -166,8 +166,8 @@ int main(int argc, char **argv)
 	memset(&emv_ep, 0, sizeof(emv_ep));
 	emv_ep.hal = (struct emv_hal *)&hal;
 	emv_ep.restart = false;
-	emv_ep.combinations = combinations;
-	emv_ep.num_combinations = 2;
+	emv_ep.combination_set[txn_purchase].combinations = combinations;
+	emv_ep.combination_set[txn_purchase].size	  = 2;
 
 	rc = emv_ep_activate(&emv_ep, 0, NULL, NULL, NULL, 0x12345678u);
 	if (rc != EMV_RC_OK) {

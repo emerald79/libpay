@@ -251,8 +251,13 @@ struct emv_ep_combination {
 	size_t					aid_len;
 	uint8_t					kernel_id[8];
 	size_t					kernel_id_len;
-	struct emv_ep_config			config[num_txn_types];
+	struct emv_ep_config			config;
 	struct emv_ep_preproc_indicators	indicators;
+};
+
+struct emv_ep_combination_set {
+	struct emv_ep_combination *combinations;
+	size_t			   size;
 };
 
 struct emv_ep_candidate {
@@ -275,8 +280,7 @@ struct emv_ep {
 	enum emv_txn_type		txn_type;
 	struct emv_hal			*hal;
 	bool				restart;
-	struct emv_ep_combination	*combinations;
-	int				num_combinations;
+	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_candidate		*candidates;
 	int				num_candidates;
 	struct emv_ep_reg_kernel	*reg_kernels;

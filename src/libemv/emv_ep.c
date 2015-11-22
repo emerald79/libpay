@@ -99,6 +99,7 @@ static int get_txn_type(struct emv_transaction_data *txn,
 int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 					      struct emv_outcome_parms *outcome)
 {
+	struct emv_ep_combination_set *combination_set = NULL;
 	uint64_t amount_authorised = 0, unit_of_currency = 0;
 	bool ctls_app_allowed = 0;
 	int i = 0, rc = EMV_RC_OK;
@@ -111,18 +112,23 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 	if (rc != EMV_RC_OK)
 		return rc;
 
+	assert(ep->txn_type < num_txn_types);
+	combination_set = &ep->combination_set[ep->txn_type];
+
 	if (!is_currency_code_supported(tx->currency_code))
 		return EMV_RC_UNSUPPORTED_CURRENCY_CODE;
 
-	for (i = 0; i < ep->num_combinations; i++) {
+	for (i = 0; i < combination_set->size; i++) {
+		struct emv_ep_combination *combination = NULL;
 		struct emv_ep_preproc_indicators *indicators = NULL;
 		struct emv_ep_config *cfg = NULL;
 		uint64_t ctls_tx_limit = 0, ctls_floor_limit = 0;
 		uint64_t floor_limit = 0, cvm_reqd_limit = 0;
 		uint32_t *ttq = NULL;
 
-		cfg	   = &ep->combinations[i].config[ep->txn_type];
-		indicators = &ep->combinations[i].indicators;
+		combination = &combination_set->combinations[i];
+		cfg	    = &combination->config;
+		indicators  = &combination->indicators;
 
 		ctls_tx_limit	 = bcd_to_u64(cfg->reader_ctls_floor_limit, 6);
 		ctls_floor_limit = bcd_to_u64(cfg->reader_ctls_floor_limit, 6);
@@ -132,8 +138,8 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_transaction_data *tx,
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.1");
 
-		memset(&ep->combinations[i].indicators, 0,
-					sizeof(ep->combinations[i].indicators));
+		memset(&combination->indicators, 0,
+					       sizeof(combination->indicators));
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.2");
@@ -251,19 +257,24 @@ int emv_ep_protocol_activation(struct emv_ep *ep,
 
 	if (!ep->restart) {
 		if (started_by_reader) {
-			int i;
+			struct emv_ep_combination_set *combination_set = NULL;
+			int i = 0;
 
-			for (i = 0; i < ep->num_combinations; i++) {
-				struct emv_ep_config *cfg = NULL;
+			combination_set = &ep->combination_set[ep->txn_type];
+
+			for (i = 0; i < combination_set->size; i++) {
+				struct emv_ep_combination *combination = NULL;
+				struct emv_ep_config *config = NULL;
 				struct emv_ep_preproc_indicators *indicators;
 
-				cfg = &ep->combinations[i].config[ep->txn_type];
-				indicators = &ep->combinations[i].indicators;
+				combination = &combination_set->combinations[i];
+				config	    = &combination->config;
+				indicators  = &combination->indicators;
 
 				memset(indicators, 0, sizeof(*indicators));
 
-				if (cfg->present.ttq)
-					indicators->copy_of_ttq = cfg->ttq;
+				if (config->present.ttq)
+					indicators->copy_of_ttq = config->ttq;
 			}
 		}
 
@@ -526,6 +537,7 @@ static int compare_candidates(const void *candidate_a, const void *candidate_b)
 
 int emv_ep_combination_selection(struct emv_ep *ep)
 {
+	struct emv_ep_combination_set *combination_set = NULL;
 	struct ppse_dir_entry dir_entry[32];
 	size_t num_dir_entries = ARRAY_SIZE(dir_entry);
 	uint8_t fci[256];
@@ -534,6 +546,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	int rc = EMV_RC_OK, i_comb, i_dir;
 	struct tlv *tlv_fci = NULL;
 
+	combination_set = &ep->combination_set[ep->txn_type];
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.1");
@@ -562,15 +575,16 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 
 	ep->num_candidates = 0;
 	ep->candidates = (struct emv_ep_candidate *)
-				  calloc(ep->num_combinations * num_dir_entries,
+				 calloc(combination_set->size * num_dir_entries,
 					       sizeof(struct emv_ep_candidate));
 	if (!ep->candidates) {
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;
 	}
 
-	for (i_comb = 0; i_comb < ep->num_combinations; i_comb++) {
-		struct emv_ep_combination *comb = &ep->combinations[i_comb];
+	for (i_comb = 0; i_comb < combination_set->size; i_comb++) {
+		struct emv_ep_combination *comb =
+					 &combination_set->combinations[i_comb];
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
@@ -625,7 +639,7 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	int rc = EMV_RC_OK, i;
 
 	candidate = &ep->candidates[ep->num_candidates - 1];
-	config = &candidate->combination->config[ep->txn_type];
+	config = &candidate->combination->config;
 
 	adf_len = candidate->adf_name_len;
 	memcpy(adf, candidate->adf_name, adf_len);
