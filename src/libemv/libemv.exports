@@ -1,5 +1,6 @@
 emv_ep_new
 emv_ep_register_hal
+emv_ep_register_kernel
 emv_ep_configure
 emv_ep_activate
 emv_ep_free

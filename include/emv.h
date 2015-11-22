@@ -31,6 +31,7 @@
 #define EMV_RC_BUFFER_OVERFLOW			5
 #define EMV_RC_OUT_OF_MEMORY			6
 #define EMV_RC_SYNTAX_ERROR			7
+#define EMV_RC_NO_KERNEL			8
 
 #define EMV_MAX_ONLINE_RESPONSE_LEN	256
 #define EMV_MAX_DATA_RECORD_LEN		512
@@ -189,16 +190,20 @@ struct emv_hal {
 struct emv_kernel;
 
 struct emv_kernel_ops {
+	int (*get_id)	(struct emv_kernel *kernel,
+			 void		   *kernel_id,
+			 size_t		   *len);
+
 	int (*configure)(struct emv_kernel *kernel,
 			 const void	   *configuration,
 			 size_t		    length);
 
-	void (*activate)(struct emv_kernel		  *kernel,
+	int (*activate)	(struct emv_kernel		  *kernel,
 			 struct emv_hal			  *hal,
 			 struct emv_ep_preproc_indicators *prepoc_indicators,
-			 void				  *fci,
+			 const void			  *fci,
 			 size_t				   fci_len,
-			 uint8_t			   sw[2],
+			 const uint8_t			   sw[2],
 			 struct emv_outcome_parms	  *outcome,
 			 void				  *txn_data,
 			 size_t				  *txn_data_len);
@@ -222,7 +227,9 @@ struct emv_ep *emv_ep_new(void);
 
 void emv_ep_free(struct emv_ep *ep);
 
-void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
+int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
+
+int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel);
 
 int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 

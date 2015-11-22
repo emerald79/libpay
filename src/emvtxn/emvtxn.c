@@ -9,6 +9,51 @@
 #include <emv.h>
 #include <tlv.h>
 
+int geldkarte_get_id(struct emv_kernel *kernel, void *kernel_id, size_t *len)
+{
+	const uint8_t geldkarte_id[] = { 0xC0, 0x61, 0x50 };
+
+	if (*len < sizeof(geldkarte_id))
+		return EMV_RC_BUFFER_OVERFLOW;
+
+	*len = sizeof(geldkarte_id);
+	memcpy(kernel_id, geldkarte_id, sizeof(geldkarte_id));
+
+	return EMV_RC_OK;
+}
+
+int geldkarte_configure(struct emv_kernel *kernel, const void *configuration,
+								  size_t length)
+{
+	printf("%s()\n", __func__);
+	return EMV_RC_OK;
+}
+
+
+int geldkarte_activate(struct emv_kernel *kernel, struct emv_hal *hal,
+			    struct emv_ep_preproc_indicators *prepoc_indicators,
+			   const void *fci, size_t fci_len, const uint8_t sw[2],
+			      struct emv_outcome_parms *outcome, void *txn_data,
+							   size_t *txn_data_len)
+{
+	uint8_t *my_fci = (uint8_t *)fci;
+	size_t i = 0;
+
+	printf("%s()\n", __func__);
+	printf("sw: %02x%02x\n", sw[0], sw[1]);
+	for (i = 0; i < fci_len; i++)
+		printf("%02X", my_fci[i]);
+	printf("\n");
+
+	return EMV_RC_OK;
+}
+
+const struct emv_kernel_ops geldkarte_ops = {
+	.get_id	   = geldkarte_get_id,
+	.configure = geldkarte_configure,
+	.activate  = geldkarte_activate
+};
+
 struct cvend_hal {
 	const struct emv_hal_ops *ops;
 	int fd_feclr;
@@ -140,6 +185,7 @@ int get_config(void *config, size_t *size)
 int main(int argc, char **argv)
 {
 	struct cvend_hal hal;
+	struct emv_kernel kernel;
 	struct emv_ep *emv_ep = emv_ep_new();
 	union tech_data tech_data;
 	uint64_t status = FECLR_STS_OK, tech = 0;
@@ -156,6 +202,9 @@ int main(int argc, char **argv)
 
 	hal.ops = &cvend_hal_ops;
 	emv_ep_register_hal(emv_ep, (struct emv_hal *)&hal);
+
+	kernel.ops = &geldkarte_ops;
+	emv_ep_register_kernel(emv_ep, &kernel);
 
 	hal.fd_feclr = open("/dev/feclr0", O_RDWR);
 	if (hal.fd_feclr < 0) {

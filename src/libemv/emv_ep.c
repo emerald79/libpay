@@ -74,7 +74,6 @@ struct emv_ep_combination_set {
 	size_t			   size;
 };
 
-
 struct emv_ep_candidate {
 	uint8_t	adf_name[16];
 	size_t	adf_name_len;
@@ -91,6 +90,11 @@ struct emv_ep_reg_kernel {
 	struct emv_kernel *kernel;
 };
 
+struct emv_ep_reg_kernel_set {
+	struct emv_ep_reg_kernel *kernel;
+	size_t			  size;
+};
+
 struct emv_txn_data {
 	enum emv_txn_type type;
 	uint8_t		  amount_authorised[6];
@@ -104,15 +108,55 @@ struct emv_ep {
 	struct emv_txn_data		txn_data;
 	bool				restart;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
+	struct emv_ep_reg_kernel_set	reg_kernel_set;
 	struct emv_ep_candidate		*candidates;
 	int				num_candidates;
-	struct emv_ep_reg_kernel	*reg_kernels;
-	int				num_reg_kernels;
 };
 
+int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel)
+{
+	struct emv_ep_reg_kernel_set *set = &ep->reg_kernel_set;
+	int rc = EMV_RC_OK;
+	size_t i_kernel = set->size++;
 
+	set->kernel = (struct emv_ep_reg_kernel *)realloc(set->kernel,
+				  set->size * sizeof(struct emv_ep_reg_kernel));
+	if (!set->kernel) {
+		rc = EMV_RC_OUT_OF_MEMORY;
+		goto error;
+	}
 
+	set->kernel[i_kernel].kernel_id_len = sizeof(set->kernel[0].kernel_id);
+	rc = kernel->ops->get_id(kernel, set->kernel[i_kernel].kernel_id,
+					  &set->kernel[i_kernel].kernel_id_len);
+	set->kernel[i_kernel].kernel = kernel;
+	if (rc)
+		goto error;
 
+	return EMV_RC_OK;
+
+error:
+	if (set->kernel) {
+		free(set->kernel);
+		set->kernel = NULL;
+		set->size = 0;
+	}
+	return rc;
+};
+
+static struct emv_kernel *get_kernel(struct emv_ep *ep,
+					   const uint8_t *kernel_id, size_t len)
+{
+	size_t i_krn;
+
+	for (i_krn = 0; i_krn < ep->reg_kernel_set.size; i_krn++)
+		if ((len == ep->reg_kernel_set.kernel[i_krn].kernel_id_len) &&
+		    (!memcmp(ep->reg_kernel_set.kernel[i_krn].kernel_id,
+							       kernel_id, len)))
+			return ep->reg_kernel_set.kernel[i_krn].kernel;
+
+	return 0;
+}
 
 static bool is_currency_code_supported(const uint8_t *currency_code)
 {
@@ -378,9 +422,10 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	return EMV_RC_OK;
 }
 
-void emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal)
+int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal)
 {
 	ep->hal = hal;
+	return EMV_RC_OK;
 }
 
 static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
@@ -707,12 +752,13 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 {
 	struct emv_ep_candidate *candidate = NULL;
 	struct emv_ep_config *config = NULL;
+	struct emv_kernel *kernel = NULL;
 	uint8_t adf[32];
 	size_t adf_len = 0;
 	uint8_t fci[256];
 	size_t fci_len = sizeof(fci);
 	uint8_t sw[2];
-	int rc = EMV_RC_OK, i;
+	int rc = EMV_RC_OK;
 
 	candidate = &ep->candidates[ep->num_candidates - 1];
 	config = &candidate->combination->config;
@@ -732,10 +778,15 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
 					  EMV_CMD_SELECT_P2_FIRST, adf, adf_len,
 							     fci, &fci_len, sw);
-	printf("sw: %02x%02x\n", sw[0], sw[1]);
-	for (i = 0; i < fci_len; i++)
-		printf("%02X", fci[i]);
-	printf("\n");
+
+	kernel = get_kernel(ep, candidate->combination->kernel_id,
+					 candidate->combination->kernel_id_len);
+	if (!kernel)
+		return EMV_RC_NO_KERNEL;
+
+	rc = kernel->ops->activate(kernel, ep->hal,
+			  &candidate->combination->indicators, fci, fci_len, sw,
+							      NULL, NULL, NULL);
 
 	return rc;
 }
