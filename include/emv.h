@@ -32,6 +32,9 @@
 #define EMV_RC_OUT_OF_MEMORY			6
 #define EMV_RC_SYNTAX_ERROR			7
 #define EMV_RC_NO_KERNEL			8
+#define EMV_RC_INVALID_ARG			9
+#define EMV_RC_COLLISION			10
+#define EMV_RC_CONTINUE				11
 
 #define EMV_MAX_ONLINE_RESPONSE_LEN	256
 #define EMV_MAX_DATA_RECORD_LEN		512
@@ -76,7 +79,6 @@ enum emv_status {
 };
 
 struct emv_ui_request {
-	bool				present;
 	enum	emv_message_identifier	msg_id;
 	enum	emv_status		status;
 	uint8_t				hold_time;
@@ -88,7 +90,8 @@ struct emv_ui_request {
 };
 
 enum emv_outcome {
-	out_select_next = 0,
+	out_na = 0,
+	out_select_next,
 	out_try_again,
 	out_approved,
 	out_declined,
@@ -151,7 +154,9 @@ struct emv_outcome_parms {
 	enum	emv_start			start;
 	struct	emv_online_response		online_response;
 	enum	emv_cvm				cvm;
+	bool					ui_request_on_outcome_present;
 	struct	emv_ui_request			ui_request_on_outcome;
+	bool					ui_request_on_restart_present;
 	struct	emv_ui_request			ui_request_on_restart;
 	struct	emv_data_record			data_record;
 	struct	emv_discretionary_data		discretionary_data;
@@ -173,6 +178,10 @@ struct emv_ep_preproc_indicators {
 struct emv_hal;
 
 struct emv_hal_ops {
+	int	(*start_polling)(struct emv_hal *hal);
+
+	int	(*wait_for_card)(struct emv_hal *hal);
+
 	int	(*transceive)(struct emv_hal *hal,
 			      const uint8_t  *capdu,
 			      size_t	     capdu_len,
@@ -236,9 +245,9 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 int emv_ep_activate(struct emv_ep    *ep,
 		    enum emv_start    start,
 		    enum emv_txn_type txn_type,
-		    uint8_t	      amount_authorised[6],
-		    uint8_t	      amount_other[6],
-		    uint8_t	      currency_code[2],
+		    uint64_t	      amount_authorised,
+		    uint64_t	      amount_other,
+		    const uint8_t     currency[2],
 		    uint32_t	      unpredictable_number);
 
 

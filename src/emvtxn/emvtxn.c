@@ -59,6 +59,16 @@ struct cvend_hal {
 	int fd_feclr;
 };
 
+int cvend_hal_start_polling(struct emv_hal *emv_hal)
+{
+	return EMV_RC_OK;
+}
+
+int cvend_hal_wait_for_card(struct emv_hal *emv_hal)
+{
+	return EMV_RC_OK;
+}
+
 int cvend_hal_transceive(struct emv_hal *emv_hal, const uint8_t *capdu,
 			    size_t capdu_len, uint8_t *rapdu, size_t *rapdu_len)
 {
@@ -96,8 +106,10 @@ void cvend_hal_ui_request(struct emv_hal *emv_hal,
 }
 
 const struct emv_hal_ops cvend_hal_ops = {
-	.transceive = cvend_hal_transceive,
-	.ui_request = cvend_hal_ui_request
+	.start_polling = cvend_hal_start_polling,
+	.wait_for_card = cvend_hal_wait_for_card,
+	.transceive    = cvend_hal_transceive,
+	.ui_request    = cvend_hal_ui_request
 };
 
 #define TXN_PURCHASE	((const uint8_t []) { 0x00 })
@@ -274,7 +286,8 @@ int main(int argc, char **argv)
 		goto error;
 	}
 
-	rc = emv_ep_activate(emv_ep, start_a, 0, NULL, NULL, NULL, 0x1234567u);
+	rc = emv_ep_activate(emv_ep, start_a, txn_purchase,
+					      1500, 0, ISO4217_EUR, 0x1234567u);
 	if (rc != EMV_RC_OK) {
 		fprintf(stderr, "emv_ep_activate failed. rc %d\n", rc);
 		goto error;

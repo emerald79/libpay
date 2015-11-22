@@ -51,13 +51,13 @@ struct emv_ep_config_flags {
 };
 
 struct emv_ep_config {
-	struct emv_ep_config_flags	present;
-	struct emv_ep_config_flags	enabled;
-	uint8_t				reader_ctls_txn_limit[6];
-	uint8_t				reader_ctls_floor_limit[6];
-	uint8_t				terminal_floor_limit[6];
-	uint8_t				reader_cvm_reqd_limit[6];
-	uint8_t				ttq[4];
+	struct emv_ep_config_flags present;
+	struct emv_ep_config_flags enabled;
+	uint64_t		   reader_ctls_txn_limit;
+	uint64_t		   reader_ctls_floor_limit;
+	uint64_t		   terminal_floor_limit;
+	uint64_t		   reader_cvm_reqd_limit;
+	uint8_t			   ttq[4];
 };
 
 struct emv_ep_combination {
@@ -84,6 +84,11 @@ struct emv_ep_candidate {
 	struct	emv_ep_combination *combination;
 };
 
+struct emv_ep_candidate_list {
+	struct emv_ep_candidate *candidates;
+	size_t			 size;
+};
+
 struct emv_ep_reg_kernel {
 	uint8_t		   kernel_id[8];
 	size_t		   kernel_id_len;
@@ -97,20 +102,38 @@ struct emv_ep_reg_kernel_set {
 
 struct emv_txn_data {
 	enum emv_txn_type type;
-	uint8_t		  amount_authorised[6];
-	uint8_t		  amount_other[6];
-	uint8_t		  currency_code[2];
+	uint64_t	  amount_authorised;
+	uint64_t	  amount_other;
+	uint8_t		  currency[2];
 	uint32_t	  unpredictable_number;
 };
 
+enum emv_ep_state {
+	eps_preprocessing = 0,
+	eps_protocol_activation,
+	eps_combination_selection,
+	eps_final_combination_selection,
+	eps_kernel_activation,
+	eps_outcome_processing,
+	eps_done
+};
+
+struct emv_ep_kernel_params {
+	uint8_t fci[256];
+	size_t  fci_len;
+	uint8_t sw[2];
+};
+
 struct emv_ep {
+	enum emv_ep_state		state;
 	struct emv_hal			*hal;
 	struct emv_txn_data		txn_data;
 	bool				restart;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_reg_kernel_set	reg_kernel_set;
-	struct emv_ep_candidate		*candidates;
-	int				num_candidates;
+	struct emv_ep_candidate_list	candidate_list;
+	struct emv_ep_kernel_params	kernel_params;
+	struct emv_outcome_parms	outcome;
 };
 
 int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel)
@@ -167,9 +190,9 @@ static bool is_currency_code_supported(const uint8_t *currency_code)
 	return false;
 }
 
-static const uint8_t *single_unit_of_currency(const uint8_t *currency_code)
+static uint64_t unit_of_currency(const uint8_t currency_code[2])
 {
-	return (uint8_t [6]) { '\x00', '\x00', '\x00', '\x00', '\x01', '\x00' };
+	return 100;
 }
 
 static enum emv_txn_type get_emv_txn_type(uint8_t txn_type)
@@ -217,48 +240,47 @@ static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
 }
 #endif
 
-int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
+int emv_ep_preprocessing(struct emv_ep *ep)
 {
+	struct emv_txn_data *txn = NULL;
 	struct emv_ep_combination_set *combination_set = NULL;
-	uint64_t amount_authorised = 0, unit_of_currency = 0;
 	bool ctls_app_allowed = 0;
 	int i = 0;
 
-	amount_authorised = bcd_to_u64(ep->txn_data.amount_authorised, 6);
-	unit_of_currency  = bcd_to_u64(
-			single_unit_of_currency(ep->txn_data.currency_code), 6);
+	txn = &ep->txn_data;
+	assert(txn->type < num_txn_types);
+	combination_set = &ep->combination_set[txn->type];
 
-	assert(ep->txn_data.type < num_txn_types);
-	combination_set = &ep->combination_set[ep->txn_data.type];
-
-	if (!is_currency_code_supported(ep->txn_data.currency_code))
+	if (!is_currency_code_supported(txn->currency))
 		return EMV_RC_UNSUPPORTED_CURRENCY_CODE;
 
 	for (i = 0; i < combination_set->size; i++) {
 		struct emv_ep_combination *combination = NULL;
 		struct emv_ep_preproc_indicators *indicators = NULL;
 		struct emv_ep_config *cfg = NULL;
-		uint64_t ctls_tx_limit = 0, ctls_floor_limit = 0;
-		uint64_t floor_limit = 0, cvm_reqd_limit = 0;
 
 		combination = &combination_set->combinations[i];
 		cfg	    = &combination->config;
 		indicators  = &combination->indicators;
 
-		ctls_tx_limit	 = bcd_to_u64(cfg->reader_ctls_floor_limit, 6);
-		ctls_floor_limit = bcd_to_u64(cfg->reader_ctls_floor_limit, 6);
-		floor_limit	 = bcd_to_u64(cfg->terminal_floor_limit, 6);
-		cvm_reqd_limit	 = bcd_to_u64(cfg->reader_cvm_reqd_limit, 6);
-
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.1");
-
+		/* For each Combination, Entry Point shall reset the Entry Point
+		 * Pre-Processing Indicators to 0.			      */
 		memset(&combination->indicators, 0,
 					       sizeof(combination->indicators));
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.2");
-
+		/* If Terminal Transaction Qualifiers (TTQ) is part of the
+		 * configuration data for a Combination, then:
+		 *  - Entry Point shall copy the TTQ from Entry Point
+		 *    Configuration Data into the Copy of TTQ in the Entry Point
+		 *    Pre-Processing Indicators.
+		 *  - Entry Point shall reset byte 2, bit 8 and bit 7 in the
+		 *    Copy of TTQ to 00b ('Online cryptogram not required' and
+		 *    'CVM not required').
+		 * The other bits are unchanged.			      */
 		if (cfg->present.ttq) {
 			memcpy(indicators->ttq, cfg->ttq, sizeof(cfg->ttq));
 			indicators->ttq[1] = indicators->ttq[1] &
@@ -268,16 +290,27 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.3");
-
+		/* If all of the following are true:
+		 *  - the Status Check Support flag is present,
+		 *  - and the Status Check Support flag is 1,
+		 *  - and the Amount, Authorised is a single unit of currency,
+		 * then Entry Point shall set the 'Status Check Requested'
+		 * indicator for the Combination to 1.			      */
 		if (cfg->present.status_check_support &&
 		    cfg->enabled.status_check_support &&
-		    (amount_authorised == unit_of_currency))
+		    (txn->amount_authorised == unit_of_currency(txn->currency)))
 			indicators->status_check_requested = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.4");
-
-		if (!amount_authorised) {
+		/* If the value of Amount, Authorised is zero, then:
+		 *   - If the Zero Amount Allowed flag is present and the Zero
+		 *     Amount Allowed flag is 0, then Entry Point shall set the
+		 *     'Contactless Application Not Allowed' indicator for the
+		 *     Combination to 1.
+		 *   - Otherwise, Entry Point shall set the 'Zero Amount'
+		 *     indicator for the Combination to 1.		      */
+		if (!txn->amount_authorised) {
 			if (cfg->present.zero_amount_allowed &&
 			    !cfg->enabled.zero_amount_allowed)
 				indicators->ctls_app_not_allowed = true;
@@ -287,31 +320,47 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.5");
-
+		/* If the Reader Contactless Transaction Limit is present and
+		 * the value of Amount, Authorised is greater than or equal to
+		 * this limit, then Entry Point shall set the 'Contactless
+		 * Application Not Allowed' indicator for the Combination to
+		 * 1.							      */
 		if (cfg->present.reader_ctls_txn_limit &&
-		    (amount_authorised >= ctls_tx_limit))
+		    (txn->amount_authorised >= cfg->reader_ctls_txn_limit))
 			indicators->ctls_app_not_allowed = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.6");
-
+		/* If the Reader Contactless Floor Limit is present and the
+		 * value of Amount, Authorised is greater than this limit,
+		 * then Entry Point shall set the 'Reader Contactless Floor
+		 * Limit Exceeded' indicator for the Combination to 1.	      */
 		if (cfg->present.reader_ctls_floor_limit &&
-		    (amount_authorised > ctls_floor_limit))
+		    (txn->amount_authorised > cfg->reader_ctls_floor_limit))
 			indicators->floor_limit_exceeded = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.7");
-
+		/* If all of the following are true:
+		 *   - the Reader Contactless Floor Limit is not present,
+		 *   - and the Terminal Floor Limit (Tag '9F1B') is present,
+		 *   - and the value of Amount, Authorised is greater than the
+		 *     Terminal Floor Limit (Tag '9F1B'),
+		 * then Entry Point shall set the 'Reader Contactless Floor
+		 * Limit Exceeded' indicator for the Combination to 1.	      */
 		if (!cfg->present.reader_ctls_floor_limit &&
 		    cfg->present.terminal_floor_limit &&
-		    (amount_authorised > floor_limit))
+		    (txn->amount_authorised > cfg->terminal_floor_limit))
 			indicators->floor_limit_exceeded = true;
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.8");
-
+		/* If the Reader CVM Required Limit is present and the value of
+		 * Amount, Authorised is greater than or equal to this limit,
+		 * then Entry Point shall set the 'Reader CVM Required Limit
+		 * Exceeded' indicator for the Combination to 1.	      */
 		if (cfg->present.reader_cvm_reqd_limit &&
-		    (amount_authorised >= cvm_reqd_limit))
+		    (txn->amount_authorised >= cfg->reader_cvm_reqd_limit))
 			indicators->cvm_reqd_limit_exceeded = true;
 
 
@@ -319,20 +368,35 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.9");
-
+			/* If the 'Reader Contactless Floor Limit Exceeded'
+			 * indicator is 1, then Entry Point shall set byte 2,
+			 * bit 8 in the Copy of TTQ for the Combination to 1b
+			 * ('Online cryptogram required').		      */
 			if (indicators->floor_limit_exceeded)
 				indicators->ttq[1] |=
 					      TTQ_B2_ONLINE_CRYPTOGRAM_REQUIRED;
 
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.10");
-
+			/* If the 'Status Check Requested' indicator is 1, then
+			 * Entry Point shall set byte 2, bit 8 in the Copy of
+			 * TTQ for the Combination to 1b ('Online cryptogram
+			 * required').					      */
 			if (indicators->status_check_requested)
 				indicators->ttq[1] |=
 					      TTQ_B2_ONLINE_CRYPTOGRAM_REQUIRED;
 
-			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.11");
 
+			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.11");
+			/* If the 'Zero Amount' indicator is 1, then:
+			 *   - If byte 1, bit 4 of the Copy of TTQ is 0b
+			 *     ('Online capable reader'), then Entry Point shall
+			 *     set byte 2, bit 8 in the Copy of TTQ for the
+			 *     Combination to 1b ('Online cryptogram required').
+			 *   - Otherwise (byte 1 bit 4 of the Copy of TTQ is 1b
+			 *     ('Offline-only reader')), Entry Point shall set
+			 *     the 'Contactless Application Not Allowed'
+			 *     indicator for the Combination to 1.	      */
 			if (indicators->zero_amount) {
 				if (indicators->ttq[0] &
 						     TTQ_B1_OFFLINE_ONLY_READER)
@@ -344,10 +408,14 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.12");
-
+			/* If the 'Reader CVM Required Limit Exceeded' indicator
+			 * is 1, then Entry Point shall set byte 2, bit 7 in the
+			 * Copy of TTQ for the Combination to 1b ('CVM
+			 * required').					      */
 			if (indicators->cvm_reqd_limit_exceeded)
 				indicators->ttq[1] |= TTQ_B2_CVM_REQUIRED;
 		}
+
 
 		if (!indicators->ctls_app_not_allowed)
 			ctls_app_allowed = true;
@@ -355,15 +423,42 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.13");
-
+	/* If, for all the Combinations, the 'Contactless Application Not
+	 * Allowed' indicator is 1, then Entry Point shall provide a Try Another
+	 * Interface Outcome with the following Outcome parameter values and
+	 * shall continue with Outcome Processing, section 3.5.
+	 *
+	 * Try Another Interface:
+	 *   - Start: N/A
+	 *   - Online Response Data: N/A
+	 *   - CVM: N/A
+	 *   - UI Request on Outcome Present: Yes
+	 *     - Message Identifier: '18' ("Please Insert or Swipe Card")
+	 *     - Status: Processing Error
+	 *   - UI Request on Restart Present: No
+	 *   - Data Record Present: No
+	 *   - Discretionary Data Present: No
+	 *   - Alternate Interface Preference: N/A
+	 *   - Receipt: N/A
+	 *   - Field Off Request: N/A
+	 *   - Removal Timeout: Zero
+	 *
+	 * Otherwise (at least one Combination is allowed) Entry Point shall
+	 * retain the Entry Point Pre-Processing Indicators for each allowed
+	 * Combination.							      */
 	if (!ctls_app_allowed) {
-		struct emv_ui_request *ui_req = &outcome->ui_request_on_outcome;
+		struct emv_ui_request *ui_req = NULL;
 
-		memset(outcome, 0, sizeof(*outcome));
-		outcome->outcome = out_try_another_interface;
-		ui_req->present	 = true;
-		ui_req->msg_id	 = msg_insert_or_swipe_card;
-		ui_req->status	 = sts_processing_error;
+		memset(&ep->outcome, 0, sizeof(ep->outcome));
+		ep->outcome.outcome = out_try_another_interface;
+		ep->outcome.ui_request_on_outcome_present = true;
+		ui_req = &ep->outcome.ui_request_on_outcome;
+		ui_req->msg_id = msg_insert_or_swipe_card;
+		ui_req->status = sts_processing_error;
+
+		ep->state = eps_outcome_processing;
+	} else {
+		ep->state = eps_protocol_activation;
 	}
 
 	return EMV_RC_OK;
@@ -371,8 +466,20 @@ int emv_ep_preprocessing(struct emv_ep *ep, struct emv_outcome_parms *outcome)
 
 int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 {
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.1");
+	bool collision = false;
+	int rc = EMV_RC_OK;
 
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.1");
+	/* If the Restart flag is 0, then:
+	 *   - If Entry Point is activated by the reader 4 at Start B, then:
+	 *     - For each Combination, Entry Point shall reset the Entry Point
+	 *       Pre-Processing Indicators to 0.
+	 *     - For each Combination, if Terminal Transaction Qualifiers (TTQ)
+	 *       is configured, then Entry Point shall copy the TTQ from Entry
+	 *       Point Configuration Data into the Copy of TTQ in the Entry
+	 *       Point Pre-Processing Indicators.
+	 *   - Entry Point shall clear the Candidate List.
+	 */
 	if (!ep->restart) {
 		if (started_by_reader) {
 			struct emv_ep_combination_set *combination_set = NULL;
@@ -398,26 +505,98 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 			}
 		}
 
-		/* FIXME: Entry Point shall clear the Candidate list */
+		if (ep->candidate_list.candidates)
+			free(ep->candidate_list.candidates);
+		ep->candidate_list.candidates = NULL;
+		ep->candidate_list.size = 0;
 	}
 
 
-	/* FIXME: The following requirements should be done before calling the
-	 * entry point.
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.2");
+	/* If the Restart flag is 1, and the value of the retained UI Request on
+	 * Restart Present parameter is 'Yes', then Entry Point shall send the
+	 * retained User Interface Request.
+	 * Otherwise (the Restart flag is 0 or the value of the retained UI
+	 * Request on Restart Present parameter is 'No'), Entry Point shall send
+	 * a User Interface Request with the following parameters:
+	 *   - Message Identifier: '15' (“Present Card”)
+	 *   - Status: Ready to Read
 	 */
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.2"); /* FIXME */
+	if (ep->restart && ep->outcome.ui_request_on_restart_present) {
+		ep->hal->ops->ui_request(ep->hal,
+					    &ep->outcome.ui_request_on_restart);
+	} else {
+		struct emv_ui_request ui_request;
+
+		memset(&ui_request, 0, sizeof(ui_request));
+		ui_request.msg_id = msg_present_card;
+		ui_request.status = sts_ready_to_read;
+
+		ep->hal->ops->ui_request(ep->hal, &ui_request);
+	}
 
 
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.3"); /* FIXME */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.3");
+	/* The field shall be powered up and polling performed as defined in the
+	 * Main Loop of Book D.						      */
+	rc = ep->hal->ops->start_polling(ep->hal);
+	if (rc != EMV_RC_OK)
+		return rc;
+
+	do {
+		rc = ep->hal->ops->wait_for_card(ep->hal);
 
 
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.4"); /* FIXME */
+		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.4");
+		/* If a collision as defined in Book D is reported to Entry
+		 * Point, then Entry Point shall send a User Interface Request
+		 * with the following parameters:
+		 *   - Message Identifier: '19' ("Please Present One Card Only")
+		 *   - Status: Contactless collision detected (Processing Error)
+		 */
+		if (rc == EMV_RC_COLLISION) {
+			struct emv_ui_request ui_request;
+
+			memset(&ui_request, 0, sizeof(ui_request));
+			ui_request.msg_id = msg_present_one_card_only;
+			ui_request.status = sts_processing_error;
+
+			ep->hal->ops->ui_request(ep->hal, &ui_request);
+
+			collision = true;
+		}
 
 
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.5"); /* FIXME */
+		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.5");
+		/* When the collision condition is no longer indicated, then
+		 * Entry Point shall send a User Interface Request with the
+		 * following parameters:
+		 *   - Message Identifier: '19' ("Please Present One Card Only")
+		 *   - Status: Ready to Read				      */
+		if ((rc == EMV_RC_CONTINUE) && (collision)) {
+			struct emv_ui_request ui_request;
+
+			memset(&ui_request, 0, sizeof(ui_request));
+			ui_request.msg_id = msg_present_one_card_only;
+			ui_request.status = sts_ready_to_read;
+
+			ep->hal->ops->ui_request(ep->hal, &ui_request);
+
+			collision = false;
+		}
+	} while ((rc == EMV_RC_COLLISION) || (rc == EMV_RC_CONTINUE));
+
+	if (rc != EMV_RC_OK)
+		return rc;
 
 
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.6"); /* FIXME */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.6");
+	/* As described in Book D requirement 6.4.1.12, Entry Point shall not
+	 * use a higher layer command in the Higher layer - INF field of the
+	 * ATTRIB command.						      */
+	/* Hm, would not even know how to do this. This is L1 stuff, right?   */
+
+	ep->state = eps_combination_selection;
 
 	return EMV_RC_OK;
 }
@@ -487,15 +666,17 @@ struct ppse_dir_entry {
 	size_t	extended_selection_len;
 };
 
-int emv_ep_parse_ppse(struct tlv *ppse, struct ppse_dir_entry *entries,
-							    size_t *num_entries)
+int emv_ep_parse_ppse(const void *fci, size_t fci_len,
+			    struct ppse_dir_entry *entries, size_t *num_entries)
 {
-	struct tlv *i_tlv;
-	size_t num;
+	struct tlv *ppse = NULL, *i_tlv = NULL;
+	size_t num = 0;
 
-	assert(ppse);
+	assert(fci);
 	assert(entries);
 	assert(num_entries);
+
+	tlv_parse(fci, fci_len, &ppse);
 
 	i_tlv = tlv_find(tlv_get_child(tlv_find(tlv_get_child(tlv_find(
 			     tlv_get_child(tlv_find(ppse, TLV_ID_FCI_TEMPLATE)),
@@ -568,11 +749,33 @@ int emv_ep_parse_ppse(struct tlv *ppse, struct ppse_dir_entry *entries,
 		num++;
 	}
 
+	if (ppse)
+		tlv_free(ppse);
+
 	if ((num == *num_entries) && (i_tlv))
 		return EMV_RC_BUFFER_OVERFLOW;
 
 	*num_entries = num;
 	return EMV_RC_OK;
+}
+
+static uint8_t rid_to_kernel_id(const void *rid)
+{
+	uint8_t rids[][5] = {
+		{ 0xA0, 0x00, 0x00, 0x00, 0x04 },	/* MasterCard	      */
+		{ 0xA0, 0x00, 0x00, 0x00, 0x03 },	/* Visa		      */
+		{ 0xA0, 0x00, 0x00, 0x00, 0x25 },	/* American Express   */
+		{ 0xA0, 0x00, 0x00, 0x00, 0x65 },	/* JCB		      */
+		{ 0xA0, 0x00, 0x00, 0x00, 0x15 },	/* Discover	      */
+		{ 0xA0, 0x00, 0x00, 0x03, 0x33 }	/* UnionPay	      */
+	};
+	int i = 0;
+
+	for (i = 0; i < ARRAY_SIZE(rid); i++)
+		if (!memcmp(rids[i], rid, sizeof(rids[i])))
+			return (uint8_t)(i + 2);
+
+	return 0;
 }
 
 bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
@@ -584,46 +787,104 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 A");
-
+	/* Entry Point shall examine the format of the ADF Name of the Directory
+	 * Entry. If the ADF Name is missing or is not coded according to
+	 * [EMV 4.2 Book 1], section 12.2.1, then Entry Point shall proceed with
+	 * the next Directory Entry.					      */
 	if (dir_entry->adf_name_len < 5)
 		return false;
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 B");
-
-	if (memcmp(combination->aid, dir_entry->adf_name, combination->aid_len))
+	/* Entry Point shall examine whether the ADF Name matches the AID of the
+	 * reader Combination. If the ADF Name has the same length and value as
+	 * the AID (full match), or the ADF Name begins with the AID (partial
+	 * match), then the ADF Name matches the AID and the AID is referred to
+	 * as the "matching AID". Otherwise Entry Point shall return to bullet A
+	 * and proceed with the next Directory Entry.			      */
+	if ((dir_entry->adf_name_len < combination->aid_len) ||
+	    memcmp(combination->aid, dir_entry->adf_name, combination->aid_len))
 		return false;
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 C");
+	/* Entry Point shall examine the presence and format of the Kernel
+	 * Identifier (Tag '9F2A') to determine the Requested Kernel ID.      */
 
 	if (dir_entry->kernel_identifier_len == 0) {
-		/* FIXME: See Table 3-6 in EMV_CTLS_BOOK_B */
-		requested_kernel_id[0] = 0;
+		/* If the Kernel Identifier (Tag '9F2A') is absent in the
+		 * Directory Entry, then Entry Point shall use a default value
+		 * for the Requested Kernel ID, based on the matching AID, as
+		 * indicated in Table 3-6.				      */
+		/* If the length of the Kernel Identifier value field is zero,
+		 * then Entry Point shall use a default value for the Requested
+		 * Kernel ID, based on the matching AID, as indicated in Table
+		 * 3-6.							      */
+		requested_kernel_id[0] = rid_to_kernel_id(combination->aid);
 		requested_kernel_id_len = 1;
-	} else if (((dir_entry->kernel_identifier[0] & 0xc0) == 0x00) ||
-			   ((dir_entry->kernel_identifier[0] & 0xc0) == 0x40)) {
-		requested_kernel_id[0] = dir_entry->kernel_identifier[0];
-		requested_kernel_id_len = 1;
-	} else if (dir_entry->kernel_identifier[0] & 0x3f) {
-		memcpy(requested_kernel_id, dir_entry->kernel_identifier, 3);
-		requested_kernel_id_len = 3;
 	} else {
-		memcpy(requested_kernel_id, dir_entry->kernel_identifier,
+		/* If the Kernel Identifier (Tag '9F2A') is present in the
+		 * Directory Entry, then Entry Point shall examine the value
+		 * field as follows:					     */
+		if (((dir_entry->kernel_identifier[0] & 0xc0) == 0x00) ||
+			   ((dir_entry->kernel_identifier[0] & 0xc0) == 0x40)) {
+			/* If byte 1, b8 and b7 of the Kernel Identifier have
+			 * the value 00b or 01b 12, then Requested Kernel ID is
+			 * equal to the value of byte 1 of the Kernel Identifier
+			 * (i.e. b8b7||Short Kernel ID).		      */
+			*requested_kernel_id = dir_entry->kernel_identifier[0];
+			requested_kernel_id_len = 1;
+		} else {
+			/* If byte 1, b8 and b7 of the Kernel Identifier have
+			 * the value 10b or 11b, then			      */
+			if (dir_entry->kernel_identifier_len < 3) {
+				/* If the length of the Kernel Identifier value
+				 * field is less than 3 bytes, then Entry Point
+				 * shall return to bullet A and proceed with the
+				 * next Directory Entry.		      */
+				return false;
+			} else if (dir_entry->kernel_identifier[0] & 0x3f) {
+				/* If the Short Kernel ID is different from
+				 * 000000b, then the Requested Kernel ID is
+				 * equal to value of the byte 1 to byte 3 of the
+				 * Kernel Identifier (i.e.
+				 * b8b7||Short Kernel ID||Extended Kernel ID).*/
+				memcpy(requested_kernel_id,
+					       dir_entry->kernel_identifier, 3);
+				requested_kernel_id_len = 3;
+			} else {
+				/* If the Short Kernel ID is equal to 000000b,
+				 * then the determination of the Requested
+				 * Kernel ID is out of scope of this
+				 * specification.			      */
+				memcpy(requested_kernel_id,
+						   dir_entry->kernel_identifier,
 					      dir_entry->kernel_identifier_len);
-		requested_kernel_id_len = dir_entry->kernel_identifier_len;
+				requested_kernel_id_len =
+					       dir_entry->kernel_identifier_len;
+			}
+		}
 	}
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 D");
-
-	if ((requested_kernel_id[0] != 0) &&
-	    ((requested_kernel_id_len != dir_entry->kernel_identifier_len) ||
-	     (memcmp(requested_kernel_id, dir_entry->kernel_identifier,
+	/* Entry Point shall examine whether the Requested Kernel ID is
+	 * supported for the reader Combination.
+	 *   - If the value of the Requested Kernel ID is zero, then the kernel
+	 *     requested by the card is supported by the reader;
+	 *   - If the value of the Requested Kernel ID is non-zero and the value
+	 *     of the Requested Kernel ID is equal to the value of the Kernel
+	 *     ID, then the kernel requested by the card is supported by the
+	 *     reader;
+	 * Otherwise Entry Point shall return to bullet A and proceed with the
+	 * next Directory Entry.					      */
+	if ((requested_kernel_id[0] == 0) ||
+	    ((requested_kernel_id_len == dir_entry->kernel_identifier_len) &&
+	     (!memcmp(requested_kernel_id, dir_entry->kernel_identifier,
 						     requested_kernel_id_len))))
+		return true;
+	else
 		return false;
-
-	return true;
 }
 
 static int compare_candidates(const void *candidate_a, const void *candidate_b)
@@ -665,64 +926,101 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	size_t fci_len = sizeof(fci);
 	uint8_t sw[2];
 	int rc = EMV_RC_OK, i_comb, i_dir;
-	struct tlv *tlv_fci = NULL;
 
 	combination_set = &ep->combination_set[ep->txn_data.type];
 
 
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.1");
+	/* Step 1 */
 
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.2");
+	/* Entry Point shall send a SELECT (PPSE) command (as described in
+	 * [EMV 4.2 Book 1], section 11.3.2) to the card, with a file name of
+	 * '2PAY.SYS.DDF01'.						     */
 	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
 				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
 				      EMV_CMD_SELECT_P2_FIRST, "2PAY.SYS.DDF01",
 							 14, fci, &fci_len, sw);
-	if (rc != EMV_RC_OK)
-		goto done;
 
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.7");
+	/* If at any time during Protocol Activation or Combination Selection
+	 * a communications error as defined in Book D (Transmission, Protocol,
+	 * or Time-out) is reported to Entry Point, then Entry Point shall
+	 * return to Start B (Protocol Activation, section 3.2.1).	      */
+	if (rc != EMV_RC_OK) {
+		ep->state = eps_protocol_activation;
+		return EMV_RC_OK;
+	}
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.3");
+	/* If Entry Point receives SW1 SW2 = '9000' in response to the SELECT
+	 * (PPSE) command, then Entry Point shall proceed to Step 2.
+	 * Otherwise, Entry Point shall add no Combinations to the Candidate
+	 * List and shall proceed to Step 3.				      */
 	if ((sw[0] != 0x90) || (sw[1] != 0x00)) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		ep->state = eps_final_combination_selection;
 		goto done;
 	}
 
 
-	rc = tlv_parse(fci, fci_len, &tlv_fci);
-	if (rc != TLV_RC_OK) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	rc = emv_ep_parse_ppse(tlv_fci, dir_entry, &num_dir_entries);
+	rc = emv_ep_parse_ppse(fci, fci_len, dir_entry, &num_dir_entries);
 	assert(rc == EMV_RC_OK);
 
-	ep->num_candidates = 0;
-	ep->candidates = (struct emv_ep_candidate *)
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.4");
+	/* If there is no Directory Entry (Tag '61') in the FCI, then
+	 * Entry Point shall add no Combinations to the Candidate List
+	 * and shall proceed to Step 3. */
+	if (!num_dir_entries) {
+		ep->state = eps_final_combination_selection;
+		goto done;
+	}
+
+	ep->candidate_list.size = 0;
+	ep->candidate_list.candidates = (struct emv_ep_candidate *)
 				 calloc(combination_set->size * num_dir_entries,
 					       sizeof(struct emv_ep_candidate));
-	if (!ep->candidates) {
+	if (!ep->candidate_list.candidates) {
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;
 	}
 
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
+	/* For each reader Combination {AID - Kernel ID} supported by the reader
+	 * for which the 'Contactless Application Not Allowed' indicator is 0,
+	 * Entry Point shall process each Directory Entry (Tag '61') from th
+	 * FCI. When the Directory Entries have been processed for all supported
+	 * reader Combinations, Entry Point shall proceed to Step 3.
+	 *
+	 * To process the Directory Entries, Entry Point shall begin with the
+	 * first Directory Entry of the FCI and process sequentially for each
+	 * Directory Entry in the FCI as described in bullet A thru E below.  */
 	for (i_comb = 0; i_comb < combination_set->size; i_comb++) {
 		struct emv_ep_combination *comb =
 					 &combination_set->combinations[i_comb];
-
-
-		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
 
 		if (comb->indicators.ctls_app_not_allowed)
 			continue;
 
 		for (i_dir = 0; i_dir < num_dir_entries; i_dir++) {
 			struct ppse_dir_entry *entry = &dir_entry[i_dir];
+			struct emv_ep_candidate_list *list = NULL;
 			struct emv_ep_candidate *candidate = NULL;
 
 			if (!emv_ep_is_combination_candidate(comb, entry))
 				continue;
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 E");
-
-			candidate = &ep->candidates[ep->num_candidates++];
+			/* Entry Point shall add a Combination to the Candidate
+			 * List for final selection, consisting of:
+			 *   - the ADF Name
+			 *   - the AID
+			 *   - the Kernel ID
+			 *   - the Application Priority Indicator (if present)
+			 *   - the Extended Selection (if present)	      */
+			list = &ep->candidate_list;
+			candidate = &list->candidates[list->size++];
 			memcpy(candidate->adf_name, entry->adf_name,
 							   entry->adf_name_len);
 			candidate->adf_name_len = entry->adf_name_len;
@@ -738,13 +1036,12 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 		}
 	}
 
-	qsort(ep->candidates, ep->num_candidates,
+	qsort(ep->candidate_list.candidates, ep->candidate_list.size,
 			   sizeof(struct emv_ep_candidate), compare_candidates);
 
-done:
-	if (tlv_fci)
-		tlv_free(tlv_fci);
+	ep->state = eps_final_combination_selection;
 
+done:
 	return rc;
 }
 
@@ -752,20 +1049,94 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 {
 	struct emv_ep_candidate *candidate = NULL;
 	struct emv_ep_config *config = NULL;
-	struct emv_kernel *kernel = NULL;
 	uint8_t adf[32];
 	size_t adf_len = 0;
-	uint8_t fci[256];
-	size_t fci_len = sizeof(fci);
-	uint8_t sw[2];
 	int rc = EMV_RC_OK;
 
-	candidate = &ep->candidates[ep->num_candidates - 1];
+	/* Step 3 */
+
+	if (!ep->candidate_list.size) {
+
+
+		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.7");
+		/* If the Candidate List is empty, then Entry Point shall send
+		 * an End Application Outcome with the following Outcome
+		 * parameter values and shall continue with Outcome Processing,
+		 * section 3.5.
+		 *
+		 * End Application:
+		 *   - Start: N/A
+		 *   - Online Response Data: N/A
+		 *   - CVM: N/A
+		 *   - UI Request on Outcome Present: Yes
+		 *     - Message Identifier: '1C' ("Insert, Swipe or Try Another
+		 *       Card")
+		 *   - Status: Ready To Read
+		 *   - UI Request on Restart Present: No
+		 *   - Data Record Present: No
+		 *   - Discretionary Data Present: No
+		 *   - Alternate Interface Preference: N/A
+		 *   - Receipt: N/A
+		 *   - Field Off Request: N/A
+		 *   - Removal Timeout: Zero				      */
+		struct emv_ui_request *ui_req = NULL;
+
+		memset(&ep->outcome, 0, sizeof(ep->outcome));
+		ep->outcome.outcome = out_end_application;
+		ep->outcome.ui_request_on_outcome_present = true;
+		ui_req = &ep->outcome.ui_request_on_outcome;
+		ui_req->msg_id = msg_try_another_card;
+		ui_req->status = sts_ready_to_read;
+
+		ep->state = eps_outcome_processing;
+
+		return EMV_RC_OK;
+	}
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.6");
+	/* If the Candidate List contains at least one entry, then Entry Point
+	 * shall retain the Candidate List and shall continue with Final
+	 * Combination Selection, section 3.3.3.			      */
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.1");
+	/* If there is only one Combination in the Candidate List, then Entry
+	 * Point shall select the Combination.				      */
+
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.2");
+	/* If there are multiple Combinations in the Candidate List, then Entry
+	 * Point shall select the Combination as follows:
+	 *   - Consider each Combination that has an Application Priority
+	 *     Indicator with a value of 0 or no Application Priority Indicator
+	 *     to be of equal lowest priority.
+	 *   - If a single Combination has a higher priority than any other
+	 *     Combination in the Candidate List, then select that Combination.
+	 *   - Otherwise multiple Combinations in the Candidate List have the
+	 *     highest priority, and Entry Point shall select a Combination as
+	 *     as follows:
+	 *     - Determine the order of these Combinations' ADF Names and Kernel
+	 *       IDs in the PPSE, where the order is the position in the PPSE,
+	 *       with the lowest order being the first.
+	 *     - Select any one of the Combinations that have the lowest order*/
+	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
 	config = &candidate->combination->config;
 
 	adf_len = candidate->adf_name_len;
 	memcpy(adf, candidate->adf_name, adf_len);
 
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.3");
+	/* If all of the following are true:
+	 *   - the Extended Selection data element (Tag '9F29') is present in
+	 *     the Combination selected,
+	 *   - and the Extended Selection Support flag is present for this
+	 *     Combination,
+	 *   - and the Extended Selection Support flag is 1,
+	 * then Entry Point shall append the value contained in Extended
+	 * Selection to the ADF Name in the data field of the SELECT command. */
 	if (candidate->extended_selection_len &&
 					config->present.ext_selection_support &&
 					config->enabled.ext_selection_support) {
@@ -774,37 +1145,173 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 		adf_len += candidate->extended_selection_len;
 	}
 
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.4");
+	/* Entry Point shall send the SELECT (AID) command with the ADF Name of
+	 * the selected Combination (with Extended Selection if appended).    */
+	ep->kernel_params.fci_len = sizeof(ep->kernel_params.fci);
 	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
 				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
-					  EMV_CMD_SELECT_P2_FIRST, adf, adf_len,
-							     fci, &fci_len, sw);
+		   EMV_CMD_SELECT_P2_FIRST, adf, adf_len, ep->kernel_params.fci,
+			      &ep->kernel_params.fci_len, ep->kernel_params.sw);
 
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.7");
+	/* If at any time during Protocol Activation or Combination Selection
+	 * a communications error as defined in Book D (Transmission, Protocol,
+	 * or Time-out) is reported to Entry Point, then Entry Point shall
+	 * return to Start B (Protocol Activation, section 3.2.1).	      */
+	if (rc != EMV_RC_OK) {
+		ep->state = eps_protocol_activation;
+		return EMV_RC_OK;
+	}
+
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.5");
+	/* If the response to the SELECT (AID) command includes an SW1 SW2 other
+	 * than '9000', then:
+	 *   - FIXME: If issuer [...] data is present [...]
+	 *   - Otherwise Entry Point shall remove the selected Combination from
+	 *     the Candidate List and shall return to Start C (Step 3 of
+	 *     Combination Selection (requirement 3.3.2.6)).		      */
+	if ((ep->kernel_params.sw[0] != 0x90) ||
+	    (ep->kernel_params.sw[1] != 0x00)) {
+		ep->candidate_list.size--;
+		if (!ep->candidate_list.size) {
+			free(ep->candidate_list.candidates);
+			ep->candidate_list.candidates = NULL;
+		}
+		ep->state = eps_final_combination_selection;
+		return EMV_RC_OK;
+	}
+
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.6");
+	/* If all of the following are true:
+	 *   - the selected AID indicates Visa AID,
+	 *   - and the kernel in the selected Combination is Kernel 3,
+	 *   - and the PDOL in the FCI is absent or the PDOL in the FCI does not
+	 *     include Tag '9F66',
+	 * then:
+	 *   - If Kernel 1 is supported, then Entry Point shall change the
+	 *     Kernel ID for this AID from the initial Kernel 3 to Kernel 1.
+	 *   - If Kernel 1 is not supported, then Entry Point shall remove the
+	 *     selected Combination from the Candidate List and shall return to
+	 *     Start C (Step 3 of Combination Selection (requirement 3.3.2.6))*/
+	/* FIXME */
+
+	ep->state = eps_kernel_activation;
+	return EMV_RC_OK;
+}
+
+int emv_ep_outcome_processing(struct emv_ep *ep)
+{
+	ep->state = eps_done;
+	return EMV_RC_OK;
+}
+
+int emv_ep_kernel_activation(struct emv_ep *ep)
+{
+	struct emv_kernel *kernel = NULL;
+	struct emv_ep_candidate *candidate = NULL;
+	int rc = EMV_RC_OK;
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.1");
+	/* Entry Point shall activate the kernel identified in the selected
+	 * Combination.							      */
+	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
 	kernel = get_kernel(ep, candidate->combination->kernel_id,
 					 candidate->combination->kernel_id_len);
 	if (!kernel)
 		return EMV_RC_NO_KERNEL;
 
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.2");
+	/* Entry Point shall make the Entry Point Pre-Processing Indicators (as
+	 * specified in Book A, Table 5-3) for the selected Combination
+	 * available to the selected kernel.				      */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.3");
+	/* Entry Point shall make available the FCI and the Status Word SW1 SW2
+	 * (both received from the card in the SELECT (AID) response) to the
+	 * selected kernel. This requirement does not apply if Entry Point is
+	 * restarted at Start D after Outcome Processing.		      */
 	rc = kernel->ops->activate(kernel, ep->hal,
-			  &candidate->combination->indicators, fci, fci_len, sw,
-							      NULL, NULL, NULL);
+		     &candidate->combination->indicators, ep->kernel_params.fci,
+			  ep->kernel_params.fci_len, ep->kernel_params.sw, NULL,
+								    NULL, NULL);
+	ep->state = eps_outcome_processing;
 
 	return rc;
 }
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
-			enum emv_txn_type txn_type, uint8_t amount_authorise[6],
-			      uint8_t amount_other[6], uint8_t currency_code[2],
+			 enum emv_txn_type txn_type, uint64_t amount_authorised,
+			       uint64_t amount_other, const uint8_t currency[2],
 						  uint32_t unpredictable_number)
 {
+	bool started_at_b = (start == start_b);
 	int rc = EMV_RC_OK;
 
-	rc = emv_ep_combination_selection(ep);
-	if (rc != EMV_RC_OK)
-		return rc;
+	switch (start) {
+	case start_a:
+		ep->state = eps_preprocessing;
+		break;
+	case start_b:
+		ep->state = eps_protocol_activation;
+		break;
+	case start_d:
+		ep->state = eps_kernel_activation;
+		break;
+	case start_c:
+	default:
+		return EMV_RC_INVALID_ARG;
+	}
 
-	rc = emv_ep_final_combination_selection(ep);
-	if (rc != EMV_RC_OK)
-		return rc;
+	ep->txn_data.type = txn_type;
+	ep->txn_data.amount_authorised = amount_authorised;
+	ep->txn_data.amount_other = amount_other;
+	memcpy(ep->txn_data.currency, currency, sizeof(ep->txn_data.currency));
+	ep->txn_data.unpredictable_number = unpredictable_number;
+
+	do {
+		switch (ep->state) {
+
+		case eps_preprocessing:
+			rc = emv_ep_preprocessing(ep);
+			break;
+
+		case eps_protocol_activation:
+			rc = emv_ep_protocol_activation(ep, started_at_b);
+			started_at_b = false;
+			break;
+
+		case eps_combination_selection:
+			rc = emv_ep_combination_selection(ep);
+			break;
+
+		case eps_final_combination_selection:
+			rc = emv_ep_final_combination_selection(ep);
+			break;
+
+		case eps_kernel_activation:
+			rc = emv_ep_kernel_activation(ep);
+			break;
+
+		case eps_outcome_processing:
+			rc = emv_ep_outcome_processing(ep);
+			break;
+
+		case eps_done:
+			break;
+
+		default:
+			assert(false);
+		}
+	} while ((rc == EMV_RC_OK) && (ep->state != eps_done));
 
 	return rc;
 }
@@ -875,7 +1382,7 @@ static int parse_combination(struct tlv *tlv_combination,
 			continue;
 		}
 
-		if (!memcmp(tag, TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED,
+		if (!memcmp(tag, TLV_ID_LIBEMV_EXT_SELECTION_SUPPORTED,
 								    tag_size)) {
 			uint8_t enabled;
 			size_t enabled_sz = sizeof(enabled);
@@ -891,62 +1398,60 @@ static int parse_combination(struct tlv *tlv_combination,
 		}
 
 		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT, tag_size)) {
-			size_t size = 0;
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv_attr, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
 
 			cfg->present.reader_ctls_txn_limit = 1;
-
-			size = sizeof(cfg->reader_ctls_txn_limit);
-			rc = tlv_encode_value(tlv_attr,
-					     cfg->reader_ctls_txn_limit, &size);
-			if ((rc != TLV_RC_OK) ||
-			    (size != sizeof(cfg->reader_ctls_txn_limit)))
-				return EMV_RC_SYNTAX_ERROR;
+			cfg->reader_ctls_txn_limit = bcd_to_u64(amount, size);
 
 			continue;
 		}
 
 		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT,
 								    tag_size)) {
-			size_t size = 0;
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv_attr, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
 
 			cfg->present.reader_ctls_floor_limit = 1;
-
-			size = sizeof(cfg->reader_ctls_floor_limit);
-			rc = tlv_encode_value(tlv_attr,
-					   cfg->reader_ctls_floor_limit, &size);
-			if ((rc != TLV_RC_OK) ||
-			    (size != sizeof(cfg->reader_ctls_floor_limit)))
-				return EMV_RC_SYNTAX_ERROR;
+			cfg->reader_ctls_floor_limit = bcd_to_u64(amount, size);
 
 			continue;
 		}
 
 		if (!memcmp(tag, TLV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT,
 								    tag_size)) {
-			size_t size = sizeof(cfg->terminal_floor_limit);
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv_attr, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
 
 			cfg->present.terminal_floor_limit = 1;
-
-			rc = tlv_encode_value(tlv_attr,
-					      cfg->terminal_floor_limit, &size);
-			if ((rc != TLV_RC_OK) ||
-			    (size != sizeof(cfg->terminal_floor_limit)))
-				return EMV_RC_SYNTAX_ERROR;
+			cfg->terminal_floor_limit = bcd_to_u64(amount, size);
 
 			continue;
 		}
 
 		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT,
 								    tag_size)) {
-			size_t size = sizeof(cfg->reader_cvm_reqd_limit);
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv_attr, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
 
 			cfg->present.reader_cvm_reqd_limit = 1;
-
-			rc = tlv_encode_value(tlv_attr,
-					     cfg->reader_cvm_reqd_limit, &size);
-			if ((rc != TLV_RC_OK) ||
-			    (size != sizeof(cfg->reader_cvm_reqd_limit)))
-				return EMV_RC_SYNTAX_ERROR;
+			cfg->reader_cvm_reqd_limit = bcd_to_u64(amount, size);
 
 			continue;
 		}
