@@ -136,7 +136,8 @@ struct emv_ep {
 	struct emv_outcome_parms	outcome;
 };
 
-int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel)
+int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
+				 const uint8_t *kernel_id, size_t kernel_id_len)
 {
 	struct emv_ep_reg_kernel_set *set = &ep->reg_kernel_set;
 	int rc = EMV_RC_OK;
@@ -149,12 +150,9 @@ int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel)
 		goto error;
 	}
 
-	set->kernel[i_kernel].kernel_id_len = sizeof(set->kernel[0].kernel_id);
-	rc = kernel->ops->get_id(kernel, set->kernel[i_kernel].kernel_id,
-					  &set->kernel[i_kernel].kernel_id_len);
 	set->kernel[i_kernel].kernel = kernel;
-	if (rc)
-		goto error;
+	set->kernel[i_kernel].kernel_id_len = kernel_id_len;
+	memcpy(set->kernel[i_kernel].kernel_id, kernel_id, kernel_id_len);
 
 	return EMV_RC_OK;
 
@@ -164,6 +162,7 @@ error:
 		set->kernel = NULL;
 		set->size = 0;
 	}
+
 	return rc;
 };
 

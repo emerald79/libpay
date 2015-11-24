@@ -238,7 +238,8 @@ void emv_ep_free(struct emv_ep *ep);
 
 int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
 
-int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel);
+int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
+				const uint8_t *kernel_id, size_t kernel_id_len);
 
 int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 
