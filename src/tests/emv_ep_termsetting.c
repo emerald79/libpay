@@ -37,6 +37,7 @@
 #define KERNEL_ID_TK4 .kernel_id = { 0x04 }, .kernel_id_len = 1
 #define KERNEL_ID_TK5 .kernel_id = { 0x05 }, .kernel_id_len = 1
 #define KERNEL_ID_TK6 .kernel_id = { 0x06 }, .kernel_id_len = 1
+#define KERNEL_ID_TK7 .kernel_id = { 0x07 }, .kernel_id_len = 1
 #define KERNEL_ID_21  .kernel_id = { 0x21 }, .kernel_id_len = 1
 #define KERNEL_ID_22  .kernel_id = { 0x22 }, .kernel_id_len = 1
 #define KERNEL_ID_23  .kernel_id = { 0x23 }, .kernel_id_len = 1
@@ -108,7 +109,6 @@ struct emv_ep_combination termsetting2[] = {
 		.config = {
 			.present = {
 				.status_check_support = true,
-				.zero_amount_allowed = true,
 				.reader_cvm_reqd_limit = true
 			},
 			.reader_cvm_reqd_limit = 10,
@@ -123,17 +123,19 @@ struct emv_ep_combination termsetting2[] = {
 		},
 		.config = {
 			.present = {
+				.status_check_support = true,
 				.zero_amount_allowed = true,
-				.reader_ctls_floor_limit = true,
-				.reader_cvm_reqd_limit = true,
+				.reader_ctls_txn_limit = true,
+				.terminal_floor_limit = true,
 				.ttq = true,
 				.ext_selection_support = true
 			},
 			.enabled = {
-				.ext_selection_support = true,
+				.status_check_support = true,
 			},
-			.reader_ctls_floor_limit = 50,
-			.reader_cvm_reqd_limit = 20,
+			.reader_ctls_txn_limit = 200,
+			.terminal_floor_limit = 25,
+			.ttq = { 0x28, 0x00, 0x00, 0x00 }
 		}
 	},
 	{
@@ -145,21 +147,40 @@ struct emv_ep_combination termsetting2[] = {
 		},
 		.config = {
 			.present = {
-				.status_check_support = true,
 				.zero_amount_allowed = true,
-				.reader_ctls_txn_limit = true,
-				.terminal_floor_limit = true,
+				.reader_ctls_floor_limit = true,
+				.reader_cvm_reqd_limit = true,
 				.ttq = true,
 				.ext_selection_support = true,
 			},
 			.enabled = {
-				.status_check_support = true,
+				.ext_selection_support = true,
 			},
-			.reader_cvm_reqd_limit = 10,
+			.reader_ctls_floor_limit = 50,
+			.reader_cvm_reqd_limit = 20,
 			.ttq = { 0x84, 0xC0, 0x80, 0x00 }
 		}
 	},
-	/* FIXME: One more here */
+	{
+		.combinations = {
+			{ AID_A0000000041010, KERNEL_ID_TK4 },
+			{ AID_A0000000020002, KERNEL_ID_24  }
+		},
+		.config = {
+			.present = {
+				.zero_amount_allowed = true,
+				.reader_ctls_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.zero_amount_allowed = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_floor_limit = 20,
+			.ttq = { 0x84, 0x00, 0x80, 0x00 }
+		}
+	},
 	{
 		.combinations = {
 			{ AID_A0000000031010, KERNEL_ID_TK1 },
@@ -198,5 +219,44 @@ struct emv_ep_combination termsetting2[] = {
 			.ttq = { 0x28, 0x00, 0x00, 0x00 }
 		}
 	},
-	/* FIXME: Two more here */
+	{
+		.combinations = {
+			{ AID_A0000000251010, KERNEL_ID_TK3 },
+			{ AID_A0000000040004, KERNEL_ID_23  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_floor_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_floor_limit = 50,
+			.reader_cvm_reqd_limit = 20
+		}
+	},
+	{
+		.combinations = {
+			{ AID_A0000000251010, KERNEL_ID_2B  },
+			{ AID_A0000001523010, KERNEL_ID_TK6 },
+			{ AID_A0000003330101, KERNEL_ID_TK7 },
+			{ AID_A0000003241010, KERNEL_ID_TK6  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.reader_ctls_txn_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_txn_limit = 120,
+			.reader_cvm_reqd_limit = 10
+		}
+	},
 };
