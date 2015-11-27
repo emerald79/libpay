@@ -1316,10 +1316,12 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 }
 
 static int parse_combination(struct tlv *tlv_combination,
-						struct emv_ep_combination *comb)
+	       const struct emv_ep_config *cfg, struct emv_ep_combination *comb)
 {
 	int rc = EMV_RC_OK;
 	struct tlv *tlv_attr = NULL;
+
+	memcpy(&comb->config, cfg, sizeof(struct emv_ep_config));
 
 	for (tlv_attr = tlv_get_child(tlv_combination);
 	     tlv_attr;
@@ -1351,131 +1353,13 @@ static int parse_combination(struct tlv *tlv_combination,
 
 			continue;
 		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED,
-								    tag_size)) {
-			uint8_t enabled;
-			size_t enabled_sz = sizeof(enabled);
-
-			rc = tlv_encode_value(tlv_attr, &enabled, &enabled_sz);
-			if ((rc != TLV_RC_OK) || (!enabled_sz))
-				return EMV_RC_SYNTAX_ERROR;
-
-			cfg->present.status_check_support = 1;
-			cfg->enabled.status_check_support = !!enabled;
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED, tag_size)) {
-			uint8_t enabled;
-			size_t enabled_sz = sizeof(enabled);
-
-			rc = tlv_encode_value(tlv_attr, &enabled, &enabled_sz);
-			if ((rc != TLV_RC_OK) || (!enabled_sz))
-				return EMV_RC_SYNTAX_ERROR;
-
-			cfg->present.zero_amount_allowed = 1;
-			cfg->enabled.zero_amount_allowed = !!enabled;
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_EXT_SELECTION_SUPPORTED,
-								    tag_size)) {
-			uint8_t enabled;
-			size_t enabled_sz = sizeof(enabled);
-
-			rc = tlv_encode_value(tlv_attr, &enabled, &enabled_sz);
-			if ((rc != TLV_RC_OK) || (!enabled_sz))
-				return EMV_RC_SYNTAX_ERROR;
-
-			cfg->present.ext_selection_support = 1;
-			cfg->enabled.ext_selection_support = !!enabled;
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT, tag_size)) {
-			uint8_t amount[6];
-			size_t size = sizeof(amount);
-
-			rc = tlv_encode_value(tlv_attr, amount, &size);
-			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
-				return EMV_RC_SYNTAX_ERROR;
-
-			cfg->present.reader_ctls_txn_limit = 1;
-			cfg->reader_ctls_txn_limit = bcd_to_u64(amount, size);
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT,
-								    tag_size)) {
-			uint8_t amount[6];
-			size_t size = sizeof(amount);
-
-			rc = tlv_encode_value(tlv_attr, amount, &size);
-			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
-				return EMV_RC_SYNTAX_ERROR;
-
-			cfg->present.reader_ctls_floor_limit = 1;
-			cfg->reader_ctls_floor_limit = bcd_to_u64(amount, size);
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT,
-								    tag_size)) {
-			uint8_t amount[6];
-			size_t size = sizeof(amount);
-
-			rc = tlv_encode_value(tlv_attr, amount, &size);
-			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
-				return EMV_RC_SYNTAX_ERROR;
-
-			cfg->present.terminal_floor_limit = 1;
-			cfg->terminal_floor_limit = bcd_to_u64(amount, size);
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT,
-								    tag_size)) {
-			uint8_t amount[6];
-			size_t size = sizeof(amount);
-
-			rc = tlv_encode_value(tlv_attr, amount, &size);
-			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
-				return EMV_RC_SYNTAX_ERROR;
-
-			cfg->present.reader_cvm_reqd_limit = 1;
-			cfg->reader_cvm_reqd_limit = bcd_to_u64(amount, size);
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_TTQ, tag_size)) {
-			size_t size = sizeof(cfg->ttq);
-
-			cfg->present.ttq = 1;
-
-			rc = tlv_encode_value(tlv_attr, cfg->ttq, &size);
-			if ((rc != TLV_RC_OK) || (size != sizeof(cfg->ttq)))
-				return EMV_RC_SYNTAX_ERROR;
-
-			continue;
-		}
-
-		if (!memcmp(tag, TLV_ID_LIBEMV_TRANSACTION_TYPES, tag_size))
-			return EMV_RC_SYNTAX_ERROR;
 	}
 
 	return EMV_RC_OK;
 }
 
 static int parse_combination_set(struct tlv *tlv_set,
-				 struct emv_ep_combination_set *set)
+	    const struct emv_ep_config *cfg, struct emv_ep_combination_set *set)
 {
 	struct tlv *tlv_comb = NULL;
 	int rc = EMV_RC_OK;
@@ -1490,7 +1374,8 @@ static int parse_combination_set(struct tlv *tlv_set,
 							      set->combinations,
 			   sizeof(struct emv_ep_combination) * (set->size + 1));
 
-		rc = parse_combination(tlv_comb, &set->combinations[set->size]);
+		rc = parse_combination(tlv_comb, cfg,
+						 &set->combinations[set->size]);
 		if (rc != TLV_RC_OK) {
 			rc = EMV_RC_SYNTAX_ERROR;
 			goto error;
@@ -1506,6 +1391,142 @@ error:
 		free(set->combinations);
 	set->size = 0;
 	return rc;
+}
+
+static int parse_emv_ep_config(struct tlv *tlv_set, struct emv_ep_config *cfg)
+{
+	struct tlv *tlv = NULL;
+	int rc = EMV_RC_OK;
+
+	for (tlv = tlv_get_child(tlv_set); tlv; tlv = tlv_get_next(tlv)) {
+		uint8_t tag[4];
+		size_t tag_size = sizeof(tag);
+
+		rc = tlv_encode_identifier(tlv, tag, &tag_size);
+		if ((rc != TLV_RC_OK) || (tag_size != sizeof(tag)))
+			return EMV_RC_SYNTAX_ERROR;
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED,
+								    tag_size)) {
+			uint8_t enabled;
+			size_t enabled_sz = sizeof(enabled);
+
+			rc = tlv_encode_value(tlv, &enabled, &enabled_sz);
+			if ((rc != TLV_RC_OK) || (!enabled_sz))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.status_check_support = 1;
+			cfg->enabled.status_check_support = !!enabled;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED, tag_size)) {
+			uint8_t enabled;
+			size_t enabled_sz = sizeof(enabled);
+
+			rc = tlv_encode_value(tlv, &enabled, &enabled_sz);
+			if ((rc != TLV_RC_OK) || (!enabled_sz))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.zero_amount_allowed = 1;
+			cfg->enabled.zero_amount_allowed = !!enabled;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_EXT_SELECTION_SUPPORTED,
+								    tag_size)) {
+			uint8_t enabled;
+			size_t enabled_sz = sizeof(enabled);
+
+			rc = tlv_encode_value(tlv, &enabled, &enabled_sz);
+			if ((rc != TLV_RC_OK) || (!enabled_sz))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.ext_selection_support = 1;
+			cfg->enabled.ext_selection_support = !!enabled;
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT, tag_size)) {
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.reader_ctls_txn_limit = 1;
+			cfg->reader_ctls_txn_limit = bcd_to_u64(amount, size);
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT,
+								    tag_size)) {
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.reader_ctls_floor_limit = 1;
+			cfg->reader_ctls_floor_limit = bcd_to_u64(amount, size);
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT,
+								    tag_size)) {
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.terminal_floor_limit = 1;
+			cfg->terminal_floor_limit = bcd_to_u64(amount, size);
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT,
+								    tag_size)) {
+			uint8_t amount[6];
+			size_t size = sizeof(amount);
+
+			rc = tlv_encode_value(tlv, amount, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(amount)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			cfg->present.reader_cvm_reqd_limit = 1;
+			cfg->reader_cvm_reqd_limit = bcd_to_u64(amount, size);
+
+			continue;
+		}
+
+		if (!memcmp(tag, TLV_ID_LIBEMV_TTQ, tag_size)) {
+			size_t size = sizeof(cfg->ttq);
+
+			cfg->present.ttq = 1;
+
+			rc = tlv_encode_value(tlv, cfg->ttq, &size);
+			if ((rc != TLV_RC_OK) || (size != sizeof(cfg->ttq)))
+				return EMV_RC_SYNTAX_ERROR;
+
+			continue;
+		}
+
+		if (memcmp(tag, TLV_ID_LIBEMV_TRANSACTION_TYPES, tag_size) &&
+		    memcmp(tag, TLV_ID_LIBEMV_COMBINATION, tag_size))
+			return EMV_RC_SYNTAX_ERROR;
+	}
+
+	return EMV_RC_OK;
 }
 
 int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
@@ -1525,10 +1546,15 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 	     tlv_combination_set;
 	     tlv_combination_set = tlv_find(tlv_get_next(tlv_combination_set),
 					       TLV_ID_LIBEMV_COMBINATION_SET)) {
-		enum emv_txn_type emv_txn_type = num_txn_types;
-		uint8_t txn_type = 0;
-		size_t txn_type_size = sizeof(txn_type);
+		struct emv_ep_config cfg;
+		uint8_t txn_types[4] = { 0, 0, 0, 0 };
+		size_t txn_types_sz = sizeof(txn_types);
 		struct tlv *tlv_txn_type = NULL;
+		int i_txn_type = 0;
+
+		rc = parse_emv_ep_config(tlv_combination_set, &cfg);
+		if (rc != EMV_RC_OK)
+			goto error;
 
 		tlv_txn_type = tlv_find(tlv_get_child(tlv_combination_set),
 					       TLV_ID_LIBEMV_TRANSACTION_TYPES);
@@ -1537,22 +1563,26 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 			goto error;
 		}
 
-		rc = tlv_encode_value(tlv_txn_type, &txn_type, &txn_type_size);
-		if ((rc != TLV_RC_OK) || (txn_type_size != 1)) {
+		rc = tlv_encode_value(tlv_txn_type, &txn_types, &txn_types_sz);
+		if ((rc != TLV_RC_OK) || (txn_types_sz < 1)) {
 			rc = EMV_RC_SYNTAX_ERROR;
 			goto error;
 		}
 
-		emv_txn_type = get_emv_txn_type(txn_type);
-		if (emv_txn_type >= num_txn_types) {
-			rc = EMV_RC_SYNTAX_ERROR;
-			goto error;
-		}
+		for (i_txn_type = 0; i_txn_type < txn_types_sz; i_txn_type++) {
+			enum emv_txn_type emv_txn_type = num_txn_types;
 
-		rc = parse_combination_set(tlv_combination_set,
-					    &ep->combination_set[emv_txn_type]);
-		if (rc != EMV_RC_OK)
-			goto error;
+			emv_txn_type = get_emv_txn_type(txn_types[i_txn_type]);
+			if (emv_txn_type >= num_txn_types) {
+				rc = EMV_RC_SYNTAX_ERROR;
+				goto error;
+			}
+
+			rc = parse_combination_set(tlv_combination_set, &cfg,
+						    &ep->combination_set[emv_txn_type]);
+			if (rc != EMV_RC_OK)
+				goto error;
+		}
 	}
 
 	return EMV_RC_OK;
