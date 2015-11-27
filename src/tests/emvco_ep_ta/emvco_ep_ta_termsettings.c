@@ -472,6 +472,10 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 						       sizeof(amount), amount));
 	}
 
+	if (comb->config.present.ttq)
+		tail = tlv_insert_after(tail, tlv_new(TLV_ID_LIBEMV_TTQ,
+				   sizeof(comb->config.ttq), comb->config.ttq));
+
 	return tlv;
 
 error:
@@ -481,7 +485,7 @@ error:
 	return NULL;
 }
 
-int get_termsetting2(void *buffer, size_t *size)
+int get_termsetting_n(int n, void *buffer, size_t *size)
 {
 	struct tlv *tlv = NULL, *tail = NULL;
 	int i;
@@ -497,18 +501,4 @@ int get_termsetting2(void *buffer, size_t *size)
 	tlv_free(tlv);
 
 	return TLV_RC_OK;
-}
-
-int main(void)
-{
-	uint8_t buffer[4096];
-	size_t size = sizeof(buffer), i;
-
-	get_termsetting2(buffer, &size);
-
-	for (i = 0; i < size; i++)
-		printf("%02X", buffer[i]);
-	printf("\n");
-
-	return EXIT_SUCCESS;
 }

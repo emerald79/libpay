@@ -183,9 +183,9 @@ struct emv_hal_ops {
 	int	(*wait_for_card)(struct emv_hal *hal);
 
 	int	(*transceive)(struct emv_hal *hal,
-			      const uint8_t  *capdu,
+			      const void     *capdu,
 			      size_t	     capdu_len,
-			      uint8_t	     *rapdu,
+			      void	     *rapdu,
 			      size_t	     *rapdu_len);
 
 	void	(*ui_request)(struct emv_hal	    *hal,
@@ -199,10 +199,6 @@ struct emv_hal {
 struct emv_kernel;
 
 struct emv_kernel_ops {
-	int (*get_id)	(struct emv_kernel *kernel,
-			 void		   *kernel_id,
-			 size_t		   *len);
-
 	int (*configure)(struct emv_kernel *kernel,
 			 const void	   *configuration,
 			 size_t		    length);

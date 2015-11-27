@@ -1,4 +1,4 @@
-AC_INIT(libtlv, 0.1)
+AC_INIT(libemv, 0.1)
 AC_CANONICAL_TARGET
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
@@ -18,6 +18,8 @@ AC_CONFIG_FILES([
 	src/libemv/libemv.pc
 	src/tlvdump/Makefile
 	src/tests/Makefile
+	src/tests/libtlv_test/Makefile
+	src/tests/emvco_ep_ta/Makefile
 ])
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
