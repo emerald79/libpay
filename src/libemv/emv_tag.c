@@ -141,3 +141,51 @@ done:
 		json_tokener_free(json_tokener);
 	return rc;
 }
+
+int emv_bcd_to_u64(const void *buffer, size_t len, uint64_t *u64)
+{
+	const uint8_t *bcd = (const uint8_t *)buffer;
+	size_t i = 0, j = 0;
+
+	if (!bcd || !u64)
+		return EMV_RC_INVALID_ARG;
+
+	for (i = len, *u64 = 0; i > 0; i--) {
+		for (j = 0; j < 2; j++) {
+			uint8_t digit = ((bcd[i - 1] >> (j * 4)) & 0xf);
+
+			if (digit > 9)
+				return EMV_RC_INVALID_ARG;
+
+			if (*u64 > (UINT64_MAX - digit) / 10)
+				return EMV_RC_OVERFLOW;
+
+			*u64 = *u64 * 10 + digit;
+		}
+	}
+
+	return EMV_RC_OK;
+}
+
+int emv_u64_to_bcd(uint64_t u64, void *buffer, size_t len)
+{
+	uint8_t *bcd = (uint8_t *)buffer;
+	size_t i = 0, j = 0;
+
+	if (!bcd)
+		return EMV_RC_INVALID_ARG;
+
+	memset(bcd, 0, len);
+
+	for (i = len; i > 0; i--) {
+		for (j = 0; j < 2; j++) {
+			bcd[i - 1] |= (u64 % 10) << (j * 4);
+			u64 /= 10;
+		}
+	}
+
+	if (u64)
+		return EMV_RC_OVERFLOW;
+
+	return EMV_RC_OK;
+}

@@ -60,7 +60,7 @@
 
 #define TLV_ID_LIBEMV_CONFIGURATION		TLV_ID_4(0xFF, 0x81, 0xE3, 0x71)
 #define TLV_ID_LIBEMV_COMBINATION_SET		TLV_ID_4(0xFF, 0x82, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_TRANSACTION_TYPE		TLV_ID_4(0xDF, 0x83, 0xE3, 0x71)
+#define TLV_ID_LIBEMV_TRANSACTION_TYPES		TLV_ID_4(0xDF, 0x83, 0xE3, 0x71)
 #define TLV_ID_LIBEMV_COMBINATION		TLV_ID_4(0xFF, 0x84, 0xE3, 0x71)
 #define TLV_ID_LIBEMV_AID			TLV_ID_4(0xDF, 0x85, 0xE3, 0x71)
 #define TLV_ID_LIBEMV_KERNEL_ID			TLV_ID_4(0xDF, 0x86, 0xE3, 0x71)
@@ -214,10 +214,10 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag);
  * @param[in]  tlv1  TLV node behind which the TLV structure shall be inserted.
  * @param[in]  tlv2  The TLV structure to be inserted.
  *
- * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
+ * @returns tlv2 on success, NULL on error.
  */
-int tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
+struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
 
-int tlv_insert_below(struct tlv *parent, struct tlv *child);
+struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child);
 
 #endif /* ndef __TLV_H__ */

@@ -191,8 +191,8 @@
   },
   {
     "tag"         : "DF83E371",
-    "name"        : "Transaction Type (libemv)",
-    "description" : "Transaction Type ('00' = Purchase, '01' = Cash Advance, '09' = Purchase with Cashback, '20' = Refund)",
+    "name"        : "Transaction Types (1 - 4) (libemv)",
+    "description" : "Transaction Types ('00' = Purchase, '01' = Cash Advance, '09' = Purchase with Cashback, '20' = Refund)",
     "source"      : "Terminal",
     "template"    : [ "FF82E371" ]
   },

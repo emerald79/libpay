@@ -14,7 +14,7 @@ int geldkarte_get_id(struct emv_kernel *kernel, void *kernel_id, size_t *len)
 	const uint8_t geldkarte_id[] = { 0xC0, 0x61, 0x50 };
 
 	if (*len < sizeof(geldkarte_id))
-		return EMV_RC_BUFFER_OVERFLOW;
+		return EMV_RC_OVERFLOW;
 
 	*len = sizeof(geldkarte_id);
 	memcpy(kernel_id, geldkarte_id, sizeof(geldkarte_id));

@@ -175,7 +175,7 @@ END_TEST
 
 START_TEST(test_tlv_construct)
 {
-	struct tlv *tlv, *tlv2;
+	struct tlv *tlv, *tlv2, *tlv3;
 	uint8_t read_record_rsp[] = {
 		0x70, 0x39, 0x5A, 0x0A, 0x67, 0x99, 0x99, 0x89, 0x00, 0x00,
 		0x02, 0x00, 0x06, 0x9F, 0x5F, 0x24, 0x03, 0x25, 0x12, 0x31,
@@ -208,8 +208,8 @@ START_TEST(test_tlv_construct)
 	rc = tlv_parse(read_record_rsp, sizeof(read_record_rsp), &tlv2);
 	ck_assert(rc == TLV_RC_OK);
 
-	rc = tlv_insert_after(tlv_get_child(tlv), tlv2);
-	ck_assert(rc == TLV_RC_OK);
+	tlv3 = tlv_insert_after(tlv_get_child(tlv), tlv2);
+	ck_assert(tlv3 == tlv2);
 
 	size = sizeof(encoded);
 	rc = tlv_encode(tlv, encoded, &size);

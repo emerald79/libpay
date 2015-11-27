@@ -752,7 +752,7 @@ int emv_ep_parse_ppse(const void *fci, size_t fci_len,
 		tlv_free(ppse);
 
 	if ((num == *num_entries) && (i_tlv))
-		return EMV_RC_BUFFER_OVERFLOW;
+		return EMV_RC_OVERFLOW;
 
 	*num_entries = num;
 	return EMV_RC_OK;
@@ -1467,7 +1467,7 @@ static int parse_combination(struct tlv *tlv_combination,
 			continue;
 		}
 
-		if (!memcmp(tag, TLV_ID_LIBEMV_TRANSACTION_TYPE, tag_size))
+		if (!memcmp(tag, TLV_ID_LIBEMV_TRANSACTION_TYPES, tag_size))
 			return EMV_RC_SYNTAX_ERROR;
 	}
 
@@ -1531,7 +1531,7 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 		struct tlv *tlv_txn_type = NULL;
 
 		tlv_txn_type = tlv_find(tlv_get_child(tlv_combination_set),
-						TLV_ID_LIBEMV_TRANSACTION_TYPE);
+					       TLV_ID_LIBEMV_TRANSACTION_TYPES);
 		if (!tlv_txn_type) {
 			rc = EMV_RC_SYNTAX_ERROR;
 			goto error;

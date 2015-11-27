@@ -5,3 +5,5 @@ emv_ep_configure
 emv_ep_activate
 emv_ep_free
 emv_tag_parse_descriptors
+emv_u64_to_bcd
+emv_bcd_to_u64

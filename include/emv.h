@@ -28,7 +28,7 @@
 #define EMV_RC_UNSUPPORTED_CURRENCY_CODE	2
 #define EMV_RC_RF_COMMUNICATION_ERROR		3
 #define EMV_RC_CARD_PROTOCOL_ERROR		4
-#define EMV_RC_BUFFER_OVERFLOW			5
+#define EMV_RC_OVERFLOW				5
 #define EMV_RC_OUT_OF_MEMORY			6
 #define EMV_RC_SYNTAX_ERROR			7
 #define EMV_RC_NO_KERNEL			8
@@ -288,5 +288,12 @@ struct emv_tag_descriptor {
 
 int emv_tag_parse_descriptors(const char *json_string,
 	      struct emv_tag_descriptor **descriptors, size_t *num_descriptors);
+
+/*-----------------------------------------------------------------------------+
+| Helpers								       |
++-----------------------------------------------------------------------------*/
+
+int emv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
+int emv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
 
 #endif							    /* ndef __EMV_H__ */
