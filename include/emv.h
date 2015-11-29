@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <tlv.h>
 
 #define EMV_RC_OK				0
 #define EMV_RC_UNSUPPORTED_TRANSACTION_TYPE	1
@@ -51,6 +52,36 @@
 #define EMV_SW_6D00_INS_NOT_SUPPORTED	EMV_SW('\x6E', '\x00')
 #define EMV_SW_6E00_CLA_NOT_SUPPORTED	EMV_SW('\x6E', '\x00')
 #define EMV_SW_9000_OK			EMV_SW('\x90', '\x00')
+
+#define EMV_ID_ADF_NAME				TLV_ID_1(0x4F)
+#define EMV_ID_APPLICATION_LABEL		TLV_ID_1(0x50)
+#define EMV_ID_DIRECTORY_ENTRY			TLV_ID_1(0x61)
+#define EMV_ID_FCI_TEMPLATE			TLV_ID_1(0x6F)
+#define EMV_ID_DF_NAME				TLV_ID_1(0x84)
+#define EMV_ID_APPLICATION_PRIORITY_INDICATOR	TLV_ID_1(0x87)
+#define EMV_ID_KERNEL_IDENTIFIER		TLV_ID_2(0x9F, 0x2A)
+#define EMV_ID_EXTENDED_SELECTION		TLV_ID_2(0x9F, 0x29)
+#define EMV_ID_PDOL				TLV_ID_2(0x9F, 0x38)
+#define EMV_ID_FCI_PROPRIETARY_TEMPLATE		TLV_ID_1(0xA5)
+#define EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA	TLV_ID_2(0xBF, 0x0C)
+
+#define EMV_ID_LIBEMV_CONFIGURATION		TLV_ID_4(0xFF, 0x81, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_COMBINATION_SET		TLV_ID_4(0xFF, 0x82, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_TRANSACTION_TYPES		TLV_ID_4(0xDF, 0x83, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_COMBINATION		TLV_ID_4(0xFF, 0x84, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_AID			TLV_ID_4(0xDF, 0x85, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_KERNEL_ID			TLV_ID_4(0xDF, 0x86, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_STATUS_CHECK_SUPPORTED	TLV_ID_4(0xDF, 0x87, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED	TLV_ID_4(0xDF, 0x88, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_EXT_SELECTION_SUPPORTED	TLV_ID_4(0xDF, 0x89, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT	TLV_ID_4(0xDF, 0x8A, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8B, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8C, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT	TLV_ID_4(0xDF, 0x8D, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_TTQ			TLV_ID_4(0xDF, 0x8E, 0xE3, 0x71)
+#define EMV_ID_LIBEMB_AUTORUN			TLV_ID_4(0xFF, 0x8F, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE	TLV_ID_4(0xDF, 0x90, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORISED	TLV_ID_4(0xDF, 0x91, 0xE3, 0x71)
 
 enum emv_message_identifier {
 	msg_approved			= 0x03,
@@ -295,13 +326,5 @@ struct emv_tag_descriptor {
 
 int emv_tag_parse_descriptors(const char *json_string,
 	      struct emv_tag_descriptor **descriptors, size_t *num_descriptors);
-
-/*-----------------------------------------------------------------------------+
-| Helpers								       |
-+-----------------------------------------------------------------------------*/
-
-int emv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
-int emv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
-const char *emv_blob_to_hex(const void *blob, size_t blob_sz);
 
 #endif							    /* ndef __EMV_H__ */

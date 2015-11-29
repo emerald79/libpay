@@ -868,3 +868,128 @@ error:
 	}
 	return NULL;
 }
+
+int tlv_process_dol(struct tlv *data_elements, const void *dol, size_t dol_sz,
+						    void *data, size_t *data_sz)
+{
+	const void *i_dol = dol;
+	uint8_t *out_data = (uint8_t *)data;
+	size_t out_data_sz = 0;
+	int rc = TLV_RC_OK;
+
+	while (i_dol - dol < dol_sz) {
+		size_t dol_sz_left = 0;
+		struct tlv tlv_do, *tlv_de;
+		uint8_t tag[6];
+		size_t tag_sz = sizeof(tag);
+
+		dol_sz_left = dol_sz - (i_dol - dol);
+		rc = tlv_parse_identifier(&i_dol, dol_sz_left, &tlv_do);
+		if (rc != TLV_RC_OK) {
+			printf("%s(): tlv_parse_identifier_fail!\n", __func__);
+			goto done;
+		}
+
+		dol_sz_left = dol_sz - (i_dol - dol);
+		rc = tlv_parse_length(&i_dol, dol_sz_left, &tlv_do);
+		if (rc != TLV_RC_OK) {
+			printf("%s(): tlv_parse_length_fail!\n", __func__);
+			goto done;
+		}
+
+		rc = tlv_encode_identifier(&tlv_do, tag, &tag_sz);
+		if (rc != TLV_RC_OK) {
+			printf("%s(): tlv_encode_identifier_fail!\n", __func__);
+			goto done;
+		}
+
+		if (out_data_sz + tlv_do.length > *data_sz) {
+			rc = TLV_RC_BUFFER_OVERFLOW;
+			goto done;
+		}
+
+		tlv_de = tlv_find(data_elements, tag);
+		if (!tlv_de || tlv_is_constructed(tlv_de)) {
+			memset(&out_data[out_data_sz], 0, tlv_do.length);
+			out_data_sz += tlv_do.length;
+		} else {
+			/* FIXME */
+			memset(&out_data[out_data_sz], 0, tlv_do.length);
+			out_data_sz += tlv_do.length;
+		}
+	}
+
+done:
+	return rc;
+}
+
+int tlv_bcd_to_u64(const void *buffer, size_t len, uint64_t *u64)
+{
+	const uint8_t *bcd = (const uint8_t *)buffer;
+	size_t i = 0, j = 0;
+
+	if (!bcd || !u64)
+		return TLV_RC_INVALID_ARG;
+
+	for (i = len, *u64 = 0; i > 0; i--) {
+		for (j = 0; j < 2; j++) {
+			uint8_t digit = ((bcd[i - 1] >> (j * 4)) & 0xf);
+
+			if (digit > 9)
+				return TLV_RC_INVALID_ARG;
+
+			if (*u64 > (UINT64_MAX - digit) / 10)
+				return TLV_RC_VALUE_OUT_OF_RANGE;
+
+			*u64 = *u64 * 10 + digit;
+		}
+	}
+
+	return TLV_RC_OK;
+}
+
+int tlv_u64_to_bcd(uint64_t u64, void *buffer, size_t len)
+{
+	uint8_t *bcd = (uint8_t *)buffer;
+	size_t i = 0, j = 0;
+
+	if (!bcd)
+		return TLV_RC_INVALID_ARG;
+
+	memset(bcd, 0, len);
+
+	for (i = len; i > 0; i--) {
+		for (j = 0; j < 2; j++) {
+			bcd[i - 1] |= (u64 % 10) << (j * 4);
+			u64 /= 10;
+		}
+	}
+
+	if (u64)
+		return TLV_RC_VALUE_OUT_OF_RANGE;
+
+	return TLV_RC_OK;
+}
+
+const char *tlv_bin_to_hex(const void *blob, size_t blob_sz)
+{
+	const uint8_t hex_digit[16] = {
+		'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+	};
+	const uint8_t *bin = (const uint8_t *)blob;
+	static __thread char hex[68];
+	size_t i;
+
+	for (i = 0; (i < blob_sz) && (i < 32); i++) {
+		hex[i * 2]     = hex_digit[bin[i] >> 4];
+		hex[i * 2 + 1] = hex_digit[bin[i] & 0xf];
+	}
+
+	if (i < blob_sz)
+		strcpy(&hex[i * 2], "...");
+	else
+		hex[i * 2] = '\0';
+
+	return hex;
+}

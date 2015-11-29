@@ -1,5 +1,7 @@
 #include <log4c.h>
+
 #include <emv.h>
+#include <tlv.h>
 
 #include "emvco_ep_ta.h"
 
@@ -26,10 +28,53 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 							   size_t *txn_data_len)
 {
 	struct tk *tk = (struct tk *)kernel;
+	struct tlv *tlv_fci = NULL, *tlv = NULL;
+	uint8_t pdol[256], gpo_data[256];
+	size_t pdol_sz = sizeof(pdol), gpo_data_sz = sizeof(gpo_data);
+	int rc = EMV_RC_OK;
 
-	log4c_category_log(tk->log_cat,
-			       LOG4C_PRIORITY_TRACE, "%s(): success", __func__);
-	return EMV_RC_OK;
+	rc = tlv_parse(fci, fci_len, &tlv_fci);
+	if (rc != TLV_RC_OK) {
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	tlv = tlv_find(tlv_get_child(tlv_find(tlv_get_child(tlv_find(tlv_fci,
+		       EMV_ID_FCI_TEMPLATE)), EMV_ID_FCI_PROPRIETARY_TEMPLATE)),
+								   EMV_ID_PDOL);
+	if (!tlv) {
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	rc = tlv_encode_value(tlv, pdol, &pdol_sz);
+	if (rc != TLV_RC_OK) {
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
+		    "%s(): PDOL='%s'", __func__, tlv_bin_to_hex(pdol, pdol_sz));
+
+	rc = tlv_process_dol(NULL, pdol, pdol_sz, gpo_data, &gpo_data_sz);
+	if (rc != TLV_RC_OK) {
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+done:
+	if (tlv_fci)
+		tlv_free(tlv_fci);
+
+	if (rc == EMV_RC_OK) {
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
+						     "%s(): success", __func__);
+	} else {
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_NOTICE,
+					     "%s(): fail. rc %d", __func__, rc);
+	}
+
+	return rc;
 }
 
 const struct emv_kernel_ops tk_ops = {

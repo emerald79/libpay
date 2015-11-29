@@ -91,26 +91,26 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 {
 	struct tlv *tlv_ppse_entry = NULL, *tlv = NULL;
 
-	tlv_ppse_entry = tlv_new(TLV_ID_DIRECTORY_ENTRY, 0, NULL);
+	tlv_ppse_entry = tlv_new(EMV_ID_DIRECTORY_ENTRY, 0, NULL);
 
 	tlv = tlv_insert_below(tlv_ppse_entry,
-			      tlv_new(TLV_ID_ADF_NAME, ent->aid_len, ent->aid));
+			      tlv_new(EMV_ID_ADF_NAME, ent->aid_len, ent->aid));
 
 	if (ent->present.app_label)
-		tlv = tlv_insert_after(tlv, tlv_new(TLV_ID_APPLICATION_LABEL,
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
 					   ent->app_label_len, ent->app_label));
 
 	if (ent->present.app_prio)
 		tlv = tlv_insert_after(tlv,
-				  tlv_new(TLV_ID_APPLICATION_PRIORITY_INDICATOR,
+				  tlv_new(EMV_ID_APPLICATION_PRIORITY_INDICATOR,
 							    1, &ent->app_prio));
 
 	if (ent->present.kernel_id)
-		tlv = tlv_insert_after(tlv, tlv_new(TLV_ID_KERNEL_IDENTIFIER,
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_KERNEL_IDENTIFIER,
 					   ent->kernel_id_len, ent->kernel_id));
 
 	if (ent->present.ext_select)
-		tlv = tlv_insert_after(tlv, tlv_new(TLV_ID_EXTENDED_SELECTION,
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_EXTENDED_SELECTION,
 					 ent->ext_select_len, ent->ext_select));
 
 	return tlv_ppse_entry;
@@ -123,14 +123,14 @@ static int ber_get_ppse(const struct ppse_entry *entries, size_t num_entries,
 	size_t i = 0;
 	int rc = TLV_RC_OK;
 
-	tlv_ppse = tlv_new(TLV_ID_FCI_TEMPLATE, 0, NULL);
+	tlv_ppse = tlv_new(EMV_ID_FCI_TEMPLATE, 0, NULL);
 
-	tlv = tlv_insert_below(tlv_ppse, tlv_new(TLV_ID_DF_NAME,
+	tlv = tlv_insert_below(tlv_ppse, tlv_new(EMV_ID_DF_NAME,
 		       strlen(DF_NAME_2PAY_SYS_DDF01), DF_NAME_2PAY_SYS_DDF01));
 	tlv = tlv_insert_after(tlv,
-			     tlv_new(TLV_ID_FCI_PROPRIETARY_TEMPLATE, 0, NULL));
+			     tlv_new(EMV_ID_FCI_PROPRIETARY_TEMPLATE, 0, NULL));
 	tlv = tlv_insert_below(tlv,
-			tlv_new(TLV_ID_FCI_ISSUER_DISCRETIONARY_DATA, 0, NULL));
+			tlv_new(EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA, 0, NULL));
 
 	tlv = tlv_insert_below(tlv, tlv_get_ppse_entry(&entries[0]));
 	for (i = 1; i < num_entries; i++)
@@ -149,17 +149,17 @@ static int ber_get_aid_fci(const struct aid_fci *aid_fci, void *ber,
 	struct tlv *tlv_aid_fci = NULL, *tlv = NULL;
 	int rc = TLV_RC_OK;
 
-	tlv_aid_fci = tlv_new(TLV_ID_FCI_TEMPLATE, 0, NULL);
+	tlv_aid_fci = tlv_new(EMV_ID_FCI_TEMPLATE, 0, NULL);
 
-	tlv = tlv_insert_below(tlv_aid_fci, tlv_new(TLV_ID_DF_NAME,
+	tlv = tlv_insert_below(tlv_aid_fci, tlv_new(EMV_ID_DF_NAME,
 					       aid_fci->aid_len, aid_fci->aid));
-	tlv = tlv_insert_after(tlv, tlv_new(TLV_ID_FCI_PROPRIETARY_TEMPLATE, 0,
+	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_FCI_PROPRIETARY_TEMPLATE, 0,
 									 NULL));
-	tlv = tlv_insert_below(tlv, tlv_new(TLV_ID_APPLICATION_LABEL,
+	tlv = tlv_insert_below(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
 				   aid_fci->app_label_len, aid_fci->app_label));
 	tlv = tlv_insert_after(tlv, tlv_new(
-		 TLV_ID_APPLICATION_PRIORITY_INDICATOR, 1, &aid_fci->app_prio));
-	tlv = tlv_insert_after(tlv, tlv_new(TLV_ID_PDOL, aid_fci->pdol_len,
+		 EMV_ID_APPLICATION_PRIORITY_INDICATOR, 1, &aid_fci->app_prio));
+	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_PDOL, aid_fci->pdol_len,
 								aid_fci->pdol));
 
 	rc = tlv_encode(tlv_aid_fci, ber, ber_size);
@@ -260,7 +260,7 @@ int lt_transceive(struct emv_hal *hal, const void *capdu, size_t capdu_sz,
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE, "%s(capdu: '%s')",
-				    __func__, emv_blob_to_hex(capdu, capdu_sz));
+				     __func__, tlv_bin_to_hex(capdu, capdu_sz));
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 

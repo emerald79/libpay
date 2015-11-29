@@ -293,10 +293,10 @@ static struct tlv *get_combinations(struct emv_ep_aid_kernel *aid_kernel)
 		if (!aid_kernel->aid_len)
 			break;
 
-		tlv = tlv_new(TLV_ID_LIBEMV_COMBINATION, 0, NULL);
-		tail = tlv_insert_below(tlv, tlv_new(TLV_ID_LIBEMV_AID,
+		tlv = tlv_new(EMV_ID_LIBEMV_COMBINATION, 0, NULL);
+		tail = tlv_insert_below(tlv, tlv_new(EMV_ID_LIBEMV_AID,
 					 aid_kernel->aid_len, aid_kernel->aid));
-		tail = tlv_insert_after(tail, tlv_new(TLV_ID_LIBEMV_KERNEL_ID,
+		tail = tlv_insert_after(tail, tlv_new(EMV_ID_LIBEMV_KERNEL_ID,
 			     aid_kernel->kernel_id_len, aid_kernel->kernel_id));
 
 		if (!tlv_combinations)
@@ -336,14 +336,14 @@ static struct tlv *get_txn_types(enum emv_txn_type *txn_types)
 		}
 	}
 
-	return tlv_new(TLV_ID_LIBEMV_TRANSACTION_TYPES, len, value);
+	return tlv_new(EMV_ID_LIBEMV_TRANSACTION_TYPES, len, value);
 }
 
 static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 {
 	struct tlv *tlv = NULL, *tail = NULL;
 
-	tlv = tlv_new(TLV_ID_LIBEMV_COMBINATION_SET, 0, NULL);
+	tlv = tlv_new(EMV_ID_LIBEMV_COMBINATION_SET, 0, NULL);
 
 	tail = tlv_insert_below(tlv, get_txn_types(comb->txn_types));
 
@@ -356,34 +356,34 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t enabled = comb->config.enabled.status_check_support;
 
 		tail = tlv_insert_after(tail, tlv_new(
-			    TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED, 1, &enabled));
+			    EMV_ID_LIBEMV_STATUS_CHECK_SUPPORTED, 1, &enabled));
 	}
 
 	if (comb->config.present.zero_amount_allowed) {
 		uint8_t enabled = comb->config.enabled.zero_amount_allowed;
 
 		tail = tlv_insert_after(tail, tlv_new(
-			       TLV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED, 1, &enabled));
+			       EMV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED, 1, &enabled));
 	}
 
 	if (comb->config.present.ext_selection_support) {
 		uint8_t enabled = comb->config.enabled.ext_selection_support;
 
 		tail = tlv_insert_after(tail, tlv_new(
-			   TLV_ID_LIBEMV_EXT_SELECTION_SUPPORTED, 1, &enabled));
+			   EMV_ID_LIBEMV_EXT_SELECTION_SUPPORTED, 1, &enabled));
 	}
 
 	if (comb->config.present.reader_ctls_txn_limit) {
 		uint8_t amount[6];
 		int rc;
 
-		rc = emv_u64_to_bcd(comb->config.reader_ctls_txn_limit,
+		rc = tlv_u64_to_bcd(comb->config.reader_ctls_txn_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;
 
 		tail = tlv_insert_after(tail, tlv_new(
-					       TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT,
+					       EMV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT,
 						       sizeof(amount), amount));
 	}
 
@@ -391,13 +391,13 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t amount[6];
 		int rc;
 
-		rc = emv_u64_to_bcd(comb->config.reader_ctls_floor_limit,
+		rc = tlv_u64_to_bcd(comb->config.reader_ctls_floor_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;
 
 		tail = tlv_insert_after(tail, tlv_new(
-					     TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT,
+					     EMV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT,
 						       sizeof(amount), amount));
 	}
 
@@ -405,13 +405,13 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t amount[6];
 		int rc;
 
-		rc = emv_u64_to_bcd(comb->config.terminal_floor_limit,
+		rc = tlv_u64_to_bcd(comb->config.terminal_floor_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;
 
 		tail = tlv_insert_after(tail, tlv_new(
-					     TLV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT,
+					     EMV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT,
 						       sizeof(amount), amount));
 	}
 
@@ -419,18 +419,18 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t amount[6];
 		int rc;
 
-		rc = emv_u64_to_bcd(comb->config.reader_cvm_reqd_limit,
+		rc = tlv_u64_to_bcd(comb->config.reader_cvm_reqd_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;
 
 		tail = tlv_insert_after(tail, tlv_new(
-					   TLV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT,
+					   EMV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT,
 						       sizeof(amount), amount));
 	}
 
 	if (comb->config.present.ttq)
-		tail = tlv_insert_after(tail, tlv_new(TLV_ID_LIBEMV_TTQ,
+		tail = tlv_insert_after(tail, tlv_new(EMV_ID_LIBEMV_TTQ,
 				   sizeof(comb->config.ttq), comb->config.ttq));
 
 	return tlv;
@@ -447,7 +447,7 @@ int get_termsetting_n(int n, void *buffer, size_t *size)
 	struct tlv *tlv = NULL, *tail = NULL;
 	int i;
 
-	tlv  = tlv_new(TLV_ID_LIBEMV_CONFIGURATION, 0, NULL);
+	tlv  = tlv_new(EMV_ID_LIBEMV_CONFIGURATION, 0, NULL);
 	tail = tlv_insert_below(tlv, get_combination_set(&termsetting2[0]));
 
 	for (i = 1; i < ARRAY_SIZE(termsetting2); i++)

@@ -35,11 +35,7 @@
 #define TLV_RC_INDEFINITE_LENGTH_NOT_SUPPORTED	5
 #define TLV_RC_VALUE_LENGTH_TOO_LARGE		6
 #define TLV_RC_IO_ERROR				7
-
-#define TLV_TAG_CLASS_UNIVERSAL		0x00u
-#define TLV_TAG_CLASS_APPLICATION	0x40u
-#define TLV_TAG_CLASS_CONTEXT_SPECIFIC	0x80u
-#define TLV_TAG_CLASS_PRIVATE		0xC0u
+#define TLV_RC_VALUE_OUT_OF_RANGE		8
 
 #define TLV_ID_1(a)		   ((const uint8_t [1]) { a })
 #define TLV_ID_2(a, b)		   ((const uint8_t [2]) { a, b })
@@ -47,36 +43,6 @@
 #define TLV_ID_4(a, b, c, d)	   ((const uint8_t [4]) { a, b, c, d })
 #define TLV_ID_5(a, b, c, d, e)	   ((const uint8_t [5]) { a, b, c, d, e })
 #define TLV_ID_6(a, b, c, d, e, f) ((const uint8_t [6]) { a, b, c, d, e, f })
-
-#define TLV_ID_ADF_NAME				TLV_ID_1(0x4F)
-#define TLV_ID_APPLICATION_LABEL		TLV_ID_1(0x50)
-#define TLV_ID_DIRECTORY_ENTRY			TLV_ID_1(0x61)
-#define TLV_ID_FCI_TEMPLATE			TLV_ID_1(0x6F)
-#define TLV_ID_DF_NAME				TLV_ID_1(0x84)
-#define TLV_ID_APPLICATION_PRIORITY_INDICATOR	TLV_ID_1(0x87)
-#define TLV_ID_KERNEL_IDENTIFIER		TLV_ID_2(0x9F, 0x2A)
-#define TLV_ID_EXTENDED_SELECTION		TLV_ID_2(0x9F, 0x29)
-#define TLV_ID_PDOL				TLV_ID_2(0x9F, 0x38)
-#define TLV_ID_FCI_PROPRIETARY_TEMPLATE		TLV_ID_1(0xA5)
-#define TLV_ID_FCI_ISSUER_DISCRETIONARY_DATA	TLV_ID_2(0xBF, 0x0C)
-
-#define TLV_ID_LIBEMV_CONFIGURATION		TLV_ID_4(0xFF, 0x81, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_COMBINATION_SET		TLV_ID_4(0xFF, 0x82, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_TRANSACTION_TYPES		TLV_ID_4(0xDF, 0x83, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_COMBINATION		TLV_ID_4(0xFF, 0x84, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_AID			TLV_ID_4(0xDF, 0x85, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_KERNEL_ID			TLV_ID_4(0xDF, 0x86, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_STATUS_CHECK_SUPPORTED	TLV_ID_4(0xDF, 0x87, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED	TLV_ID_4(0xDF, 0x88, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_EXT_SELECTION_SUPPORTED	TLV_ID_4(0xDF, 0x89, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT	TLV_ID_4(0xDF, 0x8A, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8B, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8C, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT	TLV_ID_4(0xDF, 0x8D, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_TTQ			TLV_ID_4(0xDF, 0x8E, 0xE3, 0x71)
-#define TLV_ID_LIBEMB_AUTORUN			TLV_ID_4(0xFF, 0x8F, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE	TLV_ID_4(0xDF, 0x90, 0xE3, 0x71)
-#define TLV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORISED	TLV_ID_4(0xDF, 0x91, 0xE3, 0x71)
 
 
 struct tlv;
@@ -221,5 +187,13 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag);
 struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
 
 struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child);
+
+int tlv_process_dol(struct tlv *data_elements, const void *dol, size_t dol_sz,
+						   void *data, size_t *data_sz);
+
+int tlv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
+int tlv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
+const char *tlv_bin_to_hex(const void *blob, size_t blob_sz);
+
 
 #endif /* ndef __TLV_H__ */

@@ -14,3 +14,7 @@ tlv_insert_after
 tlv_insert_below
 tlv_parse_file
 tlv_encode_file
+tlv_process_dol
+tlv_bcd_to_u64
+tlv_u64_to_bcd
+tlv_bin_to_hex
