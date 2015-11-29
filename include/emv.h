@@ -53,35 +53,35 @@
 #define EMV_SW_6E00_CLA_NOT_SUPPORTED	EMV_SW('\x6E', '\x00')
 #define EMV_SW_9000_OK			EMV_SW('\x90', '\x00')
 
-#define EMV_ID_ADF_NAME				TLV_ID_1(0x4F)
-#define EMV_ID_APPLICATION_LABEL		TLV_ID_1(0x50)
-#define EMV_ID_DIRECTORY_ENTRY			TLV_ID_1(0x61)
-#define EMV_ID_FCI_TEMPLATE			TLV_ID_1(0x6F)
-#define EMV_ID_DF_NAME				TLV_ID_1(0x84)
-#define EMV_ID_APPLICATION_PRIORITY_INDICATOR	TLV_ID_1(0x87)
-#define EMV_ID_KERNEL_IDENTIFIER		TLV_ID_2(0x9F, 0x2A)
-#define EMV_ID_EXTENDED_SELECTION		TLV_ID_2(0x9F, 0x29)
-#define EMV_ID_PDOL				TLV_ID_2(0x9F, 0x38)
-#define EMV_ID_FCI_PROPRIETARY_TEMPLATE		TLV_ID_1(0xA5)
-#define EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA	TLV_ID_2(0xBF, 0x0C)
+#define EMV_ID_ADF_NAME				"\x4F"
+#define EMV_ID_APPLICATION_LABEL		"\x50"
+#define EMV_ID_DIRECTORY_ENTRY			"\x61"
+#define EMV_ID_FCI_TEMPLATE			"\x6F"
+#define EMV_ID_DF_NAME				"\x84"
+#define EMV_ID_APPLICATION_PRIORITY_INDICATOR	"\x87"
+#define EMV_ID_KERNEL_IDENTIFIER		"\x9F\x2A"
+#define EMV_ID_EXTENDED_SELECTION		"\x9F\x29"
+#define EMV_ID_PDOL				"\x9F\x38"
+#define EMV_ID_FCI_PROPRIETARY_TEMPLATE		"\xA5"
+#define EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA	"\xBF\x0C"
 
-#define EMV_ID_LIBEMV_CONFIGURATION		TLV_ID_4(0xFF, 0x81, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_COMBINATION_SET		TLV_ID_4(0xFF, 0x82, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_TRANSACTION_TYPES		TLV_ID_4(0xDF, 0x83, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_COMBINATION		TLV_ID_4(0xFF, 0x84, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_AID			TLV_ID_4(0xDF, 0x85, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_KERNEL_ID			TLV_ID_4(0xDF, 0x86, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_STATUS_CHECK_SUPPORTED	TLV_ID_4(0xDF, 0x87, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED	TLV_ID_4(0xDF, 0x88, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_EXT_SELECTION_SUPPORTED	TLV_ID_4(0xDF, 0x89, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT	TLV_ID_4(0xDF, 0x8A, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8B, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT	TLV_ID_4(0xDF, 0x8C, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT	TLV_ID_4(0xDF, 0x8D, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_TTQ			TLV_ID_4(0xDF, 0x8E, 0xE3, 0x71)
-#define EMV_ID_LIBEMB_AUTORUN			TLV_ID_4(0xFF, 0x8F, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE	TLV_ID_4(0xDF, 0x90, 0xE3, 0x71)
-#define EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORISED	TLV_ID_4(0xDF, 0x91, 0xE3, 0x71)
+#define EMV_ID_LIBEMV_CONFIGURATION		"\xFF\x81\xE3\x71"
+#define EMV_ID_LIBEMV_COMBINATION_SET		"\xFF\x82\xE3\x71"
+#define EMV_ID_LIBEMV_TRANSACTION_TYPES		"\xDF\x83\xE3\x71"
+#define EMV_ID_LIBEMV_COMBINATION		"\xFF\x84\xE3\x71"
+#define EMV_ID_LIBEMV_AID			"\xDF\x85\xE3\x71"
+#define EMV_ID_LIBEMV_KERNEL_ID			"\xDF\x86\xE3\x71"
+#define EMV_ID_LIBEMV_STATUS_CHECK_SUPPORTED	"\xDF\x87\xE3\x71"
+#define EMV_ID_LIBEMV_ZERO_AMOUNT_ALLOWED	"\xDF\x88\xE3\x71"
+#define EMV_ID_LIBEMV_EXT_SELECTION_SUPPORTED	"\xDF\x89\xE3\x71"
+#define EMV_ID_LIBEMV_RDR_CTLS_TXN_LIMIT	"\xDF\x8A\xE3\x71"
+#define EMV_ID_LIBEMV_RDR_CTLS_FLOOR_LIMIT	"\xDF\x8B\xE3\x71"
+#define EMV_ID_LIBEMV_TERMINAL_FLOOR_LIMIT	"\xDF\x8C\xE3\x71"
+#define EMV_ID_LIBEMV_RDR_CVM_REQUIRED_LIMIT	"\xDF\x8D\xE3\x71"
+#define EMV_ID_LIBEMV_TTQ			"\xDF\x8E\xE3\x71"
+#define EMV_ID_LIBEMB_AUTORUN			"\xFF\x8F\xE3\x71"
+#define EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE	"\xDF\x90\xE3\x71"
+#define EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORISED	"\xDF\x91\xE3\x71"
 
 enum emv_message_identifier {
 	msg_approved			= 0x03,
@@ -294,16 +294,6 @@ int emv_ep_activate(struct emv_ep    *ep,
 | EMV TLV Tag Description Handling					       |
 +-----------------------------------------------------------------------------*/
 
-enum emv_tag_format {
-	fmt_a	= 0,
-	fmt_an	= 1,
-	fmt_ans	= 2,
-	fmt_b	= 3,
-	fmt_cn	= 4,
-	fmt_n	= 5,
-	fmt_var = 6
-};
-
 enum emv_tag_source {
 	src_icc	     = 0,
 	src_terminal = 1
@@ -318,7 +308,7 @@ struct emv_tag_descriptor {
 	char			*name;
 	char			*description;
 	enum emv_tag_source	source;
-	enum emv_tag_format	format;
+	enum tlv_value_format	format;
 	struct emv_tag		*templates;
 	size_t			num_templates;
 	struct emv_tag		tag;
@@ -326,5 +316,7 @@ struct emv_tag_descriptor {
 
 int emv_tag_parse_descriptors(const char *json_string,
 	      struct emv_tag_descriptor **descriptors, size_t *num_descriptors);
+
+const struct tlv_id_to_format *libemv_get_known_formats(void);
 
 #endif							    /* ndef __EMV_H__ */

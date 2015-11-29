@@ -194,7 +194,7 @@ static struct emv_kernel *get_kernel(struct emv_ep *ep,
 
 	if (kernel) {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
-						  "%s('%s'): success", _
+						  "%s('%s'): success", __func__,
 						tlv_bin_to_hex(kernel_id, len));
 	} else {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,

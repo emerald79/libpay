@@ -37,13 +37,23 @@
 #define TLV_RC_IO_ERROR				7
 #define TLV_RC_VALUE_OUT_OF_RANGE		8
 
-#define TLV_ID_1(a)		   ((const uint8_t [1]) { a })
-#define TLV_ID_2(a, b)		   ((const uint8_t [2]) { a, b })
-#define TLV_ID_3(a, b, c)	   ((const uint8_t [3]) { a, b, c })
-#define TLV_ID_4(a, b, c, d)	   ((const uint8_t [4]) { a, b, c, d })
-#define TLV_ID_5(a, b, c, d, e)	   ((const uint8_t [5]) { a, b, c, d, e })
-#define TLV_ID_6(a, b, c, d, e, f) ((const uint8_t [6]) { a, b, c, d, e, f })
+enum tlv_value_format {
+	fmt_a,
+	fmt_an,
+	fmt_ans,
+	fmt_b,
+	fmt_cn,
+	fmt_n,
+	fmt_var,
+	fmt_unknown
+};
 
+struct tlv_id_to_format {
+	const void	     *id;
+	enum tlv_value_format fmt;
+};
+
+int libtlv_register_known_formats(const struct tlv_id_to_format *formats);
 
 struct tlv;
 

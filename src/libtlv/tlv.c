@@ -993,3 +993,95 @@ const char *tlv_bin_to_hex(const void *blob, size_t blob_sz)
 
 	return hex;
 }
+
+static struct tlv_id_to_format *known_formats;
+static size_t num_known_formats;
+
+static size_t id_sz(const uint8_t *id)
+{
+	size_t sz = 1;
+
+	if ((id[0] & TLV_TAG_NUMBER_MASK) != 0x1Fu)
+		return 1;
+
+	for (sz = 1; id[sz] & 0x80u; sz++)
+		;
+
+	return sz;
+}
+
+static int compare_ids(const uint8_t *id_a, const uint8_t *id_b)
+{
+	size_t id_a_sz = 0, id_b_sz = 0, min_id_sz = 0;
+	int rc = 0;
+
+	id_a_sz = id_sz(id_a);
+	id_b_sz = id_sz(id_b);
+
+	min_id_sz = (id_a_sz < id_b_sz) ? id_a_sz : id_b_sz;
+
+	rc = memcmp(id_a, id_b, min_id_sz);
+	if (rc)
+		return rc;
+
+	if (id_a_sz < id_b_sz)
+		return -1;
+
+	if (id_a_sz > id_b_sz)
+		return 1;
+
+	return 0;
+}
+
+static int compare_formats(const void *a, const void *b)
+{
+	const struct tlv_id_to_format *fmt_a = NULL, *fmt_b = NULL;
+
+	fmt_a = (const struct tlv_id_to_format *)a;
+	fmt_b = (const struct tlv_id_to_format *)b;
+
+	return compare_ids(fmt_a->id, fmt_b->id);
+}
+
+static int compare_id_with_format(const void *a, const void *b)
+{
+	const uint8_t *id = (const uint8_t *)a;
+	const struct tlv_id_to_format *fmt = (const struct tlv_id_to_format *)b;
+
+	return compare_ids(id, fmt->id);
+}
+
+int libtlv_register_known_formats(const struct tlv_id_to_format *fmts)
+{
+	const struct tlv_id_to_format *i_fmt;
+	int rc = TLV_RC_OK;
+	size_t num_fmts = 0;
+
+	for (i_fmt = fmts, num_fmts = 0; i_fmt->id; i_fmt++)
+		num_fmts++;
+
+	known_formats = (struct tlv_id_to_format *)realloc(known_formats,
+				(num_known_formats + num_fmts) * sizeof(*fmts));
+	if (!known_formats) {
+		rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	memcpy(&known_formats[num_known_formats], fmts,
+						      num_fmts * sizeof(*fmts));
+	num_known_formats += num_fmts;
+	qsort(known_formats, num_known_formats, sizeof(*fmts), compare_formats);
+
+done:
+	return rc;
+}
+
+enum tlv_value_format libtlv_id_to_format(const void *id)
+{
+	const struct tlv_id_to_format *fmt = NULL;
+
+	fmt = (const struct tlv_id_to_format *)bsearch(id, known_formats,
+		       num_known_formats, sizeof(*fmt), compare_id_with_format);
+
+	return fmt ? fmt->fmt : fmt_unknown;
+}

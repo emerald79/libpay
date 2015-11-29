@@ -141,3 +141,23 @@ done:
 		json_tokener_free(json_tokener);
 	return rc;
 }
+
+const struct tlv_id_to_format *libemv_get_known_formats(void)
+{
+	static const struct tlv_id_to_format formats[] = {
+		{ .id = EMV_ID_ADF_NAME,		       .fmt = fmt_b   },
+		{ .id = EMV_ID_APPLICATION_LABEL,	       .fmt = fmt_ans },
+		{ .id = EMV_ID_DIRECTORY_ENTRY,		       .fmt = fmt_var },
+		{ .id = EMV_ID_FCI_TEMPLATE,		       .fmt = fmt_b   },
+		{ .id = EMV_ID_DF_NAME,			       .fmt = fmt_b   },
+		{ .id = EMV_ID_APPLICATION_PRIORITY_INDICATOR, .fmt = fmt_b   },
+		{ .id = EMV_ID_KERNEL_IDENTIFIER,	       .fmt = fmt_b   },
+		{ .id = EMV_ID_EXTENDED_SELECTION,	       .fmt = fmt_b   },
+		{ .id = EMV_ID_PDOL,			       .fmt = fmt_b   },
+		{ .id = EMV_ID_FCI_PROPRIETARY_TEMPLATE,       .fmt = fmt_var },
+		{ .id = EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA,  .fmt = fmt_var },
+		{ .id = NULL						      }
+	};
+
+	return formats;
+}

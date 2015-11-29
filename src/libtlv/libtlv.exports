@@ -18,3 +18,5 @@ tlv_process_dol
 tlv_bcd_to_u64
 tlv_u64_to_bcd
 tlv_bin_to_hex
+libtlv_register_known_formats
+libtlv_id_to_format
