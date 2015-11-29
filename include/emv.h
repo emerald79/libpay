@@ -43,6 +43,15 @@
 #define ISO4217_USD	((const uint8_t []){ '\x08', '\x40' })
 #define ISO4217_EUR	((const uint8_t []){ '\x09', '\x78' })
 
+#define DF_NAME_2PAY_SYS_DDF01 "2PAY.SYS.DDF01"
+
+#define EMV_SW(sw1, sw2) ((const uint8_t []){ sw1, sw2 })
+#define EMV_SW_6700_WRONG_LENGTH	EMV_SW('\x67', '\x00')
+#define EMV_SW_6A82_FILE_NOT_FOUND	EMV_SW('\x6A', '\x82')
+#define EMV_SW_6D00_INS_NOT_SUPPORTED	EMV_SW('\x6E', '\x00')
+#define EMV_SW_6E00_CLA_NOT_SUPPORTED	EMV_SW('\x6E', '\x00')
+#define EMV_SW_9000_OK			EMV_SW('\x90', '\x00')
+
 enum emv_message_identifier {
 	msg_approved			= 0x03,
 	msg_not_authorized		= 0x07,
@@ -228,7 +237,7 @@ enum emv_txn_type {
 
 struct emv_ep;
 
-struct emv_ep *emv_ep_new(void);
+struct emv_ep *emv_ep_new(const char *logging_category);
 
 void emv_ep_free(struct emv_ep *ep);
 
@@ -291,5 +300,6 @@ int emv_tag_parse_descriptors(const char *json_string,
 
 int emv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
 int emv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
+const char *emv_blob_to_hex(const void *blob, size_t blob_sz);
 
 #endif							    /* ndef __EMV_H__ */

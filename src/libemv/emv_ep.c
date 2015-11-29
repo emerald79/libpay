@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <log4c.h>
 
 #include <emv.h>
 #include <tlv.h>
@@ -127,6 +128,7 @@ struct emv_ep_kernel_params {
 struct emv_ep {
 	enum emv_ep_state		state;
 	struct emv_hal			*hal;
+	log4c_category_t		*log_cat;
 	struct emv_txn_data		txn_data;
 	bool				restart;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
@@ -244,14 +246,20 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 	struct emv_txn_data *txn = NULL;
 	struct emv_ep_combination_set *combination_set = NULL;
 	bool ctls_app_allowed = 0;
+	int rc = EMV_RC_OK;
 	int i = 0;
+
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
+								      __func__);
 
 	txn = &ep->txn_data;
 	assert(txn->type < num_txn_types);
 	combination_set = &ep->combination_set[txn->type];
 
-	if (!is_currency_code_supported(txn->currency))
-		return EMV_RC_UNSUPPORTED_CURRENCY_CODE;
+	if (!is_currency_code_supported(txn->currency)) {
+		rc = EMV_RC_UNSUPPORTED_CURRENCY_CODE;
+		goto done;
+	}
 
 	for (i = 0; i < combination_set->size; i++) {
 		struct emv_ep_combination *combination = NULL;
@@ -460,13 +468,23 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		ep->state = eps_protocol_activation;
 	}
 
-	return EMV_RC_OK;
+done:
+	if (rc == EMV_RC_OK)
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+						     "%s(): success", __func__);
+	else
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+					  "%s(): failed. rc %d.", __func__, rc);
+	return rc;
 }
 
 int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 {
 	bool collision = false;
 	int rc = EMV_RC_OK;
+
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
+								      __func__);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.1");
 	/* If the Restart flag is 0, then:
@@ -540,7 +558,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 * Main Loop of Book D.						      */
 	rc = ep->hal->ops->start_polling(ep->hal);
 	if (rc != EMV_RC_OK)
-		return rc;
+		goto done;
 
 	do {
 		rc = ep->hal->ops->wait_for_card(ep->hal);
@@ -586,7 +604,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	} while ((rc == EMV_RC_COLLISION) || (rc == EMV_RC_CONTINUE));
 
 	if (rc != EMV_RC_OK)
-		return rc;
+		goto done;
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.6");
@@ -597,7 +615,14 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 
 	ep->state = eps_combination_selection;
 
-	return EMV_RC_OK;
+done:
+	if (rc == EMV_RC_OK)
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+						     "%s(): success", __func__);
+	else
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+					  "%s(): failed. rc %d.", __func__, rc);
+	return rc;
 }
 
 int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal)
@@ -665,17 +690,28 @@ struct ppse_dir_entry {
 	size_t	extended_selection_len;
 };
 
-int emv_ep_parse_ppse(const void *fci, size_t fci_len,
+static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 			    struct ppse_dir_entry *entries, size_t *num_entries)
 {
 	struct tlv *ppse = NULL, *i_tlv = NULL;
 	size_t num = 0;
+	int rc = EMV_RC_OK;
 
 	assert(fci);
 	assert(entries);
 	assert(num_entries);
 
-	tlv_parse(fci, fci_len, &ppse);
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(fci: '%s')",
+				       __func__, emv_blob_to_hex(fci, fci_len));
+
+	rc = tlv_parse(fci, fci_len, &ppse);
+	if (rc != TLV_RC_OK) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
+			      "%s(): Failed to parse 2PAY.SYS. rc %d", __func__,
+									    rc);
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
 
 	i_tlv = tlv_find(tlv_get_child(tlv_find(tlv_get_child(tlv_find(
 			     tlv_get_child(tlv_find(ppse, TLV_ID_FCI_TEMPLATE)),
@@ -755,7 +791,9 @@ int emv_ep_parse_ppse(const void *fci, size_t fci_len,
 		return EMV_RC_OVERFLOW;
 
 	*num_entries = num;
-	return EMV_RC_OK;
+
+done:
+	return rc;
 }
 
 static uint8_t rid_to_kernel_id(const void *rid)
@@ -783,6 +821,7 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 {
 	uint8_t requested_kernel_id[8];
 	size_t requested_kernel_id_len;
+	bool is_candidate = false;
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 A");
@@ -791,7 +830,7 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 	 * [EMV 4.2 Book 1], section 12.2.1, then Entry Point shall proceed with
 	 * the next Directory Entry.					      */
 	if (dir_entry->adf_name_len < 5)
-		return false;
+		goto done;
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 B");
@@ -803,7 +842,7 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 	 * and proceed with the next Directory Entry.			      */
 	if ((dir_entry->adf_name_len < combination->aid_len) ||
 	    memcmp(combination->aid, dir_entry->adf_name, combination->aid_len))
-		return false;
+		goto done;
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 C");
@@ -841,7 +880,7 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 				 * field is less than 3 bytes, then Entry Point
 				 * shall return to bullet A and proceed with the
 				 * next Directory Entry.		      */
-				return false;
+				goto done;
 			} else if (dir_entry->kernel_identifier[0] & 0x3f) {
 				/* If the Short Kernel ID is different from
 				 * 000000b, then the Requested Kernel ID is
@@ -881,9 +920,10 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 	    ((requested_kernel_id_len == dir_entry->kernel_identifier_len) &&
 	     (!memcmp(requested_kernel_id, dir_entry->kernel_identifier,
 						     requested_kernel_id_len))))
-		return true;
-	else
-		return false;
+		is_candidate = true;
+
+done:
+	return is_candidate;
 }
 
 static int compare_candidates(const void *candidate_a, const void *candidate_b)
@@ -926,6 +966,9 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	uint8_t sw[2];
 	int rc = EMV_RC_OK, i_comb, i_dir;
 
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
+								      __func__);
+
 	combination_set = &ep->combination_set[ep->txn_data.type];
 
 
@@ -948,7 +991,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	 * return to Start B (Protocol Activation, section 3.2.1).	      */
 	if (rc != EMV_RC_OK) {
 		ep->state = eps_protocol_activation;
-		return EMV_RC_OK;
+		goto done;
 	}
 
 
@@ -958,12 +1001,15 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	 * Otherwise, Entry Point shall add no Combinations to the Candidate
 	 * List and shall proceed to Step 3.				      */
 	if ((sw[0] != 0x90) || (sw[1] != 0x00)) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
+				 "%s(): Select 2PAY.SYS sw: %02x%02x", __func__,
+								  sw[0], sw[1]);
 		ep->state = eps_final_combination_selection;
 		goto done;
 	}
 
 
-	rc = emv_ep_parse_ppse(fci, fci_len, dir_entry, &num_dir_entries);
+	rc = emv_ep_parse_ppse(ep, fci, fci_len, dir_entry, &num_dir_entries);
 	assert(rc == EMV_RC_OK);
 
 
@@ -972,6 +1018,8 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	 * Entry Point shall add no Combinations to the Candidate List
 	 * and shall proceed to Step 3. */
 	if (!num_dir_entries) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
+				"%s(): No entries in 2PAY.SYS found", __func__);
 		ep->state = eps_final_combination_selection;
 		goto done;
 	}
@@ -984,6 +1032,10 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;
 	}
+
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+		       "%s(): Combinations: %d, 2PAY.SYS entries: %d", __func__,
+					combination_set->size, num_dir_entries);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
 	/* For each reader Combination {AID - Kernel ID} supported by the reader
@@ -1041,6 +1093,13 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	ep->state = eps_final_combination_selection;
 
 done:
+	if (rc == EMV_RC_OK)
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+				       "%s(): success. Number of candiates: %d",
+					     __func__, ep->candidate_list.size);
+	else
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+					  "%s(): failed. rc %d.", __func__, rc);
 	return rc;
 }
 
@@ -1218,6 +1277,8 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	struct emv_ep_candidate *candidate = NULL;
 	int rc = EMV_RC_OK;
 
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
+								      __func__);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.1");
 	/* Entry Point shall activate the kernel identified in the selected
@@ -1225,8 +1286,10 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
 	kernel = get_kernel(ep, candidate->combination->kernel_id,
 					 candidate->combination->kernel_id_len);
-	if (!kernel)
-		return EMV_RC_NO_KERNEL;
+	if (!kernel) {
+		rc = EMV_RC_NO_KERNEL;
+		goto done;
+	}
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.2");
@@ -1244,6 +1307,13 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 								    NULL, NULL);
 	ep->state = eps_outcome_processing;
 
+done:
+	if (rc == EMV_RC_OK)
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+						     "%s(): success", __func__);
+	else
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+					  "%s(): failed. rc %d.", __func__, rc);
 	return rc;
 }
 
@@ -1254,6 +1324,9 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 {
 	bool started_at_b = (start == start_b);
 	int rc = EMV_RC_OK;
+
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
+								      __func__);
 
 	switch (start) {
 	case start_a:
@@ -1267,7 +1340,8 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 		break;
 	case start_c:
 	default:
-		return EMV_RC_INVALID_ARG;
+		rc = EMV_RC_INVALID_ARG;
+		goto done;
 	}
 
 	ep->txn_data.type = txn_type;
@@ -1312,6 +1386,13 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 		}
 	} while ((rc == EMV_RC_OK) && (ep->state != eps_done));
 
+done:
+	if (rc == EMV_RC_OK)
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+						     "%s(): success", __func__);
+	else
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+					  "%s(): failed. rc %d.", __func__, rc);
 	return rc;
 }
 
@@ -1328,7 +1409,6 @@ static int parse_combination(struct tlv *tlv_combination,
 	     tlv_attr = tlv_get_next(tlv_attr)) {
 		uint8_t tag[4];
 		size_t tag_size = sizeof(tag);
-		struct emv_ep_config *cfg = &comb->config;
 
 		rc = tlv_encode_identifier(tlv_attr, tag, &tag_size);
 		if ((rc != TLV_RC_OK) || (tag_size != sizeof(tag)))
@@ -1579,11 +1659,14 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 			}
 
 			rc = parse_combination_set(tlv_combination_set, &cfg,
-						    &ep->combination_set[emv_txn_type]);
+					    &ep->combination_set[emv_txn_type]);
 			if (rc != EMV_RC_OK)
 				goto error;
 		}
 	}
+
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): success",
+								      __func__);
 
 	return EMV_RC_OK;
 
@@ -1591,12 +1674,24 @@ error:
 	if (tlv_config)
 		tlv_free(tlv_config);
 
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_ERROR,
+					  "%s(): failed. rc: %d", __func__, rc);
+
 	return rc;
 }
 
-struct emv_ep *emv_ep_new(void)
+struct emv_ep *emv_ep_new(const char *log_cat)
 {
-	return (struct emv_ep *)calloc(1, sizeof(struct emv_ep));
+	struct emv_ep *ep = (struct emv_ep *)calloc(1, sizeof(struct emv_ep));
+	char cat[64];
+
+	if (!ep)
+		return NULL;
+
+	snprintf(cat, sizeof(cat), "%s.libemv.emv_ep", log_cat);
+	ep->log_cat = log4c_category_get(cat);
+
+	return ep;
 }
 
 void emv_ep_free(struct emv_ep *ep)

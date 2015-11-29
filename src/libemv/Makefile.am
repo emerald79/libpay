@@ -8,7 +8,7 @@ libemv_la_SOURCES = emv_ep.c emv_tag.c
 
 libemv_la_CFLAGS = -fPIC $(AM_CFLAGS)
 
-libemv_la_LIBADD = -ldl ../libtlv/libtlv.la @JSON_C_LIBS@
+libemv_la_LIBADD = -ldl ../libtlv/libtlv.la @JSON_C_LIBS@ @LOG4C_LIBS@
 
 libemv_la_LDFLAGS = $(AM_LDFLAGS) \
 	-export-symbols "$(srcdir)/libemv.exports" \

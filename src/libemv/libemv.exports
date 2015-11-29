@@ -7,3 +7,4 @@ emv_ep_free
 emv_tag_parse_descriptors
 emv_u64_to_bcd
 emv_bcd_to_u64
+emv_blob_to_hex

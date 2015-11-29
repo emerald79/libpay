@@ -20,11 +20,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <check.h>
+#include <log4c.h>
 
 #include <tlv.h>
 #include <emv.h>
 
 #include "emvco_ep_ta.h"
+
+const char log4c_category[] = "emv_ep_ta";
+static log4c_category_t *log_cat;
 
 /* 2EA.001.00 Entry of Amount Authorzed					      */
 START_TEST(test_2EA_001_00)
@@ -35,13 +39,16 @@ START_TEST(test_2EA_001_00)
 	struct emv_hal *lt = NULL;
 	int rc = EMV_RC_OK;
 
+	log4c_category_log(log_cat, LOG4C_PRIORITY_INFO, "%s(): start",
+								      __func__);
+
 	rc = get_termsetting_n(2, cfg, &cfg_sz);
 	ck_assert(rc == TLV_RC_OK);
 
-	ep = emv_ep_new();
+	ep = emv_ep_new(log4c_category);
 	ck_assert(ep != NULL);
 
-	lt = lt_hal_new();
+	lt = lt_new(ltsetting1_1);
 	ck_assert(lt != NULL);
 
 	rc = emv_ep_register_hal(ep, lt);
@@ -50,8 +57,15 @@ START_TEST(test_2EA_001_00)
 	rc = emv_ep_configure(ep, cfg, cfg_sz);
 	ck_assert(rc == EMV_RC_OK);
 
+	rc = emv_ep_activate(ep, start_a, txn_purchase, 10, 0, ISO4217_EUR,
+								   0x12345678u);
+	ck_assert(rc == EMV_RC_OK);
+
 	emv_ep_free(ep);
-	lt_hal_free(lt);
+	lt_free(lt);
+
+	log4c_category_log(log_cat, LOG4C_PRIORITY_INFO, "%s(): done",
+								      __func__);
 }
 END_TEST
 
@@ -75,11 +89,19 @@ int main(int argc, char **argv)
 	SRunner *srunner;
 	int failed;
 
+	if (log4c_init()) {
+		fprintf(stderr, "log4c_init() failed!\n");
+		return EXIT_FAILURE;
+	}
+
+	log_cat = log4c_category_get(log4c_category);
+
 	suite = emvco_ep_ta_test_suite();
 	srunner = srunner_create(suite);
 	srunner_run_all(srunner, CK_VERBOSE);
 	failed = srunner_ntests_failed(srunner);
 	srunner_free(srunner);
+	log4c_fini();
 
 	return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }

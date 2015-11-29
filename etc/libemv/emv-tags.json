@@ -94,6 +94,13 @@
     "format"      : "b"
   },
   {
+    "tag"         : "9F38",
+    "name"        : "Processing Options Data Object List (PDOL)",
+    "description" : "Contains a list of terminal resident data objects (tags and lengths) needed by the ICC in processing the GET PROCESSING OPTIONS command.",
+    "source"      : "ICC",
+    "format"      : "b"
+  },
+  {
     "tag"         : "9F60",
     "name"        : "CVC3 (Track1)",
     "description" : "The CVC3 (Track1) is a 2-byte cryptogram returned by the Card in the response to the COMPUTE CRYPTOGRAPHIC CHECKSUM command.",

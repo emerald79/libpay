@@ -189,3 +189,26 @@ int emv_u64_to_bcd(uint64_t u64, void *buffer, size_t len)
 
 	return EMV_RC_OK;
 }
+
+const char *emv_blob_to_hex(const void *blob, size_t blob_sz)
+{
+	const uint8_t hex_digit[16] = {
+		'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+	};
+	const uint8_t *bin = (const uint8_t *)blob;
+	static __thread char hex[68];
+	size_t i;
+
+	for (i = 0; (i < blob_sz) && (i < 32); i++) {
+		hex[i * 2]     = hex_digit[bin[i] >> 4];
+		hex[i * 2 + 1] = hex_digit[bin[i] & 0xf];
+	}
+
+	if (i < blob_sz)
+		strcpy(&hex[i * 2], "...");
+	else
+		hex[i * 2] = '\0';
+
+	return hex;
+}
