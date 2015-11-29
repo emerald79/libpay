@@ -37,6 +37,11 @@ START_TEST(test_2EA_001_00)
 	size_t cfg_sz = sizeof(cfg);
 	struct emv_ep *ep = NULL;
 	struct emv_hal *lt = NULL;
+	struct emv_kernel *tk = NULL;
+	struct tk_id tk_id[] = {
+		{ KERNEL_ID_23 },
+	};
+	size_t i_tk = 0;
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(log_cat, LOG4C_PRIORITY_INFO, "%s(): start",
@@ -54,6 +59,15 @@ START_TEST(test_2EA_001_00)
 	rc = emv_ep_register_hal(ep, lt);
 	ck_assert(rc == EMV_RC_OK);
 
+	tk = tk_new();
+	ck_assert(tk != NULL);
+
+	for (i_tk = 0; i_tk < ARRAY_SIZE(tk_id); i_tk++) {
+		rc = emv_ep_register_kernel(ep, tk, tk_id[i_tk].kernel_id,
+						     tk_id[i_tk].kernel_id_len);
+		ck_assert(rc == EMV_RC_OK);
+	}
+
 	rc = emv_ep_configure(ep, cfg, cfg_sz);
 	ck_assert(rc == EMV_RC_OK);
 
@@ -61,8 +75,9 @@ START_TEST(test_2EA_001_00)
 								   0x12345678u);
 	ck_assert(rc == EMV_RC_OK);
 
-	emv_ep_free(ep);
+	tk_free(tk);
 	lt_free(lt);
+	emv_ep_free(ep);
 
 	log4c_category_log(log_cat, LOG4C_PRIORITY_INFO, "%s(): done",
 								      __func__);

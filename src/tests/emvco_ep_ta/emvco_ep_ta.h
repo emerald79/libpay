@@ -64,6 +64,11 @@
 #define KERNEL_ID_25  .kernel_id = { 0x25 }, .kernel_id_len = 1
 #define KERNEL_ID_2B  .kernel_id = { 0x26 }, .kernel_id_len = 1
 
+struct tk_id {
+	uint8_t kernel_id[8];
+	size_t  kernel_id_len;
+};
+
 enum ltsetting {
 	ltsetting1_1 = 0,
 	num_ltsettings
@@ -75,6 +80,10 @@ int get_termsetting_n(int n, void *buffer, size_t *size);
 
 struct emv_hal *lt_new(enum ltsetting ltsetting);
 
-void lt_free(struct emv_hal *lt_hal);
+void lt_free(struct emv_hal *lt);
+
+struct emv_kernel *tk_new();
+
+void tk_free(struct emv_kernel *tk);
 
 #endif						    /* ndef __EMVCO_EP_TA_H__ */

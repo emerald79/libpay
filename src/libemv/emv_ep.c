@@ -149,21 +149,30 @@ int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
 				  set->size * sizeof(struct emv_ep_reg_kernel));
 	if (!set->kernel) {
 		rc = EMV_RC_OUT_OF_MEMORY;
-		goto error;
+		goto done;
 	}
 
 	set->kernel[i_kernel].kernel = kernel;
 	set->kernel[i_kernel].kernel_id_len = kernel_id_len;
 	memcpy(set->kernel[i_kernel].kernel_id, kernel_id, kernel_id_len);
 
-	return EMV_RC_OK;
-
-error:
-	if (set->kernel) {
-		free(set->kernel);
-		set->kernel = NULL;
-		set->size = 0;
+done:
+	if (rc != EMV_RC_OK) {
+		if (set->kernel) {
+			free(set->kernel);
+			set->kernel = NULL;
+			set->size = 0;
+		}
 	}
+
+	if (rc == EMV_RC_OK)
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+						  "%s('%s'): success", __func__,
+				     emv_blob_to_hex(kernel_id, kernel_id_len));
+	else
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+					   "%s('%s'): failed. rc %d.", __func__,
+				 emv_blob_to_hex(kernel_id, kernel_id_len), rc);
 
 	return rc;
 };
@@ -171,15 +180,29 @@ error:
 static struct emv_kernel *get_kernel(struct emv_ep *ep,
 					   const uint8_t *kernel_id, size_t len)
 {
+	struct emv_kernel *kernel = NULL;
 	size_t i_krn;
 
-	for (i_krn = 0; i_krn < ep->reg_kernel_set.size; i_krn++)
+	for (i_krn = 0; i_krn < ep->reg_kernel_set.size; i_krn++) {
 		if ((len == ep->reg_kernel_set.kernel[i_krn].kernel_id_len) &&
 		    (!memcmp(ep->reg_kernel_set.kernel[i_krn].kernel_id,
-							       kernel_id, len)))
-			return ep->reg_kernel_set.kernel[i_krn].kernel;
+							     kernel_id, len))) {
+			kernel = ep->reg_kernel_set.kernel[i_krn].kernel;
+			break;
+		}
+	}
 
-	return 0;
+	if (kernel) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+						  "%s('%s'): success", __func__,
+					       emv_blob_to_hex(kernel_id, len));
+	} else {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+						   "%s('%s'): failed", __func__,
+					       emv_blob_to_hex(kernel_id, len));
+	}
+
+	return kernel;
 }
 
 static bool is_currency_code_supported(const uint8_t *currency_code)
@@ -917,8 +940,8 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 	 * Otherwise Entry Point shall return to bullet A and proceed with the
 	 * next Directory Entry.					      */
 	if ((requested_kernel_id[0] == 0) ||
-	    ((requested_kernel_id_len == dir_entry->kernel_identifier_len) &&
-	     (!memcmp(requested_kernel_id, dir_entry->kernel_identifier,
+	    ((requested_kernel_id_len == combination->kernel_id_len) &&
+	     (!memcmp(requested_kernel_id, combination->kernel_id,
 						     requested_kernel_id_len))))
 		is_candidate = true;
 
@@ -1061,6 +1084,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 
 			if (!emv_ep_is_combination_candidate(comb, entry))
 				continue;
+
 
 			REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5 E");
 			/* Entry Point shall add a Combination to the Candidate
@@ -1302,9 +1326,10 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	 * selected kernel. This requirement does not apply if Entry Point is
 	 * restarted at Start D after Outcome Processing.		      */
 	rc = kernel->ops->activate(kernel, ep->hal,
-		     &candidate->combination->indicators, ep->kernel_params.fci,
-			  ep->kernel_params.fci_len, ep->kernel_params.sw, NULL,
-								    NULL, NULL);
+					      candidate->combination->kernel_id,
+		   candidate->combination->kernel_id_len, ep->kernel_params.fci,
+				ep->kernel_params.fci_len, ep->kernel_params.sw,
+			 &candidate->combination->indicators, NULL, NULL, NULL);
 	ep->state = eps_outcome_processing;
 
 done:

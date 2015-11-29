@@ -214,10 +214,12 @@ struct emv_kernel_ops {
 
 	int (*activate)	(struct emv_kernel		  *kernel,
 			 struct emv_hal			  *hal,
-			 struct emv_ep_preproc_indicators *prepoc_indicators,
+			 const uint8_t			  *kernel_id,
+			 size_t				   kernel_id_len,
 			 const void			  *fci,
 			 size_t				   fci_len,
 			 const uint8_t			   sw[2],
+			 struct emv_ep_preproc_indicators *prepoc_indicators,
 			 struct emv_outcome_parms	  *outcome,
 			 void				  *txn_data,
 			 size_t				  *txn_data_len);
