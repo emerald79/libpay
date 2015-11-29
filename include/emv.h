@@ -59,9 +59,14 @@
 #define EMV_ID_FCI_TEMPLATE			"\x6F"
 #define EMV_ID_DF_NAME				"\x84"
 #define EMV_ID_APPLICATION_PRIORITY_INDICATOR	"\x87"
+#define EMV_ID_TRANSACTION_TYPE			"\x9C"
+#define EMV_ID_AMOUNT_AUTHORIZED		"\x9F\x02"
+#define EMV_ID_AMOUNT_OTHER			"\x9F\x03"
 #define EMV_ID_KERNEL_IDENTIFIER		"\x9F\x2A"
 #define EMV_ID_EXTENDED_SELECTION		"\x9F\x29"
+#define EMV_ID_UN				"\x9F\x37"
 #define EMV_ID_PDOL				"\x9F\x38"
+#define EMV_ID_TTQ				"\x9F\x66"
 #define EMV_ID_FCI_PROPRIETARY_TEMPLATE		"\xA5"
 #define EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA	"\xBF\x0C"
 
@@ -212,6 +217,7 @@ struct emv_ep_preproc_indicators {
 	bool	zero_amount:1;
 	bool	cvm_reqd_limit_exceeded:1;
 	bool	floor_limit_exceeded:1;
+	bool	txn_limit_exceeded:1;
 	uint8_t ttq[4];
 };
 
@@ -236,6 +242,30 @@ struct emv_hal {
 	const struct emv_hal_ops *ops;
 };
 
+enum emv_txn_type {
+	txn_purchase		   = 0,
+	txn_purchase_with_cashback = 1,
+	txn_cash_advance	   = 2,
+	txn_refund		   = 3,
+	num_txn_types		   = 4
+};
+
+struct emv_kernel_parms {
+	bool					restart;
+	enum emv_start				start;
+	enum emv_txn_type			txn_type;
+	uint64_t				amount_authorized;
+	uint64_t				amount_other;
+	uint8_t					currency[2];
+	uint32_t				unpredictable_number;
+	uint8_t					kernel_id[8];
+	size_t					kernel_id_len;
+	uint8_t					fci[256];
+	size_t					fci_len;
+	uint8_t					sw[2];
+	const struct emv_ep_preproc_indicators *preproc_indicators;
+};
+
 struct emv_kernel;
 
 struct emv_kernel_ops {
@@ -243,29 +273,16 @@ struct emv_kernel_ops {
 			 const void	   *configuration,
 			 size_t		    length);
 
-	int (*activate)	(struct emv_kernel		  *kernel,
-			 struct emv_hal			  *hal,
-			 const uint8_t			  *kernel_id,
-			 size_t				   kernel_id_len,
-			 const void			  *fci,
-			 size_t				   fci_len,
-			 const uint8_t			   sw[2],
-			 struct emv_ep_preproc_indicators *prepoc_indicators,
-			 struct emv_outcome_parms	  *outcome,
-			 void				  *txn_data,
-			 size_t				  *txn_data_len);
+	int (*activate)	(struct emv_kernel	  *kernel,
+			 struct emv_hal		  *hal,
+			 struct emv_kernel_parms  *parms,
+			 struct emv_outcome_parms *outcome,
+			 void			  *txn_data,
+			 size_t			  *txn_data_len);
 };
 
 struct emv_kernel {
 	const struct emv_kernel_ops *ops;
-};
-
-enum emv_txn_type {
-	txn_purchase		   = 0,
-	txn_purchase_with_cashback = 1,
-	txn_cash_advance	   = 2,
-	txn_refund		   = 3,
-	num_txn_types		   = 4
 };
 
 struct emv_ep;
@@ -308,7 +325,7 @@ struct emv_tag_descriptor {
 	char			*name;
 	char			*description;
 	enum emv_tag_source	source;
-	enum tlv_value_format	format;
+	enum tlv_fmt		format;
 	struct emv_tag		*templates;
 	size_t			num_templates;
 	struct emv_tag		tag;
@@ -317,6 +334,6 @@ struct emv_tag_descriptor {
 int emv_tag_parse_descriptors(const char *json_string,
 	      struct emv_tag_descriptor **descriptors, size_t *num_descriptors);
 
-const struct tlv_id_to_format *libemv_get_known_formats(void);
+const struct tlv_id_to_fmt *libemv_get_id_fmts(void);
 
 #endif							    /* ndef __EMV_H__ */

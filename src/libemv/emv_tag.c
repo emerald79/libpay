@@ -142,9 +142,9 @@ done:
 	return rc;
 }
 
-const struct tlv_id_to_format *libemv_get_known_formats(void)
+const struct tlv_id_to_fmt *libemv_get_id_fmts(void)
 {
-	static const struct tlv_id_to_format formats[] = {
+	static const struct tlv_id_to_fmt formats[] = {
 		{ .id = EMV_ID_ADF_NAME,		       .fmt = fmt_b   },
 		{ .id = EMV_ID_APPLICATION_LABEL,	       .fmt = fmt_ans },
 		{ .id = EMV_ID_DIRECTORY_ENTRY,		       .fmt = fmt_var },

@@ -909,15 +909,57 @@ int tlv_process_dol(struct tlv *data_elements, const void *dol, size_t dol_sz,
 		}
 
 		tlv_de = tlv_find(data_elements, tag);
+
 		if (!tlv_de || tlv_is_constructed(tlv_de)) {
 			memset(&out_data[out_data_sz], 0, tlv_do.length);
 			out_data_sz += tlv_do.length;
-		} else {
-			/* FIXME */
-			memset(&out_data[out_data_sz], 0, tlv_do.length);
-			out_data_sz += tlv_do.length;
+			continue;
 		}
+
+		if (tlv_do.length == tlv_de->length) {
+			memcpy(&out_data[out_data_sz], tlv_de->value,
+								 tlv_do.length);
+			out_data_sz += tlv_do.length;
+			continue;
+		}
+
+		if (tlv_do.length < tlv_de->length) {
+			switch (libtlv_id_to_fmt(tag)) {
+			case fmt_n:
+				memcpy(&out_data[out_data_sz], tlv_de->value +
+						 tlv_de->length - tlv_do.length,
+								 tlv_do.length);
+				break;
+			default:
+				memcpy(&out_data[out_data_sz],
+						  tlv_de->value, tlv_do.length);
+				break;
+			}
+			out_data_sz += tlv_do.length;
+			continue;
+		}
+
+		/* tlv_do.length > tlv_de->length */
+		switch (libtlv_id_to_fmt(tag)) {
+		case fmt_cn:
+			memcpy(&out_data[out_data_sz], tlv_de->value,
+								tlv_de->length);
+			memset(&out_data[out_data_sz + tlv_de->length], 0xff,
+						tlv_do.length - tlv_de->length);
+			break;
+		default:
+			memset(&out_data[out_data_sz], 0x00,
+						tlv_do.length - tlv_de->length);
+			memcpy(&out_data[out_data_sz +
+						tlv_do.length - tlv_de->length],
+						 tlv_de->value, tlv_de->length);
+			break;
+		}
+		out_data_sz += tlv_do.length;
+		continue;
 	}
+
+	*data_sz = out_data_sz;
 
 done:
 	return rc;
@@ -994,7 +1036,7 @@ const char *tlv_bin_to_hex(const void *blob, size_t blob_sz)
 	return hex;
 }
 
-static struct tlv_id_to_format *known_formats;
+static struct tlv_id_to_fmt *known_formats;
 static size_t num_known_formats;
 
 static size_t id_sz(const uint8_t *id)
@@ -1035,10 +1077,10 @@ static int compare_ids(const uint8_t *id_a, const uint8_t *id_b)
 
 static int compare_formats(const void *a, const void *b)
 {
-	const struct tlv_id_to_format *fmt_a = NULL, *fmt_b = NULL;
+	const struct tlv_id_to_fmt *fmt_a = NULL, *fmt_b = NULL;
 
-	fmt_a = (const struct tlv_id_to_format *)a;
-	fmt_b = (const struct tlv_id_to_format *)b;
+	fmt_a = (const struct tlv_id_to_fmt *)a;
+	fmt_b = (const struct tlv_id_to_fmt *)b;
 
 	return compare_ids(fmt_a->id, fmt_b->id);
 }
@@ -1046,21 +1088,21 @@ static int compare_formats(const void *a, const void *b)
 static int compare_id_with_format(const void *a, const void *b)
 {
 	const uint8_t *id = (const uint8_t *)a;
-	const struct tlv_id_to_format *fmt = (const struct tlv_id_to_format *)b;
+	const struct tlv_id_to_fmt *fmt = (const struct tlv_id_to_fmt *)b;
 
 	return compare_ids(id, fmt->id);
 }
 
-int libtlv_register_known_formats(const struct tlv_id_to_format *fmts)
+int libtlv_register_fmts(const struct tlv_id_to_fmt *fmts)
 {
-	const struct tlv_id_to_format *i_fmt;
+	const struct tlv_id_to_fmt *i_fmt;
 	int rc = TLV_RC_OK;
 	size_t num_fmts = 0;
 
 	for (i_fmt = fmts, num_fmts = 0; i_fmt->id; i_fmt++)
 		num_fmts++;
 
-	known_formats = (struct tlv_id_to_format *)realloc(known_formats,
+	known_formats = (struct tlv_id_to_fmt *)realloc(known_formats,
 				(num_known_formats + num_fmts) * sizeof(*fmts));
 	if (!known_formats) {
 		rc = TLV_RC_OUT_OF_MEMORY;
@@ -1076,11 +1118,11 @@ done:
 	return rc;
 }
 
-enum tlv_value_format libtlv_id_to_format(const void *id)
+enum tlv_fmt libtlv_id_to_fmt(const void *id)
 {
-	const struct tlv_id_to_format *fmt = NULL;
+	const struct tlv_id_to_fmt *fmt = NULL;
 
-	fmt = (const struct tlv_id_to_format *)bsearch(id, known_formats,
+	fmt = (const struct tlv_id_to_fmt *)bsearch(id, known_formats,
 		       num_known_formats, sizeof(*fmt), compare_id_with_format);
 
 	return fmt ? fmt->fmt : fmt_unknown;

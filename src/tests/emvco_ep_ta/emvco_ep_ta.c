@@ -29,6 +29,10 @@
 
 const char log4c_category[] = "emv_ep_ta";
 static log4c_category_t *log_cat;
+static const struct tlv_id_to_fmt id_fmts[] = {
+	{ .id = EMV_ID_TEST_FLAGS, .fmt = fmt_b },
+	{ .id = NULL				}
+};
 
 /* 2EA.001.00 Entry of Amount Authorzed					      */
 START_TEST(test_2EA_001_00)
@@ -110,6 +114,9 @@ int main(int argc, char **argv)
 	}
 
 	log_cat = log4c_category_get(log4c_category);
+
+	libtlv_register_fmts(id_fmts);
+	libtlv_register_fmts(libemv_get_id_fmts());
 
 	suite = emvco_ep_ta_test_suite();
 	srunner = srunner_create(suite);

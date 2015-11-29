@@ -101,14 +101,6 @@ struct emv_ep_reg_kernel_set {
 	size_t			  size;
 };
 
-struct emv_txn_data {
-	enum emv_txn_type type;
-	uint64_t	  amount_authorised;
-	uint64_t	  amount_other;
-	uint8_t		  currency[2];
-	uint32_t	  unpredictable_number;
-};
-
 enum emv_ep_state {
 	eps_preprocessing = 0,
 	eps_protocol_activation,
@@ -119,22 +111,14 @@ enum emv_ep_state {
 	eps_done
 };
 
-struct emv_ep_kernel_params {
-	uint8_t fci[256];
-	size_t  fci_len;
-	uint8_t sw[2];
-};
-
 struct emv_ep {
 	enum emv_ep_state		state;
 	struct emv_hal			*hal;
 	log4c_category_t		*log_cat;
-	struct emv_txn_data		txn_data;
-	bool				restart;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_reg_kernel_set	reg_kernel_set;
 	struct emv_ep_candidate_list	candidate_list;
-	struct emv_ep_kernel_params	kernel_params;
+	struct emv_kernel_parms		parms;
 	struct emv_outcome_parms	outcome;
 };
 
@@ -266,7 +250,6 @@ static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
 
 int emv_ep_preprocessing(struct emv_ep *ep)
 {
-	struct emv_txn_data *txn = NULL;
 	struct emv_ep_combination_set *combination_set = NULL;
 	bool ctls_app_allowed = 0;
 	int rc = EMV_RC_OK;
@@ -275,11 +258,10 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
 
-	txn = &ep->txn_data;
-	assert(txn->type < num_txn_types);
-	combination_set = &ep->combination_set[txn->type];
+	assert(ep->parms.txn_type < num_txn_types);
+	combination_set = &ep->combination_set[ep->parms.txn_type];
 
-	if (!is_currency_code_supported(txn->currency)) {
+	if (!is_currency_code_supported(ep->parms.currency)) {
 		rc = EMV_RC_UNSUPPORTED_CURRENCY_CODE;
 		goto done;
 	}
@@ -328,7 +310,8 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * indicator for the Combination to 1.			      */
 		if (cfg->present.status_check_support &&
 		    cfg->enabled.status_check_support &&
-		    (txn->amount_authorised == unit_of_currency(txn->currency)))
+		    (ep->parms.amount_authorized ==
+					  unit_of_currency(ep->parms.currency)))
 			indicators->status_check_requested = true;
 
 
@@ -340,7 +323,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 *     Combination to 1.
 		 *   - Otherwise, Entry Point shall set the 'Zero Amount'
 		 *     indicator for the Combination to 1.		      */
-		if (!txn->amount_authorised) {
+		if (!ep->parms.amount_authorized) {
 			if (cfg->present.zero_amount_allowed &&
 			    !cfg->enabled.zero_amount_allowed)
 				indicators->ctls_app_not_allowed = true;
@@ -356,7 +339,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * Application Not Allowed' indicator for the Combination to
 		 * 1.							      */
 		if (cfg->present.reader_ctls_txn_limit &&
-		    (txn->amount_authorised >= cfg->reader_ctls_txn_limit))
+		    (ep->parms.amount_authorized >= cfg->reader_ctls_txn_limit))
 			indicators->ctls_app_not_allowed = true;
 
 
@@ -366,7 +349,8 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * then Entry Point shall set the 'Reader Contactless Floor
 		 * Limit Exceeded' indicator for the Combination to 1.	      */
 		if (cfg->present.reader_ctls_floor_limit &&
-		    (txn->amount_authorised > cfg->reader_ctls_floor_limit))
+		    (ep->parms.amount_authorized >
+						  cfg->reader_ctls_floor_limit))
 			indicators->floor_limit_exceeded = true;
 
 
@@ -380,7 +364,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * Limit Exceeded' indicator for the Combination to 1.	      */
 		if (!cfg->present.reader_ctls_floor_limit &&
 		    cfg->present.terminal_floor_limit &&
-		    (txn->amount_authorised > cfg->terminal_floor_limit))
+		    (ep->parms.amount_authorized > cfg->terminal_floor_limit))
 			indicators->floor_limit_exceeded = true;
 
 
@@ -390,7 +374,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * then Entry Point shall set the 'Reader CVM Required Limit
 		 * Exceeded' indicator for the Combination to 1.	      */
 		if (cfg->present.reader_cvm_reqd_limit &&
-		    (txn->amount_authorised >= cfg->reader_cvm_reqd_limit))
+		    (ep->parms.amount_authorized >= cfg->reader_cvm_reqd_limit))
 			indicators->cvm_reqd_limit_exceeded = true;
 
 
@@ -520,13 +504,13 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 *       Point Pre-Processing Indicators.
 	 *   - Entry Point shall clear the Candidate List.
 	 */
-	if (!ep->restart) {
+	if (!ep->parms.restart) {
 		if (started_by_reader) {
 			struct emv_ep_combination_set *combination_set = NULL;
 			int i = 0;
 
 			combination_set =
-					&ep->combination_set[ep->txn_data.type];
+				       &ep->combination_set[ep->parms.txn_type];
 
 			for (i = 0; i < combination_set->size; i++) {
 				struct emv_ep_combination *combination = NULL;
@@ -562,7 +546,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 *   - Message Identifier: '15' (“Present Card”)
 	 *   - Status: Ready to Read
 	 */
-	if (ep->restart && ep->outcome.ui_request_on_restart_present) {
+	if (ep->parms.restart && ep->outcome.ui_request_on_restart_present) {
 		ep->hal->ops->ui_request(ep->hal,
 					    &ep->outcome.ui_request_on_restart);
 	} else {
@@ -992,7 +976,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
 
-	combination_set = &ep->combination_set[ep->txn_data.type];
+	combination_set = &ep->combination_set[ep->parms.txn_type];
 
 
 	/* Step 1 */
@@ -1232,11 +1216,11 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.4");
 	/* Entry Point shall send the SELECT (AID) command with the ADF Name of
 	 * the selected Combination (with Extended Selection if appended).    */
-	ep->kernel_params.fci_len = sizeof(ep->kernel_params.fci);
+	ep->parms.fci_len = sizeof(ep->parms.fci);
 	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
 				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
-		   EMV_CMD_SELECT_P2_FIRST, adf, adf_len, ep->kernel_params.fci,
-			      &ep->kernel_params.fci_len, ep->kernel_params.sw);
+			   EMV_CMD_SELECT_P2_FIRST, adf, adf_len, ep->parms.fci,
+					      &ep->parms.fci_len, ep->parms.sw);
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.7");
@@ -1258,8 +1242,7 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	 *   - Otherwise Entry Point shall remove the selected Combination from
 	 *     the Candidate List and shall return to Start C (Step 3 of
 	 *     Combination Selection (requirement 3.3.2.6)).		      */
-	if ((ep->kernel_params.sw[0] != 0x90) ||
-	    (ep->kernel_params.sw[1] != 0x00)) {
+	if ((ep->parms.sw[0] != 0x90) || (ep->parms.sw[1] != 0x00)) {
 		ep->candidate_list.size--;
 		if (!ep->candidate_list.size) {
 			free(ep->candidate_list.candidates);
@@ -1304,12 +1287,16 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
 
+	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
+	ep->parms.kernel_id_len = candidate->combination->kernel_id_len;
+	memcpy(ep->parms.kernel_id, candidate->combination->kernel_id,
+						       ep->parms.kernel_id_len);
+	ep->parms.preproc_indicators = &candidate->combination->indicators;
+
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.1");
 	/* Entry Point shall activate the kernel identified in the selected
 	 * Combination.							      */
-	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
-	kernel = get_kernel(ep, candidate->combination->kernel_id,
-					 candidate->combination->kernel_id_len);
+	kernel = get_kernel(ep, ep->parms.kernel_id, ep->parms.kernel_id_len);
 	if (!kernel) {
 		rc = EMV_RC_NO_KERNEL;
 		goto done;
@@ -1325,11 +1312,8 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	 * (both received from the card in the SELECT (AID) response) to the
 	 * selected kernel. This requirement does not apply if Entry Point is
 	 * restarted at Start D after Outcome Processing.		      */
-	rc = kernel->ops->activate(kernel, ep->hal,
-					      candidate->combination->kernel_id,
-		   candidate->combination->kernel_id_len, ep->kernel_params.fci,
-				ep->kernel_params.fci_len, ep->kernel_params.sw,
-			 &candidate->combination->indicators, NULL, NULL, NULL);
+	rc = kernel->ops->activate(kernel, ep->hal, &ep->parms, NULL, NULL,
+									  NULL);
 	ep->state = eps_outcome_processing;
 
 done:
@@ -1343,7 +1327,7 @@ done:
 }
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
-			 enum emv_txn_type txn_type, uint64_t amount_authorised,
+			 enum emv_txn_type txn_type, uint64_t amount_authorized,
 			       uint64_t amount_other, const uint8_t currency[2],
 						  uint32_t unpredictable_number)
 {
@@ -1369,11 +1353,12 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 		goto done;
 	}
 
-	ep->txn_data.type = txn_type;
-	ep->txn_data.amount_authorised = amount_authorised;
-	ep->txn_data.amount_other = amount_other;
-	memcpy(ep->txn_data.currency, currency, sizeof(ep->txn_data.currency));
-	ep->txn_data.unpredictable_number = unpredictable_number;
+	ep->parms.start		       = start;
+	ep->parms.txn_type	       = txn_type;
+	ep->parms.amount_authorized    = amount_authorized;
+	ep->parms.amount_other	       = amount_other;
+	ep->parms.unpredictable_number = unpredictable_number;
+	memcpy(ep->parms.currency, currency, sizeof(ep->parms.currency));
 
 	do {
 		switch (ep->state) {

@@ -37,7 +37,7 @@
 #define TLV_RC_IO_ERROR				7
 #define TLV_RC_VALUE_OUT_OF_RANGE		8
 
-enum tlv_value_format {
+enum tlv_fmt {
 	fmt_a,
 	fmt_an,
 	fmt_ans,
@@ -48,12 +48,13 @@ enum tlv_value_format {
 	fmt_unknown
 };
 
-struct tlv_id_to_format {
-	const void	     *id;
-	enum tlv_value_format fmt;
+struct tlv_id_to_fmt {
+	const void  *id;
+	enum tlv_fmt fmt;
 };
 
-int libtlv_register_known_formats(const struct tlv_id_to_format *formats);
+int libtlv_register_fmts(const struct tlv_id_to_fmt *fmts);
+enum tlv_fmt libtlv_id_to_fmt(const void *id);
 
 struct tlv;
 
