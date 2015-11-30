@@ -306,6 +306,20 @@ int emv_ep_activate(struct emv_ep    *ep,
 		    const uint8_t     currency[2],
 		    uint32_t	      unpredictable_number);
 
+#define EMV_CMD_SELECT_CLA		0x00u
+#define EMV_CMD_SELECT_INS		0xA4u
+#define EMV_CMD_SELECT_P1_BY_NAME	0x04u
+#define EMV_CMD_SELECT_P2_FIRST		0x00u
+#define EMV_CMD_SELECT_P2_NEXT		0x02u
+
+#define EMV_CMD_GPO_CLA			0x80u
+#define EMV_CMD_GPO_INS			0xA8u
+#define EMV_CMD_P1_NONE			0x00u
+#define EMV_CMD_P2_NONE			0x00u
+
+int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
+		      uint8_t p1, uint8_t p2, const void *data, size_t data_len,
+			void *response, size_t *response_length, uint8_t sw[2]);
 
 /*-----------------------------------------------------------------------------+
 | EMV TLV Tag Description Handling					       |

@@ -139,8 +139,9 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 {
 	struct tk *tk = (struct tk *)kernel;
 	struct tlv *tlv_fci = NULL, *tlv = NULL, *tlv_parms = NULL;
-	uint8_t pdol[256], gpo_data[256];
+	uint8_t pdol[256], gpo_data[256], gpo_resp[256], sw[2];
 	size_t pdol_sz = sizeof(pdol), gpo_data_sz = sizeof(gpo_data);
+	size_t gpo_resp_sz = sizeof(gpo_resp);
 	int rc = EMV_RC_OK;
 
 	rc = tlv_parse(parms->fci, parms->fci_len, &tlv_fci);
@@ -181,6 +182,19 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
 					       "%s(): GPO DATA ='%s'", __func__,
 					 tlv_bin_to_hex(gpo_data, gpo_data_sz));
+
+	rc = emv_transceive_apdu(hal, EMV_CMD_GPO_CLA, EMV_CMD_GPO_INS,
+			EMV_CMD_P1_NONE, EMV_CMD_P2_NONE, gpo_data, gpo_data_sz,
+						    gpo_resp, &gpo_resp_sz, sw);
+	if (rc != TLV_RC_OK) {
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
+			    "%s(): GPO RESP = '%s' SW: %02hhX%02hhX", __func__,
+			  tlv_bin_to_hex(gpo_resp, gpo_resp_sz), sw[0], sw[1]);
+
 done:
 	if (tlv_parms)
 		tlv_free(tlv_parms);

@@ -231,6 +231,23 @@ done:
 	return rc;
 }
 
+static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
+		      size_t lc, const uint8_t *data, size_t *le, uint8_t *resp,
+								    uint8_t *sw)
+{
+	int rc = EMV_RC_OK;
+
+	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
+		     "%s(PDOL data: '%s')", __func__, tlv_bin_to_hex(data, lc));
+
+	*le = 0;
+
+	memcpy(sw, EMV_SW_9000_OK, 2);
+
+done:
+	return rc;
+}
+
 struct lt_ins {
 	uint8_t cla;
 	uint8_t ins;
@@ -245,7 +262,8 @@ struct lt_ins {
 };
 
 static struct lt_ins lt_ins[] = {
-	{ 0x00, 0xa4, lt_select_application },
+	{ EMV_CMD_SELECT_CLA, EMV_CMD_SELECT_INS, lt_select_application	      },
+	{ EMV_CMD_GPO_CLA,    EMV_CMD_GPO_INS,	  lt_get_processing_options   }
 };
 
 int lt_transceive(struct emv_hal *hal, const void *capdu, size_t capdu_sz,

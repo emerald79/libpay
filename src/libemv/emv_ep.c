@@ -638,7 +638,7 @@ int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal)
 	return EMV_RC_OK;
 }
 
-static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
+int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
 		      uint8_t p1, uint8_t p2, const void *data, size_t data_len,
 			 void *response, size_t *response_length, uint8_t sw[2])
 {
@@ -678,12 +678,6 @@ static int emv_transceive_apdu(struct emv_hal *hal, uint8_t cla, uint8_t ins,
 
 	return EMV_RC_OK;
 }
-
-#define EMV_CMD_SELECT_CLA		0x00u
-#define EMV_CMD_SELECT_INS		0xA4u
-#define EMV_CMD_SELECT_P1_BY_NAME	0x04u
-#define EMV_CMD_SELECT_P2_FIRST		0x00u
-#define EMV_CMD_SELECT_P2_NEXT		0x02u
 
 struct ppse_dir_entry {
 	uint8_t adf_name[16];
