@@ -377,7 +377,7 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t amount[6];
 		int rc;
 
-		rc = tlv_u64_to_bcd(comb->config.reader_ctls_txn_limit,
+		rc = libtlv_u64_to_bcd(comb->config.reader_ctls_txn_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;
@@ -391,7 +391,7 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t amount[6];
 		int rc;
 
-		rc = tlv_u64_to_bcd(comb->config.reader_ctls_floor_limit,
+		rc = libtlv_u64_to_bcd(comb->config.reader_ctls_floor_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;
@@ -405,7 +405,7 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t amount[6];
 		int rc;
 
-		rc = tlv_u64_to_bcd(comb->config.terminal_floor_limit,
+		rc = libtlv_u64_to_bcd(comb->config.terminal_floor_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;
@@ -419,7 +419,7 @@ static struct tlv *get_combination_set(struct emv_ep_combination *comb)
 		uint8_t amount[6];
 		int rc;
 
-		rc = tlv_u64_to_bcd(comb->config.reader_cvm_reqd_limit,
+		rc = libtlv_u64_to_bcd(comb->config.reader_cvm_reqd_limit,
 							amount, sizeof(amount));
 		if (rc != EMV_RC_OK)
 			goto error;

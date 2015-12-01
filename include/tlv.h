@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define TLV_RC_OK				0
 #define TLV_RC_INVALID_ARG			1
@@ -37,25 +38,10 @@
 #define TLV_RC_IO_ERROR				7
 #define TLV_RC_VALUE_OUT_OF_RANGE		8
 
-enum tlv_fmt {
-	fmt_a,
-	fmt_an,
-	fmt_ans,
-	fmt_b,
-	fmt_cn,
-	fmt_n,
-	fmt_var,
-	fmt_unknown
-};
-
-struct tlv_id_to_fmt {
-	const void  *id;
-	enum tlv_fmt fmt;
-};
-
-int libtlv_register_fmts(const struct tlv_id_to_fmt *fmts);
-enum tlv_fmt libtlv_id_to_fmt(const void *id);
-
+/**
+ * Structure that represents a complex TLV structure. I.e. for example a single
+ * TLV node, a list of TLV nodes, or a constructed TLV node with child nodes.
+ */
 struct tlv;
 
 /**
@@ -86,10 +72,8 @@ int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
  * Create a new TLV node.
  *
  * @param[in]  tag     The tag of the new TLV node.
- * @param[in]  length  The length of the value of the new TLV node. Must be 0
- *			 for constructed TLV nodes.
- * @param[in]  value   The value of the new TLV node. Must be NULL for
- *			 constructed TLV nodes.
+ * @param[in]  length  The length of the value of the new TLV node.
+ * @param[in]  value   The value of the new TLV node.
  *
  * @return A pointer to the new TLV node if successful. NULL otherwise.
  */
@@ -152,9 +136,9 @@ int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size);
  *
  * @param[in]  tlv  TLV node to determine whether its constructed or primitive.
  *
- * @returns 1 if TLV node is contructed, 0 if TLV node is primitive.
+ * @returns true if TLV node is contructed, false if TLV node is primitive.
  */
-int tlv_is_constructed(struct tlv *tlv);
+bool tlv_is_constructed(struct tlv *tlv);
 
 /**
  * Get the TLV node after the current TLV node. Elements of constructed TLV
@@ -201,6 +185,10 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag);
 /**
  * Insert one TLV structure after a TLV node
  *
+ * Note: If tlv1 is part of a TLV node list, and if tlv1 is not the last element
+ * of this list, then tlv2 will be inserted between tlv1 and the remainder of
+ * the list.
+ *
  * @param[in]  tlv1  TLV node behind which the TLV structure shall be inserted.
  * @param[in]  tlv2  The TLV structure to be inserted.
  *
@@ -208,14 +196,62 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag);
  */
 struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
 
+/**
+ * Insert a TLV structure as a child of another constructed TLV node.
+ *
+ * Note: If parent already has childs, then the new child will be added as the
+ * head of the list of childs.
+ *
+ * @param[in]  parent  The constructed TLV node to which a child TLV node shall
+ *			 be added.
+ * @param[in]  child   The TLV node to add as a child TLV node to parent.
+ *
+ * @returns child on success, NULL on error.
+ */
 struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child);
 
-int tlv_process_dol(struct tlv *data_elements, const void *dol, size_t dol_sz,
-						   void *data, size_t *data_sz);
+/**
+ * Concatenate the value fields of all data objects referenced in a Data Object
+ * List (DOL).
+ *
+ * See section 'Rules for Using a Data Object List (DOL)' in EMV v4.3 Book 3.
+ *
+ * @param[in]  data_objects  The data objects to get the values to concatenate
+ *			       from.
+ * @param[in]  dol	     The Data Object List that identifies the order and
+ *			       size of data object values to concatenate.
+ * @param[in]  dol_sz	     Size of the Data Object List in bytes.
+ * @param[out] values	     The concatenated value fields.
+ * @param[inout] values_sz   On input: The size of the output buffer. On output:
+ *			       The length of the concatenated value fields.
+ */
+int tlv_process_dol(struct tlv *data_objects, const void *dol, size_t dol_sz,
+					       void *values, size_t *values_sz);
 
-int tlv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
-int tlv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
-const char *tlv_bin_to_hex(const void *blob, size_t blob_sz);
+enum tlv_fmt {
+	fmt_a,
+	fmt_an,
+	fmt_ans,
+	fmt_b,
+	fmt_cn,
+	fmt_n,
+	fmt_var,
+	fmt_unknown
+};
 
+struct tlv_id_to_fmt {
+	const void  *id;
+	enum tlv_fmt fmt;
+};
+
+int libtlv_register_fmts(const struct tlv_id_to_fmt *fmts);
+
+enum tlv_fmt libtlv_id_to_fmt(const void *id);
+
+int libtlv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
+
+int libtlv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
+
+const char *libtlv_bin_to_hex(const void *blob, size_t blob_sz);
 
 #endif /* ndef __TLV_H__ */

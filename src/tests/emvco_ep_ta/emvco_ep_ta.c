@@ -27,7 +27,7 @@
 
 #include "emvco_ep_ta.h"
 
-const char log4c_category[] = "emv_ep_ta";
+const char log4c_category[] = "emvco_ep_ta";
 static log4c_category_t *log_cat;
 static const struct tlv_id_to_fmt id_fmts[] = {
 	{ .id = EMV_ID_TEST_FLAGS, .fmt = fmt_b },

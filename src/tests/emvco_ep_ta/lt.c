@@ -238,7 +238,7 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
-		     "%s(PDOL data: '%s')", __func__, tlv_bin_to_hex(data, lc));
+		  "%s(PDOL data: '%s')", __func__, libtlv_bin_to_hex(data, lc));
 
 	*le = 0;
 
@@ -277,7 +277,7 @@ int lt_transceive(struct emv_hal *hal, const void *capdu, size_t capdu_sz,
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE, "%s(capdu: '%s')",
-				     __func__, tlv_bin_to_hex(capdu, capdu_sz));
+				  __func__, libtlv_bin_to_hex(capdu, capdu_sz));
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 

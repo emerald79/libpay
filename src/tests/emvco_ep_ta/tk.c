@@ -90,12 +90,12 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 		goto done;
 	}
 
-	rc = tlv_u64_to_bcd(parms->amount_authorized, amount_authorized,
+	rc = libtlv_u64_to_bcd(parms->amount_authorized, amount_authorized,
 						     sizeof(amount_authorized));
 	if (rc != TLV_RC_OK)
 		goto done;
 
-	rc = tlv_u64_to_bcd(parms->amount_other, amount_other,
+	rc = libtlv_u64_to_bcd(parms->amount_other, amount_other,
 							  sizeof(amount_other));
 	if (rc != TLV_RC_OK)
 		goto done;
@@ -165,7 +165,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 	}
 
 	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
-		    "%s(): PDOL='%s'", __func__, tlv_bin_to_hex(pdol, pdol_sz));
+		 "%s(): PDOL='%s'", __func__, libtlv_bin_to_hex(pdol, pdol_sz));
 
 	tlv_parms = tlv_kernel_parms(parms);
 	if (!tlv_parms) {
@@ -181,7 +181,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 
 	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
 					       "%s(): GPO DATA ='%s'", __func__,
-					 tlv_bin_to_hex(gpo_data, gpo_data_sz));
+				      libtlv_bin_to_hex(gpo_data, gpo_data_sz));
 
 	rc = emv_transceive_apdu(hal, EMV_CMD_GPO_CLA, EMV_CMD_GPO_INS,
 			EMV_CMD_P1_NONE, EMV_CMD_P2_NONE, gpo_data, gpo_data_sz,
@@ -193,7 +193,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 
 	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
 			    "%s(): GPO RESP = '%s' SW: %02hhX%02hhX", __func__,
-			  tlv_bin_to_hex(gpo_resp, gpo_resp_sz), sw[0], sw[1]);
+		       libtlv_bin_to_hex(gpo_resp, gpo_resp_sz), sw[0], sw[1]);
 
 done:
 	if (tlv_parms)

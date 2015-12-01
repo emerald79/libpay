@@ -42,7 +42,7 @@ struct tlv {
 	struct tlv	*child;
 };
 
-int tlv_is_constructed(struct tlv *tlv)
+bool tlv_is_constructed(struct tlv *tlv)
 {
 	return !!(tlv->leading_octet & TLV_TAG_P_C_MASK);
 }
@@ -537,6 +537,9 @@ struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child)
 	if (!parent || !child || child->parent)
 		return NULL;
 
+	if (!(parent->leading_octet & TLV_TAG_P_C_MASK))
+		return NULL;
+
 	if (parent->child) {
 		child->next = parent->child;
 		parent->child->prev = child;
@@ -593,6 +596,9 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 	struct tlv *tlv = NULL;
 	int rc = TLV_RC_OK;
 
+	if (!tag || (length && !value))
+		goto error;
+
 	tlv = (struct tlv *)calloc(1, sizeof(struct tlv));
 	if (!tlv)
 		goto error;
@@ -601,11 +607,23 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 	if (rc != TLV_RC_OK)
 		goto error;
 
-	tlv->length = length;
-	tlv->value = malloc(length);
-	if (!tlv->value)
-		goto error;
-	memcpy(tlv->value, value, length);
+	if (length) {
+		if (tlv->leading_octet & TLV_TAG_P_C_MASK) {
+			struct tlv *childs = NULL;
+
+			rc = tlv_parse(value, length, &childs);
+			if (rc != TLV_RC_OK)
+				goto error;
+
+			tlv_insert_below(tlv, childs);	
+		} else {
+			tlv->length = length;
+			tlv->value = malloc(length);
+			if (!tlv->value)
+				goto error;
+			memcpy(tlv->value, value, length);
+		}
+	}
 
 	return tlv;
 
@@ -714,7 +732,7 @@ done:
 	return rc;
 }
 
-int tlv_bcd_to_u64(const void *buffer, size_t len, uint64_t *u64)
+int libtlv_bcd_to_u64(const void *buffer, size_t len, uint64_t *u64)
 {
 	const uint8_t *bcd = (const uint8_t *)buffer;
 	size_t i = 0, j = 0;
@@ -739,7 +757,7 @@ int tlv_bcd_to_u64(const void *buffer, size_t len, uint64_t *u64)
 	return TLV_RC_OK;
 }
 
-int tlv_u64_to_bcd(uint64_t u64, void *buffer, size_t len)
+int libtlv_u64_to_bcd(uint64_t u64, void *buffer, size_t len)
 {
 	uint8_t *bcd = (uint8_t *)buffer;
 	size_t i = 0, j = 0;
@@ -762,7 +780,7 @@ int tlv_u64_to_bcd(uint64_t u64, void *buffer, size_t len)
 	return TLV_RC_OK;
 }
 
-const char *tlv_bin_to_hex(const void *blob, size_t blob_sz)
+const char *libtlv_bin_to_hex(const void *blob, size_t blob_sz)
 {
 	const uint8_t hex_digit[16] = {
 		'0', '1', '2', '3', '4', '5', '6', '7',

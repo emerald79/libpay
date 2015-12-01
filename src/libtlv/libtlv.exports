@@ -13,8 +13,8 @@ tlv_find
 tlv_insert_after
 tlv_insert_below
 tlv_process_dol
-tlv_bcd_to_u64
-tlv_u64_to_bcd
-tlv_bin_to_hex
+libtlv_bcd_to_u64
+libtlv_u64_to_bcd
+libtlv_bin_to_hex
 libtlv_register_fmts
 libtlv_id_to_fmt

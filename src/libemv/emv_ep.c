@@ -152,11 +152,11 @@ done:
 	if (rc == EMV_RC_OK)
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 						  "%s('%s'): success", __func__,
-				      tlv_bin_to_hex(kernel_id, kernel_id_len));
+				   libtlv_bin_to_hex(kernel_id, kernel_id_len));
 	else
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
 					   "%s('%s'): failed. rc %d.", __func__,
-				  tlv_bin_to_hex(kernel_id, kernel_id_len), rc);
+			       libtlv_bin_to_hex(kernel_id, kernel_id_len), rc);
 
 	return rc;
 };
@@ -179,11 +179,11 @@ static struct emv_kernel *get_kernel(struct emv_ep *ep,
 	if (kernel) {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 						  "%s('%s'): success", __func__,
-						tlv_bin_to_hex(kernel_id, len));
+					     libtlv_bin_to_hex(kernel_id, len));
 	} else {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
 						   "%s('%s'): failed", __func__,
-						tlv_bin_to_hex(kernel_id, len));
+					     libtlv_bin_to_hex(kernel_id, len));
 	}
 
 	return kernel;
@@ -703,7 +703,7 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 	assert(num_entries);
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(fci: '%s')",
-					__func__, tlv_bin_to_hex(fci, fci_len));
+				     __func__, libtlv_bin_to_hex(fci, fci_len));
 
 	rc = tlv_parse(fci, fci_len, &ppse);
 	if (rc != TLV_RC_OK) {
