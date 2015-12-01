@@ -82,6 +82,17 @@ int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
  */
 int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
 
+/**
+ * Create a new TLV node.
+ *
+ * @param[in]  tag     The tag of the new TLV node.
+ * @param[in]  length  The length of the value of the new TLV node. Must be 0
+ *			 for constructed TLV nodes.
+ * @param[in]  value   The value of the new TLV node. Must be NULL for
+ *			 constructed TLV nodes.
+ *
+ * @return A pointer to the new TLV node if successful. NULL otherwise.
+ */
 struct tlv *tlv_new(const void *tag, size_t length, const void *value);
 
 /**
