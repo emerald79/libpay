@@ -244,7 +244,6 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 
-done:
 	return rc;
 }
 
