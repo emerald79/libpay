@@ -69,9 +69,9 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 	if (parms->restart)
 		test_flags[1] |= 0x80u;
 
-	switch (parms->txn_type) {
+	switch (parms->txn->type) {
 	case txn_purchase:
-		if (parms->amount_other)
+		if (parms->txn->amount_other)
 			txn_type = 0x09;
 		else
 			txn_type = 0x00;
@@ -90,12 +90,12 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 		goto done;
 	}
 
-	rc = libtlv_u64_to_bcd(parms->amount_authorized, amount_authorized,
+	rc = libtlv_u64_to_bcd(parms->txn->amount_authorized, amount_authorized,
 						     sizeof(amount_authorized));
 	if (rc != TLV_RC_OK)
 		goto done;
 
-	rc = libtlv_u64_to_bcd(parms->amount_other, amount_other,
+	rc = libtlv_u64_to_bcd(parms->txn->amount_other, amount_other,
 							  sizeof(amount_other));
 	if (rc != TLV_RC_OK)
 		goto done;

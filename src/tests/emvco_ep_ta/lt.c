@@ -225,8 +225,14 @@ struct lt {
 	const struct emv_hal_ops *ops;
 	const struct lt_setting	 *setting;
 	const struct aid_fci	 *selected_aid;
+	struct chk		 *checker;
 	log4c_category_t	 *log_cat;
 };
+
+uint32_t lt_get_unpredictable_number(struct emv_hal *hal)
+{
+	return 0x12345678u;
+}
 
 int lt_start_polling(struct emv_hal *hal)
 {
@@ -291,25 +297,30 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 								    uint8_t *sw)
 {
 	int rc = EMV_RC_OK;
-	struct tlv *tlv = NULL;
-	const struct aid_fci *app = lt->selected_aid;
-	uint8_t ber[512];
-	size_t ber_sz = sizeof(ber);
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 		  "%s(PDOL data: '%s')", __func__, libtlv_bin_to_hex(data, lc));
 
 	rc = ber_get_gpo_resp(&lt->setting->gpo_resp, resp, le);
+	if (rc != EMV_RC_OK)
+		goto done;
 
-	rc = dol_and_del_to_tlv(app->pdol, app->pdol_len, data, lc, &tlv);
-	tlv_encode(tlv, ber, &ber_sz);
+	if (lt->checker && lt->checker->ops->check_gpo_data) {
+		struct tlv *tlv = NULL;
 
-	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
-			     "TLV(PDOL): '%s'", libtlv_bin_to_hex(ber, ber_sz));
-	tlv_free(tlv);
+		rc = dol_and_del_to_tlv(lt->selected_aid->pdol,
+				    lt->selected_aid->pdol_len, data, lc, &tlv);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		lt->checker->ops->check_gpo_data(lt->checker, tlv);
+
+		tlv_free(tlv);
+	}
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 
+done:
 	return rc;
 }
 
@@ -407,18 +418,21 @@ done:
 void lt_ui_request(struct emv_hal *hal, const struct emv_ui_request *ui_request)
 {
 	struct lt *lt = (struct lt *)hal;
-	log4c_category_log(lt->log_cat,
-			       LOG4C_PRIORITY_TRACE, "%s(): success", __func__);
+
+	if (lt->checker && lt->checker->ops->check_ui_request)
+		lt->checker->ops->check_ui_request(lt->checker, ui_request);
 }
 
 const struct emv_hal_ops lt_ops  = {
-	.start_polling = lt_start_polling,
-	.wait_for_card = lt_wait_for_card,
-	.transceive    = lt_transceive,
-	.ui_request    = lt_ui_request
+	.get_unpredictable_number = lt_get_unpredictable_number,
+	.start_polling		  = lt_start_polling,
+	.wait_for_card		  = lt_wait_for_card,
+	.transceive		  = lt_transceive,
+	.ui_request		  = lt_ui_request
 };
 
-struct emv_hal *lt_new(enum ltsetting i_lts, const char *log4c_category)
+struct emv_hal *lt_new(enum ltsetting i_lts, struct chk *checker,
+						     const char *log4c_category)
 {
 	struct lt *lt = NULL;
 	char cat[64];
@@ -435,6 +449,7 @@ struct emv_hal *lt_new(enum ltsetting i_lts, const char *log4c_category)
 	snprintf(cat, sizeof(cat), "%s.lt", log4c_category);
 	lt->log_cat = log4c_category_get(cat);
 	lt->setting = &ltsetting[i_lts];
+	lt->checker = checker;
 
 	return (struct emv_hal *)lt;
 }

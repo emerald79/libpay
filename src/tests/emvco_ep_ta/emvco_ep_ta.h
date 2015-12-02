@@ -79,6 +79,26 @@
 
 
 /*-----------------------------------------------------------------------------+
+| Test Checker (chk)							       |
++-----------------------------------------------------------------------------*/
+
+struct chk;
+
+struct chk_ops {
+	void (*check_gpo_data)(struct chk *chk, struct tlv *gpo_data);
+	void (*check_ui_request)(struct chk *chk,
+				       const struct emv_ui_request *ui_request);
+	void (*check_outcome)(struct chk *chk,
+				       const struct emv_outcome_parms *outcome);
+	bool (*pass_criteria_met)(struct chk *chk);
+};
+
+struct chk {
+	const struct chk_ops *ops;
+};
+
+
+/*-----------------------------------------------------------------------------+
 | Terminal Settings (term)						       |
 +-----------------------------------------------------------------------------*/
 
@@ -89,6 +109,7 @@ enum termsetting {
 
 int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
 
+
 /*-----------------------------------------------------------------------------+
 | Lower Tester (lt)							       |
 +-----------------------------------------------------------------------------*/
@@ -98,7 +119,8 @@ enum ltsetting {
 	num_ltsettings
 };
 
-struct emv_hal *lt_new(enum ltsetting ltsetting, const char *log4c_category);
+struct emv_hal *lt_new(enum ltsetting ltsetting, struct chk *checker,
+						    const char *log4c_category);
 
 void lt_free(struct emv_hal *lt);
 

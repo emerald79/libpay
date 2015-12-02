@@ -195,7 +195,7 @@ static bool is_currency_code_supported(const uint8_t *currency_code)
 	    !memcmp(ISO4217_EUR, currency_code, sizeof(ISO4217_EUR)))
 		return true;
 
-	return false;
+	return true;
 }
 
 static uint64_t unit_of_currency(const uint8_t currency_code[2])
@@ -258,10 +258,10 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
 
-	assert(ep->parms.txn_type < num_txn_types);
-	combination_set = &ep->combination_set[ep->parms.txn_type];
+	assert(ep->parms.txn->type < num_txn_types);
+	combination_set = &ep->combination_set[ep->parms.txn->type];
 
-	if (!is_currency_code_supported(ep->parms.currency)) {
+	if (!is_currency_code_supported(ep->parms.txn->currency)) {
 		rc = EMV_RC_UNSUPPORTED_CURRENCY_CODE;
 		goto done;
 	}
@@ -310,8 +310,8 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * indicator for the Combination to 1.			      */
 		if (cfg->present.status_check_support &&
 		    cfg->enabled.status_check_support &&
-		    (ep->parms.amount_authorized ==
-					  unit_of_currency(ep->parms.currency)))
+		    (ep->parms.txn->amount_authorized ==
+				     unit_of_currency(ep->parms.txn->currency)))
 			indicators->status_check_requested = true;
 
 
@@ -323,7 +323,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 *     Combination to 1.
 		 *   - Otherwise, Entry Point shall set the 'Zero Amount'
 		 *     indicator for the Combination to 1.		      */
-		if (!ep->parms.amount_authorized) {
+		if (!ep->parms.txn->amount_authorized) {
 			if (cfg->present.zero_amount_allowed &&
 			    !cfg->enabled.zero_amount_allowed)
 				indicators->ctls_app_not_allowed = true;
@@ -339,7 +339,8 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * Application Not Allowed' indicator for the Combination to
 		 * 1.							      */
 		if (cfg->present.reader_ctls_txn_limit &&
-		    (ep->parms.amount_authorized >= cfg->reader_ctls_txn_limit))
+		    (ep->parms.txn->amount_authorized >=
+						    cfg->reader_ctls_txn_limit))
 			indicators->ctls_app_not_allowed = true;
 
 
@@ -349,7 +350,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * then Entry Point shall set the 'Reader Contactless Floor
 		 * Limit Exceeded' indicator for the Combination to 1.	      */
 		if (cfg->present.reader_ctls_floor_limit &&
-		    (ep->parms.amount_authorized >
+		    (ep->parms.txn->amount_authorized >
 						  cfg->reader_ctls_floor_limit))
 			indicators->floor_limit_exceeded = true;
 
@@ -364,7 +365,8 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * Limit Exceeded' indicator for the Combination to 1.	      */
 		if (!cfg->present.reader_ctls_floor_limit &&
 		    cfg->present.terminal_floor_limit &&
-		    (ep->parms.amount_authorized > cfg->terminal_floor_limit))
+		    (ep->parms.txn->amount_authorized >
+						     cfg->terminal_floor_limit))
 			indicators->floor_limit_exceeded = true;
 
 
@@ -374,7 +376,8 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		 * then Entry Point shall set the 'Reader CVM Required Limit
 		 * Exceeded' indicator for the Combination to 1.	      */
 		if (cfg->present.reader_cvm_reqd_limit &&
-		    (ep->parms.amount_authorized >= cfg->reader_cvm_reqd_limit))
+		    (ep->parms.txn->amount_authorized >=
+						    cfg->reader_cvm_reqd_limit))
 			indicators->cvm_reqd_limit_exceeded = true;
 
 
@@ -510,7 +513,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 			int i = 0;
 
 			combination_set =
-				       &ep->combination_set[ep->parms.txn_type];
+				      &ep->combination_set[ep->parms.txn->type];
 
 			for (i = 0; i < combination_set->size; i++) {
 				struct emv_ep_combination *combination = NULL;
@@ -970,7 +973,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
 
-	combination_set = &ep->combination_set[ep->parms.txn_type];
+	combination_set = &ep->combination_set[ep->parms.txn->type];
 
 
 	/* Step 1 */
@@ -1329,9 +1332,7 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 }
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
-			 enum emv_txn_type txn_type, uint64_t amount_authorized,
-			       uint64_t amount_other, const uint8_t currency[2],
-						  uint32_t unpredictable_number)
+						      const struct emv_txn *txn)
 {
 	bool started_at_b = (start == start_b);
 	int rc = EMV_RC_OK;
@@ -1356,11 +1357,9 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 	}
 
 	ep->parms.start		       = start;
-	ep->parms.txn_type	       = txn_type;
-	ep->parms.amount_authorized    = amount_authorized;
-	ep->parms.amount_other	       = amount_other;
-	ep->parms.unpredictable_number = unpredictable_number;
-	memcpy(ep->parms.currency, currency, sizeof(ep->parms.currency));
+	ep->parms.txn		       = txn;
+	ep->parms.unpredictable_number =
+				ep->hal->ops->get_unpredictable_number(ep->hal);
 
 	do {
 		switch (ep->state) {

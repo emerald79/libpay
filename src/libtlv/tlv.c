@@ -819,9 +819,9 @@ int libtlv_bcd_to_u64(const void *buffer, size_t len, uint64_t *u64)
 	if (!bcd || !u64)
 		return TLV_RC_INVALID_ARG;
 
-	for (i = len, *u64 = 0; i > 0; i--) {
+	for (i = 0, *u64 = 0; i < len; i++) {
 		for (j = 0; j < 2; j++) {
-			uint8_t digit = ((bcd[i - 1] >> (j * 4)) & 0xf);
+			uint8_t digit = ((bcd[i] >> ((1 - j) * 4)) & 0xf);
 
 			if (digit > 9)
 				return TLV_RC_INVALID_ARG;

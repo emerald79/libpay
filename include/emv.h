@@ -25,17 +25,18 @@
 #include <tlv.h>
 
 #define EMV_RC_OK				0
-#define EMV_RC_UNSUPPORTED_TRANSACTION_TYPE	1
-#define EMV_RC_UNSUPPORTED_CURRENCY_CODE	2
-#define EMV_RC_RF_COMMUNICATION_ERROR		3
-#define EMV_RC_CARD_PROTOCOL_ERROR		4
-#define EMV_RC_OVERFLOW				5
-#define EMV_RC_OUT_OF_MEMORY			6
-#define EMV_RC_SYNTAX_ERROR			7
-#define EMV_RC_NO_KERNEL			8
-#define EMV_RC_INVALID_ARG			9
-#define EMV_RC_COLLISION			10
-#define EMV_RC_CONTINUE				11
+#define EMV_RC_FAIL				1
+#define EMV_RC_UNSUPPORTED_TRANSACTION_TYPE	2
+#define EMV_RC_UNSUPPORTED_CURRENCY_CODE	3
+#define EMV_RC_RF_COMMUNICATION_ERROR		4
+#define EMV_RC_CARD_PROTOCOL_ERROR		5
+#define EMV_RC_OVERFLOW				6
+#define EMV_RC_OUT_OF_MEMORY			7
+#define EMV_RC_SYNTAX_ERROR			8
+#define EMV_RC_NO_KERNEL			9
+#define EMV_RC_INVALID_ARG			10
+#define EMV_RC_COLLISION			11
+#define EMV_RC_CONTINUE				12
 
 #define EMV_MAX_ONLINE_RESPONSE_LEN	256
 #define EMV_MAX_DATA_RECORD_LEN		512
@@ -226,6 +227,8 @@ struct emv_ep_preproc_indicators {
 struct emv_hal;
 
 struct emv_hal_ops {
+	uint32_t (*get_unpredictable_number)(struct emv_hal *hal);
+
 	int	(*start_polling)(struct emv_hal *hal);
 
 	int	(*wait_for_card)(struct emv_hal *hal);
@@ -252,13 +255,17 @@ enum emv_txn_type {
 	num_txn_types		   = 4
 };
 
+struct emv_txn {
+	enum emv_txn_type type;
+	uint64_t	  amount_authorized;
+	uint64_t	  amount_other;
+	uint8_t		  currency[2];
+};
+
 struct emv_kernel_parms {
 	bool					restart;
 	enum emv_start				start;
-	enum emv_txn_type			txn_type;
-	uint64_t				amount_authorized;
-	uint64_t				amount_other;
-	uint8_t					currency[2];
+	const struct emv_txn		       *txn;
 	uint32_t				unpredictable_number;
 	uint8_t					kernel_id[8];
 	size_t					kernel_id_len;
@@ -300,13 +307,9 @@ int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
 
 int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 
-int emv_ep_activate(struct emv_ep    *ep,
-		    enum emv_start    start,
-		    enum emv_txn_type txn_type,
-		    uint64_t	      amount_authorised,
-		    uint64_t	      amount_other,
-		    const uint8_t     currency[2],
-		    uint32_t	      unpredictable_number);
+int emv_ep_activate(struct emv_ep	 *ep,
+		    enum emv_start	  start,
+		    const struct emv_txn *txn);
 
 #define EMV_CMD_SELECT_CLA		0x00u
 #define EMV_CMD_SELECT_INS		0xA4u
