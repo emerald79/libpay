@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <arpa/inet.h>
 #include <log4c.h>
 
 #include <emv.h>
@@ -46,14 +47,20 @@ struct aid_fci {
 	uint8_t		     pdol_len;
 };
 
+struct gpo_resp {
+	struct emv_outcome_parms outcome_parms;
+};
+
 struct lt_setting {
 	struct ppse_entry ppse_entries[8];
 	size_t		  ppse_entries_num;
-	struct aid_fci    aid_fci[8];
+	struct aid_fci	  aid_fci[8];
 	size_t		  aid_fci_num;
+	struct gpo_resp	  gpo_resp;
 };
 
 static const struct lt_setting ltsetting[] = {
+	/* LTsetting1.1 */
 	{
 		.ppse_entries = {
 			{
@@ -83,7 +90,19 @@ static const struct lt_setting ltsetting[] = {
 				.pdol_len = 19
 			}
 		},
-		.aid_fci_num = 1
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.present = {
+					.ui_request_on_outcome = true
+				},
+				.outcome = out_approved,
+				.ui_request_on_outcome = {
+					.msg_id = msg_approved,
+					.status = sts_card_read_successfully
+				}
+			}
+		}
 	}
 };
 
@@ -114,6 +133,80 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 					 ent->ext_select_len, ent->ext_select));
 
 	return tlv_ppse_entry;
+}
+
+struct outcome_gpo_resp {
+	uint8_t	 outcome;
+	uint8_t	 start;
+	uint8_t	 online_resp;
+	uint8_t	 cvm;
+	uint8_t	 alt_iface_pref;
+	uint8_t	 receipt;
+	uint16_t field_off_request;
+	uint16_t removal_timeout;
+} __attribute__((packed));
+
+struct ui_req_gpo_resp {
+	uint8_t	 msg_id;
+	uint8_t	 status;
+	uint16_t hold_time;
+	uint8_t	 lang_pref[2];
+	uint8_t	 value_qual;
+	uint8_t	 value[6];
+	uint8_t	 currency_code[2];
+} __attribute__((packed));
+
+static int ber_get_gpo_resp(const struct gpo_resp *resp, void *ber,
+								 size_t *ber_sz)
+{
+	const struct emv_outcome_parms *out_parms = &resp->outcome_parms;
+	struct outcome_gpo_resp out_resp;
+	struct tlv *gpo_resp = NULL, *tlv = NULL;
+	int rc = TLV_RC_OK;
+
+	out_resp.outcome	 = (uint8_t)out_parms->outcome;
+	out_resp.start		 = (uint8_t)out_parms->start;
+	out_resp.online_resp	 = (uint8_t)out_parms->online_response.type;
+	out_resp.cvm		 = (uint8_t)out_parms->cvm;
+	out_resp.alt_iface_pref	 = (uint8_t)out_parms->alternate_interface_pref;
+	out_resp.receipt	 = (uint8_t)out_parms->present.receipt;
+	out_resp.field_off_request = out_parms->present.field_off_request ?
+			       htons((uint16_t)out_parms->field_off_hold_time) :
+									0xffffu;
+	out_resp.removal_timeout = htons((uint16_t)out_parms->removal_timeout);
+
+	gpo_resp = tlv_new(EMV_ID_RESP_MSG_TEMPLATE_FMT_2, 0, NULL);
+	if (!gpo_resp)
+		return TLV_RC_OUT_OF_MEMORY;
+
+	tlv = tlv_insert_below(gpo_resp, tlv_new(EMV_ID_OUTCOME_DATA,
+						  sizeof(out_resp), &out_resp));
+
+	if (out_parms->present.ui_request_on_outcome) {
+		struct ui_req_gpo_resp ui_req_resp;
+		const struct emv_ui_request *ui_req = NULL;
+
+		ui_req = &out_parms->ui_request_on_outcome;
+
+		ui_req_resp.msg_id     = (uint8_t)ui_req->msg_id;
+		ui_req_resp.status     = (uint8_t)ui_req->status;
+		ui_req_resp.hold_time  = htons(ui_req->hold_time);
+		ui_req_resp.value_qual = (uint8_t)ui_req->value_qualifier;
+		memcpy(ui_req_resp.lang_pref, ui_req->lang_pref,
+						 sizeof(ui_req_resp.lang_pref));
+		memcpy(ui_req_resp.value, ui_req->value,
+						     sizeof(ui_req_resp.value));
+		memcpy(ui_req_resp.currency_code, ui_req->currency_code,
+						 sizeof(ui_req->currency_code));
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_UI_REQ_ON_OUTCOME,
+					    sizeof(ui_req_resp), &ui_req_resp));
+	}
+
+	rc = tlv_encode(gpo_resp, ber, ber_sz);
+
+	tlv_free(gpo_resp);
+
+	return rc;
 }
 
 static int ber_get_ppse(const struct ppse_entry *entries, size_t num_entries,
@@ -240,7 +333,7 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 		  "%s(PDOL data: '%s')", __func__, libtlv_bin_to_hex(data, lc));
 
-	*le = 0;
+	rc = ber_get_gpo_resp(&lt->setting->gpo_resp, resp, le);
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 
@@ -270,7 +363,7 @@ int lt_transceive(struct emv_hal *hal, const void *capdu, size_t capdu_sz,
 {
 	struct lt *lt = (struct lt *)hal;
 	uint8_t *requ = (uint8_t *)capdu;
-	uint8_t resp[4096];
+	uint8_t resp[256];
 	uint8_t sw[2];
 	size_t resp_sz = sizeof(resp);
 	int i = 0;

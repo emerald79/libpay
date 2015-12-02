@@ -465,7 +465,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 
 		memset(&ep->outcome, 0, sizeof(ep->outcome));
 		ep->outcome.outcome = out_try_another_interface;
-		ep->outcome.ui_request_on_outcome_present = true;
+		ep->outcome.present.ui_request_on_outcome = true;
 		ui_req = &ep->outcome.ui_request_on_outcome;
 		ui_req->msg_id = msg_insert_or_swipe_card;
 		ui_req->status = sts_processing_error;
@@ -546,7 +546,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 *   - Message Identifier: '15' (“Present Card”)
 	 *   - Status: Ready to Read
 	 */
-	if (ep->parms.restart && ep->outcome.ui_request_on_restart_present) {
+	if (ep->parms.restart && ep->outcome.present.ui_request_on_restart) {
 		ep->hal->ops->ui_request(ep->hal,
 					    &ep->outcome.ui_request_on_restart);
 	} else {
@@ -1143,7 +1143,7 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 
 		memset(&ep->outcome, 0, sizeof(ep->outcome));
 		ep->outcome.outcome = out_end_application;
-		ep->outcome.ui_request_on_outcome_present = true;
+		ep->outcome.present.ui_request_on_outcome = true;
 		ui_req = &ep->outcome.ui_request_on_outcome;
 		ui_req->msg_id = msg_try_another_card;
 		ui_req->status = sts_ready_to_read;

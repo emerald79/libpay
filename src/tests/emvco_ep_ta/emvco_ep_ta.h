@@ -32,6 +32,9 @@
 #define EMV_ID_TEST_FLAGS	  "\xD1"
 #define EMV_ID_START_POINT	  "\xD2"
 #define EMV_ID_SELECT_RESPONSE_SW "\xD3"
+#define EMV_ID_OUTCOME_DATA	  "\xD4"
+#define EMV_ID_UI_REQ_ON_OUTCOME  "\xD5"
+#define EMV_ID_UI_REQ_ON_RESTART  "\xD6"
 
 /*-----------------------------------------------------------------------------+
 | Application Identifiers						       |

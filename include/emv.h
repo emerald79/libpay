@@ -58,6 +58,7 @@
 #define EMV_ID_DIRECTORY_ENTRY			"\x61"
 #define EMV_ID_FCI_TEMPLATE			"\x6F"
 #define EMV_ID_DF_NAME				"\x84"
+#define EMV_ID_RESP_MSG_TEMPLATE_FMT_2		"\x77"
 #define EMV_ID_APPLICATION_PRIORITY_INDICATOR	"\x87"
 #define EMV_ID_TRANSACTION_TYPE			"\x9C"
 #define EMV_ID_AMOUNT_AUTHORIZED		"\x9F\x02"
@@ -115,56 +116,56 @@ enum emv_value_qualifier {
 };
 
 enum emv_status {
-	sts_not_ready = 0,
-	sts_idle,
-	sts_ready_to_read,
-	sts_processing,
-	sts_card_read_successfully,
-	sts_processing_error
+	sts_na				= 0,
+	sts_not_ready			= 1,
+	sts_idle			= 2,
+	sts_ready_to_read		= 3,
+	sts_processing			= 4,
+	sts_card_read_successfully	= 5,
+	sts_processing_error		= 6
 };
 
 struct emv_ui_request {
 	enum	emv_message_identifier	msg_id;
 	enum	emv_status		status;
-	uint8_t				hold_time;
-	char				lang_pref[8];
-	size_t				lang_pref_len;
+	uint16_t			hold_time;
+	char				lang_pref[2];
 	enum	emv_value_qualifier	value_qualifier;
 	uint8_t				value[6];
 	uint8_t				currency_code[2];
 };
 
 enum emv_outcome {
-	out_na = 0,
-	out_select_next,
-	out_try_again,
-	out_approved,
-	out_declined,
-	out_online_request,
-	out_try_another_interface,
-	out_end_application
+	out_na			  = 0,
+	out_select_next		  = 1,
+	out_try_again		  = 2,
+	out_approved		  = 3,
+	out_declined		  = 4,
+	out_online_request	  = 5,
+	out_try_another_interface = 6,
+	out_end_application	  = 7
 };
 
 enum emv_start {
-	start_na = 0,
-	start_a,
-	start_b,
-	start_c,
-	start_d
+	start_na = 0x00,
+	start_a	 = 0x0A,
+	start_b  = 0x0B,
+	start_c  = 0x0C,
+	start_d  = 0x0D
 };
 
 enum emv_cvm {
-	cvm_na = 0,
-	cvm_online_pin,
-	cvm_confirmation_code_verified,
-	cvm_obtain_signature,
-	cvm_no_cvm
+	cvm_na			       = 0,
+	cvm_online_pin		       = 1,
+	cvm_confirmation_code_verified = 2,
+	cvm_obtain_signature	       = 3,
+	cvm_no_cvm		       = 4
 };
 
 enum emv_online_response_type {
-	ort_na = 0,
-	ort_emv_data,
-	ort_any
+	ort_na	     = 0,
+	ort_emv_data = 1,
+	ort_any	     = 2
 };
 
 struct emv_online_response {
@@ -184,30 +185,31 @@ struct emv_discretionary_data {
 };
 
 enum emv_alternate_interface_pref {
-	aip_na = 0,
-	aip_contact_chip,
-	aip_magstripe
+	aip_na		 = 0,
+	aip_contact_chip = 1,
+	aip_magstripe	 = 2,
+	aip_both	 = 3
 };
 
-struct emv_field_off_request {
-	bool	requested;
-	int	hold_time_value;
+struct emv_outcome_parms_flags {
+	bool	ui_request_on_outcome;
+	bool	ui_request_on_restart;
+	bool	field_off_request;
+	bool	receipt;
 };
 
 struct emv_outcome_parms {
+	struct	emv_outcome_parms_flags		present;
 	enum	emv_outcome			outcome;
 	enum	emv_start			start;
 	struct	emv_online_response		online_response;
 	enum	emv_cvm				cvm;
-	bool					ui_request_on_outcome_present;
 	struct	emv_ui_request			ui_request_on_outcome;
-	bool					ui_request_on_restart_present;
 	struct	emv_ui_request			ui_request_on_restart;
 	struct	emv_data_record			data_record;
 	struct	emv_discretionary_data		discretionary_data;
 	enum	emv_alternate_interface_pref	alternate_interface_pref;
-	bool					receipt;
-	struct	emv_field_off_request		field_off_request;
+	int					field_off_hold_time;
 	int					removal_timeout;
 };
 
