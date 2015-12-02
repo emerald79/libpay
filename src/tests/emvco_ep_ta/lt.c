@@ -352,7 +352,7 @@ const struct emv_hal_ops lt_ops  = {
 	.ui_request    = lt_ui_request
 };
 
-struct emv_hal *lt_new(enum ltsetting i_lts)
+struct emv_hal *lt_new(enum ltsetting i_lts, const char *log4c_category)
 {
 	struct lt *lt = NULL;
 	char cat[64];

@@ -1,3 +1,21 @@
+/*
+ * libemv - Support Library for EMV TLV handling.
+ * Copyright (C) 2015 Michael Jung <mijung@gmx.net>, All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3.0 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library.
+ */
+
 #ifndef __EMVCO_EP_TA_H__
 #define __EMVCO_EP_TA_H__
 
@@ -55,8 +73,34 @@
 	.app_label = "APP1", .app_label_len = 4
 
 /*-----------------------------------------------------------------------------+
-| Kernel IDs								       |
+| Terminal Settings (term)						       |
 +-----------------------------------------------------------------------------*/
+
+enum termsetting {
+	termsetting2 = 0,
+	num_termsettings
+};
+
+int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
+
+/*-----------------------------------------------------------------------------+
+| Lower Tester (lt)							       |
++-----------------------------------------------------------------------------*/
+
+enum ltsetting {
+	ltsetting1_1 = 0,
+	num_ltsettings
+};
+
+struct emv_hal *lt_new(enum ltsetting ltsetting, const char *log4c_category);
+
+void lt_free(struct emv_hal *lt);
+
+
+/*-----------------------------------------------------------------------------+
+| Test Kernel (tk)							       |
++-----------------------------------------------------------------------------*/
+
 #define KERNEL_ID_TK1 .kernel_id = { 0x01 }, .kernel_id_len = 1
 #define KERNEL_ID_TK2 .kernel_id = { 0x02 }, .kernel_id_len = 1
 #define KERNEL_ID_TK3 .kernel_id = { 0x03 }, .kernel_id_len = 1
@@ -76,20 +120,7 @@ struct tk_id {
 	size_t  kernel_id_len;
 };
 
-enum ltsetting {
-	ltsetting1_1 = 0,
-	num_ltsettings
-};
-
-extern const char log4c_category[];
-
-int get_termsetting_n(int n, void *buffer, size_t *size);
-
-struct emv_hal *lt_new(enum ltsetting ltsetting);
-
-void lt_free(struct emv_hal *lt);
-
-struct emv_kernel *tk_new();
+struct emv_kernel *tk_new(const char *log4c_category);
 
 void tk_free(struct emv_kernel *tk);
 

@@ -43,7 +43,7 @@ struct emv_ep_combination {
 	struct emv_ep_config config;
 };
 
-struct emv_ep_combination termsetting2[] = {
+struct emv_ep_combination termset2[] = {
 	{
 		.txn_types = {
 			txn_purchase,
@@ -283,6 +283,18 @@ struct emv_ep_combination termsetting2[] = {
 	}
 };
 
+struct termset {
+	struct emv_ep_combination *combination_sets;
+	size_t			   num_combination_sets;
+};
+
+struct termset termsettings[num_termsettings] = {
+	{
+		.combination_sets = termset2,
+		.num_combination_sets = ARRAY_SIZE(termset2)
+	}
+};
+
 static struct tlv *get_combinations(struct emv_ep_aid_kernel *aid_kernel)
 {
 	struct tlv *tlv_combinations = NULL;
@@ -442,20 +454,41 @@ error:
 	return NULL;
 }
 
-int get_termsetting_n(int n, void *buffer, size_t *size)
+int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 {
 	struct tlv *tlv = NULL, *tail = NULL;
-	int i;
+	struct termset *settings = NULL;
+	int i = 0, rc = TLV_RC_OK;
+
+	if ((termsetting >= num_termsettings) || !buffer || !size) {
+		rc = TLV_RC_INVALID_ARG;
+		goto done;
+	}
+
+	settings = &termsettings[termsetting];
 
 	tlv  = tlv_new(EMV_ID_LIBEMV_CONFIGURATION, 0, NULL);
-	tail = tlv_insert_below(tlv, get_combination_set(&termsetting2[0]));
+	if (!tlv) {
+		rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
 
-	for (i = 1; i < ARRAY_SIZE(termsetting2); i++)
+	tail = tlv_insert_below(tlv,
+			   get_combination_set(&settings->combination_sets[0]));
+
+	for (i = 1; i < settings->num_combination_sets; i++)
 		tail = tlv_insert_after(tail,
-					 get_combination_set(&termsetting2[i]));
+			   get_combination_set(&settings->combination_sets[i]));
 
-	tlv_encode(tlv, buffer, size);
+	if (!tail) {
+		rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	rc = tlv_encode(tlv, buffer, size);
+
+done:
 	tlv_free(tlv);
 
-	return TLV_RC_OK;
+	return rc;
 }

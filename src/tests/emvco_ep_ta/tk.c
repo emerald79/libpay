@@ -218,7 +218,7 @@ const struct emv_kernel_ops tk_ops = {
 	.activate  = tk_activate
 };
 
-struct emv_kernel *tk_new(void)
+struct emv_kernel *tk_new(const char *log4c_category)
 {
 	struct tk *tk = NULL;
 	char cat[64];

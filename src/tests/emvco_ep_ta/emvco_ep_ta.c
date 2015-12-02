@@ -27,7 +27,7 @@
 
 #include "emvco_ep_ta.h"
 
-const char log4c_category[] = "emvco_ep_ta";
+static const char log4c_category[] = "emvco_ep_ta";
 static log4c_category_t *log_cat;
 static const struct tlv_id_to_fmt id_fmts[] = {
 	{ .id = EMV_ID_TEST_FLAGS, .fmt = fmt_b },
@@ -51,19 +51,19 @@ START_TEST(test_2EA_001_00)
 	log4c_category_log(log_cat, LOG4C_PRIORITY_INFO, "%s(): start",
 								      __func__);
 
-	rc = get_termsetting_n(2, cfg, &cfg_sz);
+	rc = term_get_setting(termsetting2, cfg, &cfg_sz);
 	ck_assert(rc == TLV_RC_OK);
 
 	ep = emv_ep_new(log4c_category);
 	ck_assert(ep != NULL);
 
-	lt = lt_new(ltsetting1_1);
+	lt = lt_new(ltsetting1_1, log4c_category);
 	ck_assert(lt != NULL);
 
 	rc = emv_ep_register_hal(ep, lt);
 	ck_assert(rc == EMV_RC_OK);
 
-	tk = tk_new();
+	tk = tk_new(log4c_category);
 	ck_assert(tk != NULL);
 
 	for (i_tk = 0; i_tk < ARRAY_SIZE(tk_id); i_tk++) {
