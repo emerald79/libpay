@@ -139,6 +139,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 {
 	struct tk *tk = (struct tk *)kernel;
 	struct tlv *tlv_fci = NULL, *tlv = NULL, *tlv_parms = NULL;
+	struct tlv *tlv_resp = NULL;
 	uint8_t pdol[256], gpo_data[256], gpo_resp[256], sw[2];
 	size_t pdol_sz = sizeof(pdol), gpo_data_sz = sizeof(gpo_data);
 	size_t gpo_resp_sz = sizeof(gpo_resp);
@@ -196,12 +197,47 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 			    "%s(): GPO RESP = '%s' SW: %02hhX%02hhX", __func__,
 		       libtlv_bin_to_hex(gpo_resp, gpo_resp_sz), sw[0], sw[1]);
 
-done:
-	if (tlv_parms)
-		tlv_free(tlv_parms);
+	rc = tlv_parse(gpo_resp, gpo_resp_sz, &tlv_resp);
+	if (rc != TLV_RC_OK) {
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_NOTICE,
+				"%s(): Failed to parse GPO response", __func__);
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
 
-	if (tlv_fci)
-		tlv_free(tlv_fci);
+	tlv = tlv_find(tlv_get_child(tlv_resp), EMV_ID_OUTCOME_DATA);
+	if (tlv) {
+		struct outcome_gpo_resp gpo_outcome;
+		size_t gpo_outcome_sz = sizeof(gpo_outcome);
+
+		rc = tlv_encode_value(tlv, &gpo_outcome, &gpo_outcome_sz);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		gpo_outcome_to_outcome(&gpo_outcome, outcome);
+	}
+
+	tlv = tlv_find(tlv_get_child(tlv_resp), EMV_ID_UI_REQ_ON_OUTCOME);
+	if (tlv) {
+		struct ui_req_gpo_resp gpo_ui_req;
+		size_t gpo_ui_req_sz = sizeof(gpo_ui_req);
+
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
+			       "%s(): UI Request on Outcome present", __func__);
+
+		rc = tlv_encode_value(tlv, &gpo_ui_req, &gpo_ui_req_sz);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		gpo_ui_req_to_ui_req(&gpo_ui_req,
+					       &outcome->ui_request_on_outcome);
+		outcome->present.ui_request_on_outcome = true;
+	}
+
+done:
+	tlv_free(tlv_resp);
+	tlv_free(tlv_parms);
+	tlv_free(tlv_fci);
 
 	if (rc == EMV_RC_OK) {
 		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,

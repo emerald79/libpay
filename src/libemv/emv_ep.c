@@ -1266,12 +1266,6 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	return EMV_RC_OK;
 }
 
-int emv_ep_outcome_processing(struct emv_ep *ep)
-{
-	ep->state = eps_done;
-	return EMV_RC_OK;
-}
-
 int emv_ep_kernel_activation(struct emv_ep *ep)
 {
 	struct emv_kernel *kernel = NULL;
@@ -1306,8 +1300,8 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	 * (both received from the card in the SELECT (AID) response) to the
 	 * selected kernel. This requirement does not apply if Entry Point is
 	 * restarted at Start D after Outcome Processing.		      */
-	rc = kernel->ops->activate(kernel, ep->hal, &ep->parms, NULL, NULL,
-									  NULL);
+	rc = kernel->ops->activate(kernel, ep->hal, &ep->parms, &ep->outcome,
+								    NULL, NULL);
 	ep->state = eps_outcome_processing;
 
 done:
@@ -1318,6 +1312,20 @@ done:
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
 					  "%s(): failed. rc %d.", __func__, rc);
 	return rc;
+}
+
+int emv_ep_outcome_processing(struct emv_ep *ep)
+{
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.5.1.1");
+	/* If the value of Outcome parameter UI Request on Outcome Present is
+	 * 'Yes', then Entry Point shall send the associated User Interface
+	 * Request.							      */
+	if (ep->outcome.present.ui_request_on_outcome)
+		ep->hal->ops->ui_request(ep->hal,
+					    &ep->outcome.ui_request_on_outcome);
+
+	ep->state = eps_done;
+	return EMV_RC_OK;
 }
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start,

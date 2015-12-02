@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <check.h>
 #include <log4c.h>
+#include <arpa/inet.h>
 
 #include <tlv.h>
 #include <emv.h>
@@ -33,6 +34,66 @@ static const struct tlv_id_to_fmt id_fmts[] = {
 	{ .id = EMV_ID_TEST_FLAGS, .fmt = fmt_b },
 	{ .id = NULL				}
 };
+
+void gpo_outcome_to_outcome(const struct outcome_gpo_resp *in,
+						  struct emv_outcome_parms *out)
+{
+	out->outcome		      = (enum emv_outcome)in->outcome;
+	out->start		      = (enum emv_start)in->start;
+	out->cvm		      = (enum emv_cvm)in->cvm;
+	out->present.receipt	      = (bool)in->receipt;
+	out->removal_timeout	      = (int)ntohs(in->removal_timeout);
+	out->online_response.type     = (enum emv_online_response_type)
+								in->online_resp;
+	out->alternate_interface_pref = (enum emv_alternate_interface_pref)
+							     in->alt_iface_pref;
+	if (in->field_off_request == 0xffffu) {
+		out->present.field_off_request	= false;
+		out->field_off_hold_time	= 0;
+	} else {
+		out->present.field_off_request	= true;
+		out->field_off_hold_time = (int)(ntohs(in->field_off_request));
+	}
+}
+
+void outcome_to_gpo_outcome(const struct emv_outcome_parms *in,
+						   struct outcome_gpo_resp *out)
+{
+	out->outcome		= (uint8_t)in->outcome;
+	out->start		= (uint8_t)in->start;
+	out->online_resp	= (uint8_t)in->online_response.type;
+	out->cvm		= (uint8_t)in->cvm;
+	out->alt_iface_pref	= (uint8_t)in->alternate_interface_pref;
+	out->receipt		= (uint8_t)in->present.receipt;
+	out->field_off_request	= in->present.field_off_request ?
+			     htons((uint16_t)in->field_off_hold_time) : 0xffffu;
+	out->removal_timeout	= htons((uint16_t)in->removal_timeout);
+}
+
+
+void gpo_ui_req_to_ui_req(const struct ui_req_gpo_resp *in,
+						     struct emv_ui_request *out)
+{
+	out->msg_id	     = (enum emv_message_identifier)in->msg_id;
+	out->status	     = (uint8_t)out->status;
+	out->value_qualifier = (enum emv_value_qualifier)in->value_qual;
+	memcpy(out->lang_pref, in->lang_pref, sizeof(in->lang_pref));
+	memcpy(out->value, in->value, sizeof(in->value));
+	memcpy(out->currency_code, in->currency_code,
+						     sizeof(in->currency_code));
+}
+
+void ui_req_to_gpo_ui_req(const struct emv_ui_request *in,
+						    struct ui_req_gpo_resp *out)
+{
+	out->status     = (uint8_t)in->status;
+	out->hold_time  = htons(in->hold_time);
+	out->value_qual = (uint8_t)in->value_qualifier;
+	memcpy(out->lang_pref, in->lang_pref, sizeof(in->lang_pref));
+	memcpy(out->value, in->value, sizeof(in->value));
+	memcpy(out->currency_code, in->currency_code,
+						     sizeof(in->currency_code));
+}
 
 /* 2EA.001.00 Entry of Amount Authorzed					      */
 START_TEST(test_2EA_001_00)

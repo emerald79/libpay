@@ -236,8 +236,8 @@ struct emv_hal_ops {
 			      void	     *rapdu,
 			      size_t	     *rapdu_len);
 
-	void	(*ui_request)(struct emv_hal	    *hal,
-			      struct emv_ui_request *ui_request);
+	void	(*ui_request)(struct emv_hal		  *hal,
+			      const struct emv_ui_request *ui_request);
 };
 
 struct emv_hal {

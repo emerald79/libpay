@@ -147,6 +147,12 @@ struct outcome_gpo_resp {
 	uint16_t removal_timeout;
 } __attribute__((packed));
 
+void gpo_outcome_to_outcome(const struct outcome_gpo_resp *gpo_outcome,
+					     struct emv_outcome_parms *outcome);
+
+void outcome_to_gpo_outcome(const struct emv_outcome_parms *outcome,
+					  struct outcome_gpo_resp *gpo_outcome);
+
 
 /*-----------------------------------------------------------------------------+
 | UI Request data as provided by Lower Tester to Test Kernel in		       |
@@ -163,6 +169,11 @@ struct ui_req_gpo_resp {
 	uint8_t	 currency_code[2];
 } __attribute__((packed));
 
+void gpo_ui_req_to_ui_req(const struct ui_req_gpo_resp *gpo_ui_req,
+						 struct emv_ui_request *ui_req);
+
+void ui_req_to_gpo_ui_req(const struct emv_ui_request *ui_req,
+					    struct ui_req_gpo_resp *gpo_ui_req);
 
 
 #endif						    /* ndef __EMVCO_EP_TA_H__ */

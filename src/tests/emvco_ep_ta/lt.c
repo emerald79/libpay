@@ -138,45 +138,25 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 static int ber_get_gpo_resp(const struct gpo_resp *resp, void *ber,
 								 size_t *ber_sz)
 {
-	const struct emv_outcome_parms *out_parms = &resp->outcome_parms;
 	struct outcome_gpo_resp out_resp;
 	struct tlv *gpo_resp = NULL, *tlv = NULL;
 	int rc = TLV_RC_OK;
-
-	out_resp.outcome	 = (uint8_t)out_parms->outcome;
-	out_resp.start		 = (uint8_t)out_parms->start;
-	out_resp.online_resp	 = (uint8_t)out_parms->online_response.type;
-	out_resp.cvm		 = (uint8_t)out_parms->cvm;
-	out_resp.alt_iface_pref	 = (uint8_t)out_parms->alternate_interface_pref;
-	out_resp.receipt	 = (uint8_t)out_parms->present.receipt;
-	out_resp.field_off_request = out_parms->present.field_off_request ?
-			       htons((uint16_t)out_parms->field_off_hold_time) :
-									0xffffu;
-	out_resp.removal_timeout = htons((uint16_t)out_parms->removal_timeout);
 
 	gpo_resp = tlv_new(EMV_ID_RESP_MSG_TEMPLATE_FMT_2, 0, NULL);
 	if (!gpo_resp)
 		return TLV_RC_OUT_OF_MEMORY;
 
+	outcome_to_gpo_outcome(&resp->outcome_parms, &out_resp);
+
 	tlv = tlv_insert_below(gpo_resp, tlv_new(EMV_ID_OUTCOME_DATA,
 						  sizeof(out_resp), &out_resp));
 
-	if (out_parms->present.ui_request_on_outcome) {
+	if (resp->outcome_parms.present.ui_request_on_outcome) {
 		struct ui_req_gpo_resp ui_req_resp;
-		const struct emv_ui_request *ui_req = NULL;
 
-		ui_req = &out_parms->ui_request_on_outcome;
+		ui_req_to_gpo_ui_req(&resp->outcome_parms.ui_request_on_outcome,
+								  &ui_req_resp);
 
-		ui_req_resp.msg_id     = (uint8_t)ui_req->msg_id;
-		ui_req_resp.status     = (uint8_t)ui_req->status;
-		ui_req_resp.hold_time  = htons(ui_req->hold_time);
-		ui_req_resp.value_qual = (uint8_t)ui_req->value_qualifier;
-		memcpy(ui_req_resp.lang_pref, ui_req->lang_pref,
-						 sizeof(ui_req_resp.lang_pref));
-		memcpy(ui_req_resp.value, ui_req->value,
-						     sizeof(ui_req_resp.value));
-		memcpy(ui_req_resp.currency_code, ui_req->currency_code,
-						 sizeof(ui_req->currency_code));
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_UI_REQ_ON_OUTCOME,
 					    sizeof(ui_req_resp), &ui_req_resp));
 	}
@@ -424,7 +404,7 @@ done:
 	return rc;
 }
 
-void lt_ui_request(struct emv_hal *hal, struct emv_ui_request *ui_request)
+void lt_ui_request(struct emv_hal *hal, const struct emv_ui_request *ui_request)
 {
 	struct lt *lt = (struct lt *)hal;
 	log4c_category_log(lt->log_cat,
