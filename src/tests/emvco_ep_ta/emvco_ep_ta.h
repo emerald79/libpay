@@ -26,8 +26,9 @@
 +-----------------------------------------------------------------------------*/
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
 
+
 /*-----------------------------------------------------------------------------+
-| Proprietary Tags                                                             |
+| Proprietary Tags for EMVCo Type Approval - Book A & Book B		       |
 +-----------------------------------------------------------------------------*/
 #define EMV_ID_TEST_FLAGS	  "\xD1"
 #define EMV_ID_START_POINT	  "\xD2"
@@ -36,8 +37,9 @@
 #define EMV_ID_UI_REQ_ON_OUTCOME  "\xD5"
 #define EMV_ID_UI_REQ_ON_RESTART  "\xD6"
 
+
 /*-----------------------------------------------------------------------------+
-| Application Identifiers						       |
+| Application Identifiers used in EMVCo Type Approval - Book A & Book B	       |
 +-----------------------------------------------------------------------------*/
 #define AID_A0000000010001 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01 }, .aid_len = 7
@@ -74,6 +76,7 @@
 
 #define APP_LABEL_APP1 \
 	.app_label = "APP1", .app_label_len = 4
+
 
 /*-----------------------------------------------------------------------------+
 | Terminal Settings (term)						       |
@@ -126,5 +129,40 @@ struct tk_id {
 struct emv_kernel *tk_new(const char *log4c_category);
 
 void tk_free(struct emv_kernel *tk);
+
+
+/*-----------------------------------------------------------------------------+
+| Outcome data as provided by Lower Tester to Test Kernel in		       |
+| EMV_ID_OUTCOME_DATA type TLV nodes.					       |
++-----------------------------------------------------------------------------*/
+
+struct outcome_gpo_resp {
+	uint8_t	 outcome;
+	uint8_t	 start;
+	uint8_t	 online_resp;
+	uint8_t	 cvm;
+	uint8_t	 alt_iface_pref;
+	uint8_t	 receipt;
+	uint16_t field_off_request;
+	uint16_t removal_timeout;
+} __attribute__((packed));
+
+
+/*-----------------------------------------------------------------------------+
+| UI Request data as provided by Lower Tester to Test Kernel in		       |
+| EMV_ID_UI_REQ_ON_OUTCOME and EMV_ID_UI_REQ_ON_RESTART type TLV nodes.	       |
++-----------------------------------------------------------------------------*/
+
+struct ui_req_gpo_resp {
+	uint8_t	 msg_id;
+	uint8_t	 status;
+	uint16_t hold_time;
+	uint8_t	 lang_pref[2];
+	uint8_t	 value_qual;
+	uint8_t	 value[6];
+	uint8_t	 currency_code[2];
+} __attribute__((packed));
+
+
 
 #endif						    /* ndef __EMVCO_EP_TA_H__ */

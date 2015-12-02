@@ -211,22 +211,31 @@ struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
 struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child);
 
 /**
- * Concatenate the value fields of all data objects referenced in a Data Object
- * List (DOL).
+ * Construct a Data Element List (DEL) from a Data Object List (DOL) and a
+ * corresponding TLV list.
  *
  * See section 'Rules for Using a Data Object List (DOL)' in EMV v4.3 Book 3.
  *
- * @param[in]  data_objects  The data objects to get the values to concatenate
- *			       from.
- * @param[in]  dol	     The Data Object List that identifies the order and
- *			       size of data object values to concatenate.
- * @param[in]  dol_sz	     Size of the Data Object List in bytes.
- * @param[out] values	     The concatenated value fields.
- * @param[inout] values_sz   On input: The size of the output buffer. On output:
- *			       The length of the concatenated value fields.
+ * @param[in]	 tlv	 A TLV encoded list of data elements to fetch the values
+ *			   from.
+ * @param[in]	 dol	 The Data Object List that identifies the order and size
+ *			   of data object values to concatenate.
+ * @param[in]	 dol_sz	 Size of the Data Object List in bytes.
+ * @param[out]	 del	 The concatenated value fields (Data Element List).
+ * @param[inout] del_sz	 On input: The size of the output buffer. On output:
+ *			       The length of the DEL in bytes.
  */
-int tlv_process_dol(struct tlv *data_objects, const void *dol, size_t dol_sz,
-					       void *values, size_t *values_sz);
+int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
+				      size_t dol_sz, void *del, size_t *del_sz);
+
+/**
+ * Construct a list of TLV node from a Data Object List (DOL) and a Data Element
+ * list.
+ *
+ * See section 'Rules for Using a Data Object List (DOL)' in EMV v4.3 Book 3.
+ */
+int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
+			      const void *del, size_t del_sz, struct tlv **tlv);
 
 enum tlv_fmt {
 	fmt_a,

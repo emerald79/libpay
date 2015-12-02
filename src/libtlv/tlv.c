@@ -516,7 +516,10 @@ struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
 {
 	struct tlv *tail_of_tlv2 = NULL;
 
-	if (!tlv1 || !tlv2 || tlv2->prev)
+	if (!tlv1)
+		return tlv2;
+
+	if (!tlv2 || tlv2->prev)
 		return NULL;
 
 	for (tail_of_tlv2 = tlv2; tail_of_tlv2->next; )
@@ -615,7 +618,7 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 			if (rc != TLV_RC_OK)
 				goto error;
 
-			tlv_insert_below(tlv, childs);	
+			tlv_insert_below(tlv, childs);
 		} else {
 			tlv->length = length;
 			tlv->value = malloc(length);
@@ -636,11 +639,11 @@ error:
 	return NULL;
 }
 
-int tlv_process_dol(struct tlv *data_elements, const void *dol, size_t dol_sz,
-						    void *data, size_t *data_sz)
+int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
+				       size_t dol_sz, void *del, size_t *del_sz)
 {
 	const void *i_dol = dol;
-	uint8_t *out_data = (uint8_t *)data;
+	uint8_t *out_data = (uint8_t *)del;
 	size_t out_data_sz = 0;
 	int rc = TLV_RC_OK;
 
@@ -670,12 +673,12 @@ int tlv_process_dol(struct tlv *data_elements, const void *dol, size_t dol_sz,
 			goto done;
 		}
 
-		if (out_data_sz + tlv_do.length > *data_sz) {
+		if (out_data_sz + tlv_do.length > *del_sz) {
 			rc = TLV_RC_BUFFER_OVERFLOW;
 			goto done;
 		}
 
-		tlv_de = tlv_find(data_elements, tag);
+		tlv_de = tlv_find(tlv, tag);
 
 		if (!tlv_de || tlv_is_constructed(tlv_de)) {
 			memset(&out_data[out_data_sz], 0, tlv_do.length);
@@ -726,9 +729,85 @@ int tlv_process_dol(struct tlv *data_elements, const void *dol, size_t dol_sz,
 		continue;
 	}
 
-	*data_sz = out_data_sz;
+	*del_sz = out_data_sz;
 
 done:
+	return rc;
+}
+
+int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
+			       const void *del, size_t del_sz, struct tlv **out)
+{
+	const void *i_dol = NULL, *i_del = NULL;
+	struct tlv *tlv = NULL;
+	int rc = TLV_RC_OK;
+
+	if (!dol || !del || !out) {
+		rc = TLV_RC_INVALID_ARG;
+		goto done;
+	}
+
+	*out = NULL;
+
+	i_dol = dol;
+	i_del = del;
+
+	while (i_dol - dol < dol_sz) {
+		struct tlv tlv_do;
+		size_t dol_sz_left = 0, del_sz_left = 0;
+		uint8_t tag[6];
+		size_t tag_sz = sizeof(tag);
+
+		dol_sz_left = dol_sz - (i_dol - dol);
+		rc = tlv_parse_identifier(&i_dol, dol_sz_left, &tlv_do);
+		if (rc != TLV_RC_OK) {
+			printf("%s(): tlv_parse_identifier_fail!\n", __func__);
+			goto done;
+		}
+
+		dol_sz_left = dol_sz - (i_dol - dol);
+		rc = tlv_parse_length(&i_dol, dol_sz_left, &tlv_do);
+		if (rc != TLV_RC_OK) {
+			printf("%s(): tlv_parse_length_fail!\n", __func__);
+			goto done;
+		}
+
+		rc = tlv_encode_identifier(&tlv_do, tag, &tag_sz);
+		if (rc != TLV_RC_OK) {
+			printf("%s(): tlv_encode_identifier_fail!\n", __func__);
+			goto done;
+		}
+
+		del_sz_left = del_sz - (i_del - del);
+		if (tlv_do.length > del_sz_left) {
+			rc = TLV_RC_BUFFER_OVERFLOW;
+			goto done;
+		}
+
+		tlv = tlv_insert_after(tlv, tlv_new(tag, tlv_do.length, i_del));
+		i_del += tlv_do.length;
+
+
+		if (!*out)
+			*out = tlv;
+	}
+
+	if (!tlv) {
+		rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	if ((i_del - del != del_sz) || (i_dol - dol != dol_sz)) {
+		rc = TLV_RC_INVALID_ARG;
+		goto done;
+	}
+
+done:
+	if (rc != TLV_RC_OK) {
+		*out = NULL;
+		tlv_free(tlv);
+	}
+
 	return rc;
 }
 

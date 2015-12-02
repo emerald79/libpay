@@ -173,7 +173,8 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		goto done;
 	}
 
-	rc = tlv_process_dol(tlv_parms, pdol, pdol_sz, gpo_data, &gpo_data_sz);
+	rc = tlv_and_dol_to_del(tlv_parms, pdol, pdol_sz, gpo_data,
+								  &gpo_data_sz);
 	if (rc != TLV_RC_OK) {
 		rc = EMV_RC_CARD_PROTOCOL_ERROR;
 		goto done;

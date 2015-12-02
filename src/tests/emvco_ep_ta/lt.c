@@ -44,7 +44,7 @@ struct aid_fci {
 	size_t		     app_label_len;
 	uint8_t		     app_prio;
 	uint8_t		     pdol[256];
-	uint8_t		     pdol_len;
+	size_t		     pdol_len;
 };
 
 struct gpo_resp {
@@ -134,27 +134,6 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 
 	return tlv_ppse_entry;
 }
-
-struct outcome_gpo_resp {
-	uint8_t	 outcome;
-	uint8_t	 start;
-	uint8_t	 online_resp;
-	uint8_t	 cvm;
-	uint8_t	 alt_iface_pref;
-	uint8_t	 receipt;
-	uint16_t field_off_request;
-	uint16_t removal_timeout;
-} __attribute__((packed));
-
-struct ui_req_gpo_resp {
-	uint8_t	 msg_id;
-	uint8_t	 status;
-	uint16_t hold_time;
-	uint8_t	 lang_pref[2];
-	uint8_t	 value_qual;
-	uint8_t	 value[6];
-	uint8_t	 currency_code[2];
-} __attribute__((packed));
 
 static int ber_get_gpo_resp(const struct gpo_resp *resp, void *ber,
 								 size_t *ber_sz)
@@ -264,8 +243,9 @@ static int ber_get_aid_fci(const struct aid_fci *aid_fci, void *ber,
 
 struct lt {
 	const struct emv_hal_ops *ops;
-	const struct lt_setting *setting;
-	log4c_category_t *log_cat;
+	const struct lt_setting	 *setting;
+	const struct aid_fci	 *selected_aid;
+	log4c_category_t	 *log_cat;
 };
 
 int lt_start_polling(struct emv_hal *hal)
@@ -312,6 +292,8 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 			if (rc != EMV_RC_OK)
 				goto done;
 
+			lt->selected_aid = &lt->setting->aid_fci[i_aid];
+
 			memcpy(sw, EMV_SW_9000_OK, 2);
 			goto done;
 		}
@@ -329,11 +311,22 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 								    uint8_t *sw)
 {
 	int rc = EMV_RC_OK;
+	struct tlv *tlv = NULL;
+	const struct aid_fci *app = lt->selected_aid;
+	uint8_t ber[512];
+	size_t ber_sz = sizeof(ber);
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 		  "%s(PDOL data: '%s')", __func__, libtlv_bin_to_hex(data, lc));
 
 	rc = ber_get_gpo_resp(&lt->setting->gpo_resp, resp, le);
+
+	rc = dol_and_del_to_tlv(app->pdol, app->pdol_len, data, lc, &tlv);
+	tlv_encode(tlv, ber, &ber_sz);
+
+	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
+			     "TLV(PDOL): '%s'", libtlv_bin_to_hex(ber, ber_sz));
+	tlv_free(tlv);
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 
