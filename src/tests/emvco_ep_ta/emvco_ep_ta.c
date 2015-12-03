@@ -225,7 +225,7 @@ void txn_checker_check_gpo_data(struct chk *chk, struct tlv *gpo_data)
 	if (amount != txn_checker->txn->amount_authorized) {
 		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
 			      "Incorrect 'Amount Authorized' passed to kernel! "
-						      "TXN: %llu, KERNEL: %llu",
+							"TXN: %lu, KERNEL: %lu",
 				   txn_checker->txn->amount_authorized, amount);
 		txn_checker->pass_criteria_met = false;
 	}
@@ -249,7 +249,7 @@ void txn_checker_check_gpo_data(struct chk *chk, struct tlv *gpo_data)
 	if (amount != txn_checker->txn->amount_other) {
 		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
 				  "Incorrect 'Amount Other' passed to kernel! "
-						      "TXN: %llu, KERNEL: %llu",
+							"TXN: %lu, KERNEL: %lu",
 					txn_checker->txn->amount_other, amount);
 		txn_checker->pass_criteria_met = false;
 	}

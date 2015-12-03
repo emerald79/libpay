@@ -128,6 +128,7 @@ int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
 	struct emv_ep_reg_kernel_set *set = &ep->reg_kernel_set;
 	int rc = EMV_RC_OK;
 	size_t i_kernel = set->size++;
+	char hex[kernel_id_len * 2 + 1];
 
 	set->kernel = (struct emv_ep_reg_kernel *)realloc(set->kernel,
 				  set->size * sizeof(struct emv_ep_reg_kernel));
@@ -152,11 +153,11 @@ done:
 	if (rc == EMV_RC_OK)
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 						  "%s('%s'): success", __func__,
-				   libtlv_bin_to_hex(kernel_id, kernel_id_len));
+			      libtlv_bin_to_hex(kernel_id, kernel_id_len, hex));
 	else
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
 					   "%s('%s'): failed. rc %d.", __func__,
-			       libtlv_bin_to_hex(kernel_id, kernel_id_len), rc);
+			  libtlv_bin_to_hex(kernel_id, kernel_id_len, hex), rc);
 
 	return rc;
 };
@@ -166,6 +167,7 @@ static struct emv_kernel *get_kernel(struct emv_ep *ep,
 {
 	struct emv_kernel *kernel = NULL;
 	size_t i_krn;
+	char hex[2 * len + 1];
 
 	for (i_krn = 0; i_krn < ep->reg_kernel_set.size; i_krn++) {
 		if ((len == ep->reg_kernel_set.kernel[i_krn].kernel_id_len) &&
@@ -179,11 +181,11 @@ static struct emv_kernel *get_kernel(struct emv_ep *ep,
 	if (kernel) {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 						  "%s('%s'): success", __func__,
-					     libtlv_bin_to_hex(kernel_id, len));
+					libtlv_bin_to_hex(kernel_id, len, hex));
 	} else {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
 						   "%s('%s'): failed", __func__,
-					     libtlv_bin_to_hex(kernel_id, len));
+					libtlv_bin_to_hex(kernel_id, len, hex));
 	}
 
 	return kernel;
@@ -700,13 +702,14 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 	struct tlv *ppse = NULL, *i_tlv = NULL;
 	size_t num = 0;
 	int rc = EMV_RC_OK;
+	char hex[2 * fci_len + 1];
 
 	assert(fci);
 	assert(entries);
 	assert(num_entries);
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(fci: '%s')",
-				     __func__, libtlv_bin_to_hex(fci, fci_len));
+				__func__, libtlv_bin_to_hex(fci, fci_len, hex));
 
 	rc = tlv_parse(fci, fci_len, &ppse);
 	if (rc != TLV_RC_OK) {
@@ -1039,7 +1042,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 		       "%s(): Combinations: %d, 2PAY.SYS entries: %d", __func__,
-					combination_set->size, num_dir_entries);
+			      (int)combination_set->size, (int)num_dir_entries);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
 	/* For each reader Combination {AID - Kernel ID} supported by the reader
@@ -1101,7 +1104,7 @@ done:
 	if (rc == EMV_RC_OK)
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 				       "%s(): success. Number of candiates: %d",
-					     __func__, ep->candidate_list.size);
+					__func__, (int)ep->candidate_list.size);
 	else
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
 					  "%s(): failed. rc %d.", __func__, rc);

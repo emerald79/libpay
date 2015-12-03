@@ -594,6 +594,65 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag)
 	return tlv_i;
 }
 
+int tlv_get_depth(struct tlv *tlv)
+{
+	int depth = 0;
+
+	do {
+		tlv = tlv_get_parent(tlv);
+		depth++;
+	} while (tlv);
+
+	return depth;
+}
+
+struct tlv *tlv_iterate(struct tlv *tlv)
+{
+	if (!tlv)
+		return NULL;
+
+	if (tlv_is_constructed(tlv))
+		return tlv_get_child(tlv);
+
+	if (tlv_get_next(tlv))
+		return tlv_get_next(tlv);
+
+	while (tlv_get_parent(tlv)) {
+		if (tlv_get_next(tlv_get_parent(tlv)))
+			return tlv_get_next(tlv_get_parent(tlv));
+
+		tlv = tlv_get_parent(tlv);
+	}
+
+	return NULL;
+}
+
+struct tlv *tlv_deep_find(struct tlv *tlv, const void *tag)
+{
+	size_t tag_len;
+
+	assert(tag);
+
+	if (!tlv)
+		return NULL;
+
+	tag_len = tlv_get_tag_length(tag);
+
+	while (tlv) {
+		uint8_t encoded_tag[6];
+		size_t encoded_tag_len = sizeof(encoded_tag);
+
+		tlv_encode_identifier(tlv, encoded_tag, &encoded_tag_len);
+		if ((tag_len == encoded_tag_len) &&
+					   (!memcmp(tag, encoded_tag, tag_len)))
+			break;
+
+		tlv = tlv_iterate(tlv);
+	}
+
+	return tlv;
+}
+
 struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 {
 	struct tlv *tlv = NULL;
@@ -859,27 +918,23 @@ int libtlv_u64_to_bcd(uint64_t u64, void *buffer, size_t len)
 	return TLV_RC_OK;
 }
 
-const char *libtlv_bin_to_hex(const void *blob, size_t blob_sz)
+char *libtlv_bin_to_hex(const void *blob, size_t blob_sz, char *buffer)
 {
-	const uint8_t hex_digit[16] = {
+	const char hex_digit[16] = {
 		'0', '1', '2', '3', '4', '5', '6', '7',
 		'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
 	};
 	const uint8_t *bin = (const uint8_t *)blob;
-	static __thread char hex[68];
 	size_t i;
 
-	for (i = 0; (i < blob_sz) && (i < 32); i++) {
-		hex[i * 2]     = hex_digit[bin[i] >> 4];
-		hex[i * 2 + 1] = hex_digit[bin[i] & 0xf];
+	for (i = 0; i < blob_sz; i++) {
+		buffer[i * 2]     = hex_digit[bin[i] >> 4];
+		buffer[i * 2 + 1] = hex_digit[bin[i] & 0xf];
 	}
 
-	if (i < blob_sz)
-		strcpy(&hex[i * 2], "...");
-	else
-		hex[i * 2] = '\0';
+	buffer[i * 2] = '\0';
 
-	return hex;
+	return buffer;
 }
 
 static struct tlv_id_to_fmt *known_formats;

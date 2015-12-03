@@ -141,6 +141,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 	struct tlv *tlv_fci = NULL, *tlv = NULL, *tlv_parms = NULL;
 	struct tlv *tlv_resp = NULL;
 	uint8_t pdol[256], gpo_data[256], gpo_resp[256], sw[2];
+	char hex[513];
 	size_t pdol_sz = sizeof(pdol), gpo_data_sz = sizeof(gpo_data);
 	size_t gpo_resp_sz = sizeof(gpo_resp);
 	int rc = EMV_RC_OK;
@@ -166,7 +167,8 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 	}
 
 	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
-		 "%s(): PDOL='%s'", __func__, libtlv_bin_to_hex(pdol, pdol_sz));
+						    "%s(): PDOL='%s'", __func__,
+					 libtlv_bin_to_hex(pdol, pdol_sz, hex));
 
 	tlv_parms = tlv_kernel_parms(parms);
 	if (!tlv_parms) {
@@ -183,7 +185,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 
 	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
 					       "%s(): GPO DATA ='%s'", __func__,
-				      libtlv_bin_to_hex(gpo_data, gpo_data_sz));
+				 libtlv_bin_to_hex(gpo_data, gpo_data_sz, hex));
 
 	rc = emv_transceive_apdu(hal, EMV_CMD_GPO_CLA, EMV_CMD_GPO_INS,
 			EMV_CMD_P1_NONE, EMV_CMD_P2_NONE, gpo_data, gpo_data_sz,
@@ -195,7 +197,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 
 	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
 			    "%s(): GPO RESP = '%s' SW: %02hhX%02hhX", __func__,
-		       libtlv_bin_to_hex(gpo_resp, gpo_resp_sz), sw[0], sw[1]);
+		  libtlv_bin_to_hex(gpo_resp, gpo_resp_sz, hex), sw[0], sw[1]);
 
 	rc = tlv_parse(gpo_resp, gpo_resp_sz, &tlv_resp);
 	if (rc != TLV_RC_OK) {

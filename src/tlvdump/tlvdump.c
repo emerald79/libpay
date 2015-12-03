@@ -215,29 +215,6 @@ static int hex_to_binary(const uint8_t *hex, size_t hex_len, uint8_t **binary,
 	return TLV_RC_OK;
 }
 
-static struct tlv *tlv_iterate(struct tlv *tlv, int *depth)
-{
-	if (!tlv)
-		return NULL;
-
-	if (tlv_is_constructed(tlv)) {
-		(*depth)++;
-		return tlv_get_child(tlv);
-	}
-
-	if (tlv_get_next(tlv))
-		return tlv_get_next(tlv);
-
-	while (tlv_get_parent(tlv)) {
-		(*depth)--;
-		if (tlv_get_next(tlv_get_parent(tlv)))
-			return tlv_get_next(tlv_get_parent(tlv));
-		tlv = tlv_get_parent(tlv);
-	}
-
-	return NULL;
-}
-
 static int write_file(int fd, uint8_t *contents, size_t len)
 {
 	ssize_t rc = 0;
@@ -310,15 +287,14 @@ static int read_file(int fd, uint8_t **contents, size_t *len)
 static int encode_to_text_file(int fd, struct tlv *tlv,
 			       struct emv_tag_descriptor *tags, size_t num_tags)
 {
-	int depth = 0;
-
-	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
+	do {
 		struct emv_tag_descriptor *desc = NULL;
 		uint8_t buffer[256];
 		char line[256];
 		size_t size;
 		ssize_t rc = 0;
 		int i, j, len = 0;
+		int depth = tlv_get_depth(tlv);
 
 		for (i = 0, j = 0; i < depth; i++, j += 2)
 			len += snprintf(&line[len], sizeof(line) - len, "  ");
@@ -359,7 +335,9 @@ static int encode_to_text_file(int fd, struct tlv *tlv,
 				return TLV_RC_IO_ERROR;
 			size += rc;
 		} while (size < len);
-	}
+
+		tlv = tlv_iterate(tlv);
+	} while (tlv);
 
 	return TLV_RC_OK;
 
@@ -369,15 +347,14 @@ static int encode_to_c11_file(int fd, struct tlv *tlv,
 			       struct emv_tag_descriptor *tags, size_t num_tags)
 {
 	FILE *out = fdopen(fd, "w");
-	int depth = 0;
 
 	fprintf(out, "const unsigned char ber_tlv[] = {\n");
 
-	for (depth = 0; tlv; tlv = tlv_iterate(tlv, &depth)) {
+	do {
 		struct emv_tag_descriptor *desc = NULL;
 		uint8_t buffer[256];
 		size_t size;
-		int i;
+		int i, depth = tlv_get_depth(tlv);
 
 		size = sizeof(buffer);
 		tlv_encode_identifier(tlv, buffer, &size);
@@ -417,7 +394,9 @@ static int encode_to_c11_file(int fd, struct tlv *tlv,
 		}
 
 		fprintf(out, "\n");
-	}
+
+		tlv = tlv_iterate(tlv);
+	} while (tlv);
 
 	fprintf(out, "};\n");
 

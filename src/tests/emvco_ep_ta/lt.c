@@ -297,9 +297,11 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 								    uint8_t *sw)
 {
 	int rc = EMV_RC_OK;
+	char hex[lc * 2 + 1];
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
-		  "%s(PDOL data: '%s')", __func__, libtlv_bin_to_hex(data, lc));
+						"%s(PDOL data: '%s')", __func__,
+					      libtlv_bin_to_hex(data, lc, hex));
 
 	rc = ber_get_gpo_resp(&lt->setting->gpo_resp, resp, le);
 	if (rc != EMV_RC_OK)
@@ -349,12 +351,13 @@ int lt_transceive(struct emv_hal *hal, const void *capdu, size_t capdu_sz,
 	uint8_t *requ = (uint8_t *)capdu;
 	uint8_t resp[256];
 	uint8_t sw[2];
+	char hex[capdu_sz * 2 + 1];
 	size_t resp_sz = sizeof(resp);
 	int i = 0;
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE, "%s(capdu: '%s')",
-				  __func__, libtlv_bin_to_hex(capdu, capdu_sz));
+			     __func__, libtlv_bin_to_hex(capdu, capdu_sz, hex));
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 

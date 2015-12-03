@@ -141,16 +141,6 @@ int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size);
 bool tlv_is_constructed(struct tlv *tlv);
 
 /**
- * Get the TLV node after the current TLV node. Elements of constructed TLV
- * nodes skipped.
- *
- * @param[in]  tlv  The current TLV node.
- *
- * @returns The TLV node after the current TLV node or NULL if there is none.
- */
-struct tlv *tlv_get_next(struct tlv *tlv);
-
-/**
  * Get the constructed TLV node which the current TLV node is an element of.
  *
  * @param[in]  tlv  The current TLV node.
@@ -170,7 +160,17 @@ struct tlv *tlv_get_parent(struct tlv *tlv);
 struct tlv *tlv_get_child(struct tlv *tlv);
 
 /**
- * Search for a TLV node with a given specific tag.
+ * Get the TLV node after the current TLV node. Elements of constructed TLV
+ * nodes skipped.
+ *
+ * @param[in]  tlv  The current TLV node.
+ *
+ * @returns The TLV node after the current TLV node or NULL if there is none.
+ */
+struct tlv *tlv_get_next(struct tlv *tlv);
+
+/**
+ * Shallow search for a TLV node with a given specific tag.
  *
  * Note that the descendant nodes of constructed TLV nodes will not be searched.
  *
@@ -181,6 +181,38 @@ struct tlv *tlv_get_child(struct tlv *tlv);
  *          there is none.
  */
 struct tlv *tlv_find(struct tlv *tlv, const void *tag);
+
+/**
+ * Iterate through all TLV nodes in depth first order.
+ *
+ * @param[in]  tlv  The current TLV node.
+ *
+ * @returns The next TLV node in depth first order.
+ */
+struct tlv *tlv_iterate(struct tlv *tlv);
+
+/**
+ * Deep search for a TLV node with a given specific tag.
+ *
+ * Note that descendant nodes will be searched order.
+ *
+ * @param[in]  tlv  The list of TLV nodes to search.
+ * @param[in]  tag  The tag to search for.
+ *
+ * @returns The first occurence of a TLV node with the given tag or NULL if
+ *          there is none.
+ */
+struct tlv *tlv_deep_find(struct tlv *tlv, const void *tag);
+
+/**
+ * Get the number of ancestors a given TLV node has. I.e. the number of parent
+ * nodes until the root node is found.
+ *
+ * @param[in]  tlv  The TLV node whose depth is to be queried.
+ *
+ * @returns The depth of the given TLV node.
+ */
+int tlv_get_depth(struct tlv *tlv);
 
 /**
  * Insert one TLV structure after a TLV node
@@ -237,6 +269,28 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 			      const void *del, size_t del_sz, struct tlv **tlv);
 
+/**
+ * Convert a BCD encoded value into a 64 bit wide unsigned integer.
+ */
+int libtlv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
+
+/**
+ * Convert a 64 bit wide unsigned integer into a BCD encoded value.
+ */
+int libtlv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
+
+/**
+ * Format a binary string into a hexdecimal (ASCII coded) string.
+ *
+ * @param[in]  bin     Pointer to the binary string to encode in hex.
+ * @param[in]  bin_sz  Size of the binary string in bytes.
+ * @param[out] hex     Buffer to hold the hex encoded ASCII string. NOTE: This
+ *			 buffer must be at least 2 * bin_sz + 1 bytes large.
+ *
+ * @returns The ASCII encoded hex string.
+ */
+char *libtlv_bin_to_hex(const void *bin, size_t bin_sz, char *hex);
+
 enum tlv_fmt {
 	fmt_a,
 	fmt_an,
@@ -256,11 +310,5 @@ struct tlv_id_to_fmt {
 int libtlv_register_fmts(const struct tlv_id_to_fmt *fmts);
 
 enum tlv_fmt libtlv_id_to_fmt(const void *id);
-
-int libtlv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
-
-int libtlv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
-
-const char *libtlv_bin_to_hex(const void *blob, size_t blob_sz);
 
 #endif /* ndef __TLV_H__ */
