@@ -283,6 +283,246 @@ struct emv_ep_combination termset2[] = {
 	}
 };
 
+struct emv_ep_combination termset3[] = {
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000651010, KERNEL_ID_TK1 },
+			{ AID_A0000000030003, KERNEL_ID_21  }
+		},
+		.config = {
+			.present = {
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.reader_ctls_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true,
+			},
+			.enabled = {
+				.zero_amount_allowed = true,
+				.ext_selection_support = true,
+			},
+			.reader_ctls_txn_limit = 120,
+			.reader_ctls_floor_limit = 20,
+			TTQ_1
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000041010, KERNEL_ID_TK2 },
+			{ AID_A0000000020002, KERNEL_ID_22  },
+			{ AID_A0000000041010, KERNEL_ID_2B  },
+			{ AID_A0000000020002, KERNEL_ID_2B  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.reader_cvm_reqd_limit = true
+			},
+			.reader_cvm_reqd_limit = 10,
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000031010, KERNEL_ID_TK3 },
+			{ AID_A0000000010001, KERNEL_ID_23  },
+			{ AID_A0000000031010, KERNEL_ID_2B  },
+			{ AID_A0000000010001, KERNEL_ID_2B  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.terminal_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.status_check_support = true,
+			},
+			.reader_ctls_txn_limit = 200,
+			.terminal_floor_limit = 25,
+			TTQ_2
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000251010, KERNEL_ID_TK4 },
+			{ AID_A0000000651010, KERNEL_ID_TK5 },
+			{ AID_A0000000040004, KERNEL_ID_24  },
+			{ AID_A0000000030003, KERNEL_ID_25  }
+		},
+		.config = {
+			.present = {
+				.zero_amount_allowed = true,
+				.reader_ctls_floor_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ttq = true,
+				.ext_selection_support = true,
+			},
+			.enabled = {
+				.ext_selection_support = true,
+			},
+			.reader_ctls_floor_limit = 50,
+			.reader_cvm_reqd_limit = 20,
+			TTQ_3
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000041010, KERNEL_ID_TK4 },
+			{ AID_A0000000020002, KERNEL_ID_24  }
+		},
+		.config = {
+			.present = {
+				.zero_amount_allowed = true,
+				.reader_ctls_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.zero_amount_allowed = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_floor_limit = 20,
+			TTQ_1
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000031010, KERNEL_ID_TK1 },
+			{ AID_A0000000010001, KERNEL_ID_21  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.reader_cvm_reqd_limit = true,
+				.ext_selection_support = true
+			},
+			.reader_cvm_reqd_limit = 10
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000651010, KERNEL_ID_TK2 },
+			{ AID_A0000000251010, KERNEL_ID_TK5 },
+			{ AID_A0000000030003, KERNEL_ID_22  },
+			{ AID_A0000000040004, KERNEL_ID_25  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.terminal_floor_limit = true,
+				.ttq = true
+			},
+			.enabled = {
+				.status_check_support = true,
+				.zero_amount_allowed = true
+			},
+			.reader_ctls_txn_limit = 200,
+			.terminal_floor_limit = 25,
+			TTQ_2
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000251010, KERNEL_ID_TK3 },
+			{ AID_A0000000040004, KERNEL_ID_23  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_floor_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_floor_limit = 50,
+			.reader_cvm_reqd_limit = 20
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000251010, KERNEL_ID_2B  },
+			{ AID_A0000000040004, KERNEL_ID_2B  },
+			{ AID_A0000001523010, KERNEL_ID_TK6 },
+			{ AID_A0000003330101, KERNEL_ID_TK7 },
+			{ AID_A0000003241010, KERNEL_ID_TK6 }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.reader_ctls_txn_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_txn_limit = 120,
+			.reader_cvm_reqd_limit = 10
+		}
+	}
+};
+
 struct emv_ep_combination termset4[] = {
 	{
 		.txn_types = {
@@ -490,6 +730,10 @@ struct termset termsettings[num_termsettings] = {
 	{
 		.combination_sets = termset2,
 		.num_combination_sets = ARRAY_SIZE(termset2)
+	},
+	{
+		.combination_sets = termset3,
+		.num_combination_sets = ARRAY_SIZE(termset3)
 	},
 	{
 		.combination_sets = termset4,

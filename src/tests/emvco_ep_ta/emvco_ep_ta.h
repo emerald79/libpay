@@ -134,6 +134,7 @@ struct chk_ops {
 	void (*check_outcome)(struct chk *chk,
 				       const struct emv_outcome_parms *outcome);
 	bool (*pass_criteria_met)(struct chk *chk);
+	void (*free)(struct chk *chk);
 };
 
 struct chk {
@@ -141,13 +142,29 @@ struct chk {
 };
 
 
+enum pass_criteria {
+	pc_2ea_001_00_case01,
+	pc_2ea_001_00_case02,
+	pc_2ea_001_00_case03,
+	pc_2ea_002_00,
+	pc_2ea_002_01,
+	pc_2ea_002_02,
+	pc_2ea_003_00_case01,
+	pc_2ea_003_00_case02,
+	pc_2ea_004_00_case01,
+	pc_2ea_004_00_case02,
+};
+
+struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria);
+
 /*-----------------------------------------------------------------------------+
 | Terminal Settings (term)						       |
 +-----------------------------------------------------------------------------*/
 
 enum termsetting {
 	termsetting2 = 0,
-	termsetting4 = 1,
+	termsetting3 = 1,
+	termsetting4 = 2,
 	num_termsettings
 };
 
@@ -169,7 +186,6 @@ enum ltsetting {
 
 struct emv_hal *lt_new(enum ltsetting ltsetting, struct chk *checker,
 						    const char *log4c_category);
-
 void lt_free(struct emv_hal *lt);
 
 
