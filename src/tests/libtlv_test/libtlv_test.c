@@ -28,7 +28,7 @@ START_TEST(test_tlv_malformed_input)
 
 	struct tlv *tlv = NULL;
 	const uint8_t tag_number_too_large[] = {
-		0x1Fu, 0xFFu, 0xFFu, 0xFFu, 0xFFu, 0x7Fu
+		0x1Fu, 0xFFu, 0xFFu, 0xFFu, 0xFFu, 0xFFu, 0xFFu, 0xFFu, 0x7Fu
 	};
 	const uint8_t buffer_overflow_1[] = { 0x1Fu };
 	const uint8_t buffer_overflow_2[] = { 0x1Fu, 0xFFu, 0xFFu, 0xFFu };
@@ -48,10 +48,10 @@ START_TEST(test_tlv_malformed_input)
 	ck_assert(rc == TLV_RC_TAG_NUMBER_TOO_LARGE);
 
 	rc = tlv_parse(buffer_overflow_1, sizeof(buffer_overflow_1), &tlv);
-	ck_assert(rc == TLV_RC_BUFFER_OVERFLOW);
+	ck_assert(rc == TLV_RC_UNEXPECTED_END_OF_STREAM);
 
 	rc = tlv_parse(buffer_overflow_2, sizeof(buffer_overflow_2), &tlv);
-	ck_assert(rc == TLV_RC_BUFFER_OVERFLOW);
+	ck_assert(rc == TLV_RC_UNEXPECTED_END_OF_STREAM);
 }
 END_TEST
 

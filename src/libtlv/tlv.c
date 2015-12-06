@@ -22,92 +22,77 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include <libemv_core.h>
 #include <tlv.h>
 
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
-
-#define TLV_TAG_CLASS_MASK		0xC0u
-#define TLV_TAG_P_C_MASK		0x20u
-#define TLV_TAG_NUMBER_MASK		0x1Fu
-
 struct tlv {
-	uint8_t		leading_octet;
-	uint32_t	tag_number;
-	size_t		length;
-	uint8_t		*value;
-
 	struct tlv	*next;
 	struct tlv	*prev;
 	struct tlv	*parent;
 	struct tlv	*child;
+
+	uint8_t		tag[TLV_MAX_TAG_LENGTH];
+	size_t		length;
+	uint8_t		value[0];
 };
 
-bool tlv_is_constructed(struct tlv *tlv)
+bool tlv_is_constructed(const struct tlv *tlv)
 {
-	return !!(tlv->leading_octet & TLV_TAG_P_C_MASK);
+	return !!(tlv->tag[0] & TLV_TAG_P_C_MASK);
 }
 
-struct tlv *tlv_get_next(struct tlv *tlv)
+struct tlv *tlv_get_next(const struct tlv *tlv)
 {
 	return tlv ? tlv->next : NULL;
 }
 
-struct tlv *tlv_get_prev(struct tlv *tlv)
+struct tlv *tlv_get_prev(const struct tlv *tlv)
 {
 	return tlv ? tlv->prev : NULL;
 }
 
-struct tlv *tlv_get_parent(struct tlv *tlv)
+struct tlv *tlv_get_parent(const struct tlv *tlv)
 {
 	return tlv ? tlv->parent : NULL;
 }
 
-struct tlv *tlv_get_child(struct tlv *tlv)
+struct tlv *tlv_get_child(const struct tlv *tlv)
 {
 	return tlv ? tlv->child : NULL;
 }
 
-static int tlv_parse_identifier(const void **buffer, size_t length,
-								struct tlv *tlv)
+static int tlv_parse_identifier(const void **buf, size_t len, struct tlv *tlv)
 {
 	const uint8_t *p = NULL;
 	int i;
 
-	if (!buffer || !(*buffer) || !tlv)
+	if (!buf || !(*buf) || !tlv || !len)
 		return TLV_RC_INVALID_ARG;
 
-	if (!length)
-		return TLV_RC_BUFFER_OVERFLOW;
+	p = (uint8_t *)*buf;
 
-	p = (uint8_t *)*buffer;
+	tlv->tag[0] = *p++;
 
-	tlv->leading_octet	= p[0];
-	tlv->tag_number		= 0;
-
-	if ((tlv->leading_octet & TLV_TAG_NUMBER_MASK) != 0x1Fu) {
-		*buffer = (const void *)&p[1];
+	if ((tlv->tag[0] & TLV_TAG_NUMBER_MASK) != 0x1Fu) {
+		*buf = (const void *)p;
 		return TLV_RC_OK;
 	}
 
-	for (i = 1; (i < 6) & (i < length); i++) {
-		tlv->tag_number <<= 7;
-		tlv->tag_number |= p[i] & 0x7Fu;
+	for (i = 1; i < MIN(sizeof(tlv->tag), len); i++) {
+		tlv->tag[i] = *p++;
 
-		if (!(p[i] & 0x80u))
+		if (!(tlv->tag[i] & 0x80u))
 			break;
 	}
 
-	if (i == length) {
-		*buffer = (const void *)&p[length];
-		return TLV_RC_BUFFER_OVERFLOW;
-	}
+	*buf = (const void *)p;
 
-	if ((i == 5) && (p[1] & 0x70u)) {
-		*buffer = (const void *)&p[6];
+	if (i == sizeof(tlv->tag))
 		return TLV_RC_TAG_NUMBER_TOO_LARGE;
-	}
 
-	*buffer = (const void *)&p[i + 1];
+	if (i == len)
+		return TLV_RC_UNEXPECTED_END_OF_STREAM;
+
 	return TLV_RC_OK;
 }
 
@@ -116,11 +101,8 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 	const uint8_t *p = NULL;
 	int i, value_length;
 
-	if (!buffer || !(*buffer) || !tlv)
+	if (!buffer || !(*buffer) || !tlv || !length)
 		return TLV_RC_INVALID_ARG;
-
-	if (!length)
-		return TLV_RC_BUFFER_OVERFLOW;
 
 	p = (uint8_t *)*buffer;
 
@@ -154,35 +136,34 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 static int tlv_parse_recursive(const void **buffer, size_t length,
 			 struct tlv **tlv, struct tlv *prev, struct tlv *parent)
 {
+	struct tlv temp_tlv;
 	const void *start = *buffer;
 	int rc;
 
 	if (!buffer || !length || !tlv)
 		return TLV_RC_INVALID_ARG;
 
-	*tlv = (struct tlv *)malloc(sizeof(struct tlv));
-	if (!(*tlv))
+	*tlv = NULL;
+
+	memset(&temp_tlv, 0, sizeof(temp_tlv));
+	temp_tlv.parent = parent;
+	temp_tlv.prev   = prev;
+
+	rc = tlv_parse_identifier(buffer, length, &temp_tlv);
+	if (rc)
+		return rc;
+
+	rc = tlv_parse_length(buffer, length - (*buffer - start), &temp_tlv);
+	if (rc)
+		return rc;
+
+	*tlv = (struct tlv *)malloc(sizeof(struct tlv) + temp_tlv.length);
+	if (!*tlv)
 		return TLV_RC_OUT_OF_MEMORY;
 
-	memset(*tlv, 0, sizeof(struct tlv));
-	(*tlv)->parent	= parent;
-	(*tlv)->prev	= prev;
+	memcpy(*tlv, &temp_tlv, sizeof(struct tlv));
 
-	rc = tlv_parse_identifier(buffer, length - (*buffer - start), *tlv);
-	if (rc != TLV_RC_OK) {
-		free(*tlv);
-		*tlv = NULL;
-		return rc;
-	}
-
-	rc = tlv_parse_length(buffer, length - (*buffer - start), *tlv);
-	if (rc != TLV_RC_OK) {
-		free(*tlv);
-		*tlv = NULL;
-		return rc;
-	}
-
-	if ((*tlv)->leading_octet & TLV_TAG_P_C_MASK) {
+	if ((*tlv)->tag[0] & TLV_TAG_P_C_MASK) {
 		rc = tlv_parse_recursive(buffer, (*tlv)->length, &(*tlv)->child,
 								    NULL, *tlv);
 		if (rc != TLV_RC_OK) {
@@ -191,12 +172,6 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 			return rc;
 		}
 	} else {
-		(*tlv)->value = (uint8_t *)malloc((*tlv)->length);
-		if (!(*tlv)->value) {
-			free(*tlv);
-			*tlv = NULL;
-			return TLV_RC_OUT_OF_MEMORY;
-		}
 		memcpy((*tlv)->value, *buffer, (*tlv)->length);
 		*buffer += (*tlv)->length;
 	}
@@ -219,9 +194,6 @@ void tlv_free(struct tlv *tlv)
 	struct tlv *current, *next;
 
 	for (current = tlv; current; current = next) {
-		if (current->value)
-			free(current->value);
-
 		if (current->child)
 			tlv_free(current->child);
 
@@ -237,17 +209,16 @@ int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 
 static size_t tlv_get_encoded_identifier_size(struct tlv *tlv)
 {
-	if ((tlv->leading_octet & TLV_TAG_NUMBER_MASK) != 0x1fu)
+	size_t i;
+
+	if ((tlv->tag[0] & TLV_TAG_NUMBER_MASK) != 0x1Fu)
 		return 1;
-	if (tlv->tag_number < 0x80u)
-		return 2;
-	if (tlv->tag_number < 0x4000u)
-		return 3;
-	if (tlv->tag_number < 0x200000u)
-		return 4;
-	if (tlv->tag_number < 0x10000000u)
-		return 5;
-	return 6;
+
+	for (i = 1; i < sizeof(tlv->tag); i++)
+		if (!(tlv->tag[i] & 0x80))
+			return i + 1;
+
+	return -1;
 }
 
 static size_t tlv_get_encoded_length(struct tlv *tlv);
@@ -290,6 +261,32 @@ static size_t tlv_get_encoded_length(struct tlv *tlv)
 	return size;
 }
 
+static size_t libtlv_copy_tag(void *buffer, size_t size, void *tag)
+{
+	size_t tag_len;
+	uint8_t *b = (uint8_t *)buffer, *t = (uint8_t *)tag;
+
+	if (!buffer || !size || !tag)
+		return -1;
+
+	b[0] = t[0];
+
+	if ((t[0] & TLV_TAG_NUMBER_MASK) != 0x1Fu)
+		return 1;
+
+	for (tag_len = 1; tag_len < size; ) {
+		b[tag_len] = t[tag_len];
+		if (!(t[tag_len++] & 0x80u))
+			break;
+	}
+
+	if (tag_len == size)
+		return -1;
+
+	return tag_len;
+}
+
+#if 0
 static void __tlv_encode_identifier(uint8_t leading_octet,
 					     uint32_t tag_number, void **buffer)
 {
@@ -339,6 +336,7 @@ static void __tlv_encode_identifier(uint8_t leading_octet,
 	p[1] = tag_number & 0x7fu;
 	*buffer = (void *)&p[2];
 }
+#endif
 
 static void __tlv_encode_length(size_t length, void **buffer)
 {
@@ -384,7 +382,10 @@ static void __tlv_encode_length(size_t length, void **buffer)
 
 static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
 {
-	__tlv_encode_identifier(tlv->leading_octet, tlv->tag_number, buffer);
+	size_t tag_len = 0;
+
+	tag_len = libtlv_copy_tag(*buffer, sizeof(tlv->tag), tlv->tag);
+	*buffer += tag_len;
 
 	if (tlv_is_constructed(tlv)) {
 		__tlv_encode_length(tlv_get_encoded_length(tlv->child), buffer);
@@ -447,7 +448,7 @@ int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size)
 	if (!buffer)
 		return TLV_RC_INVALID_ARG;
 
-	__tlv_encode_identifier(tlv->leading_octet, tlv->tag_number, &buffer);
+	libtlv_copy_tag(buffer, encoded_size, tlv->tag);
 
 	return TLV_RC_OK;
 }
@@ -540,7 +541,7 @@ struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child)
 	if (!parent || !child || child->parent)
 		return NULL;
 
-	if (!(parent->leading_octet & TLV_TAG_P_C_MASK))
+	if (!(parent->tag[0] & TLV_TAG_P_C_MASK))
 		return NULL;
 
 	if (parent->child) {
@@ -655,13 +656,18 @@ struct tlv *tlv_deep_find(struct tlv *tlv, const void *tag)
 
 struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 {
+	const uint8_t *t = (const uint8_t *)tag;
 	struct tlv *tlv = NULL;
 	int rc = TLV_RC_OK;
 
 	if (!tag || (length && !value))
 		goto error;
 
-	tlv = (struct tlv *)calloc(1, sizeof(struct tlv));
+	if (t[0] & TLV_TAG_P_C_MASK)
+		tlv = (struct tlv *)calloc(1, sizeof(struct tlv));
+	else
+		tlv = (struct tlv *)calloc(1, sizeof(struct tlv) + length);
+
 	if (!tlv)
 		goto error;
 
@@ -670,7 +676,7 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 		goto error;
 
 	if (length) {
-		if (tlv->leading_octet & TLV_TAG_P_C_MASK) {
+		if (tlv->tag[0] & TLV_TAG_P_C_MASK) {
 			struct tlv *childs = NULL;
 
 			rc = tlv_parse(value, length, &childs);
@@ -680,9 +686,6 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 			tlv_insert_below(tlv, childs);
 		} else {
 			tlv->length = length;
-			tlv->value = malloc(length);
-			if (!tlv->value)
-				goto error;
 			memcpy(tlv->value, value, length);
 		}
 	}
@@ -690,11 +693,7 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 	return tlv;
 
 error:
-	if (tlv) {
-		if (tlv->value)
-			free(tlv->value);
-		free(tlv);
-	}
+	free(tlv);
 	return NULL;
 }
 

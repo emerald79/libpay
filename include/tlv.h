@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define TLV_MAX_TAG_LENGTH			8
+
 #define TLV_RC_OK				0
 #define TLV_RC_INVALID_ARG			1
 #define TLV_RC_BUFFER_OVERFLOW			2
@@ -37,6 +39,7 @@
 #define TLV_RC_VALUE_LENGTH_TOO_LARGE		6
 #define TLV_RC_IO_ERROR				7
 #define TLV_RC_VALUE_OUT_OF_RANGE		8
+#define TLV_RC_UNEXPECTED_END_OF_STREAM		9
 
 /**
  * Structure that represents a complex TLV structure. I.e. for example a single
@@ -138,7 +141,7 @@ int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size);
  *
  * @returns true if TLV node is contructed, false if TLV node is primitive.
  */
-bool tlv_is_constructed(struct tlv *tlv);
+bool tlv_is_constructed(const struct tlv *tlv);
 
 /**
  * Get the constructed TLV node which the current TLV node is an element of.
@@ -147,7 +150,7 @@ bool tlv_is_constructed(struct tlv *tlv);
  *
  * @returns The constructed TLV node or NULL if there is none.
  */
-struct tlv *tlv_get_parent(struct tlv *tlv);
+struct tlv *tlv_get_parent(const struct tlv *tlv);
 
 /**
  * Get the first element of a constructed TLV node.
@@ -157,7 +160,7 @@ struct tlv *tlv_get_parent(struct tlv *tlv);
  * @returns The first element of the constructed TLV node or NULL if there is
  *            none.
  */
-struct tlv *tlv_get_child(struct tlv *tlv);
+struct tlv *tlv_get_child(const struct tlv *tlv);
 
 /**
  * Get the TLV node after the current TLV node. Elements of constructed TLV
@@ -167,7 +170,9 @@ struct tlv *tlv_get_child(struct tlv *tlv);
  *
  * @returns The TLV node after the current TLV node or NULL if there is none.
  */
-struct tlv *tlv_get_next(struct tlv *tlv);
+struct tlv *tlv_get_next(const struct tlv *tlv);
+
+struct tlv *tlv_get_prev(const struct tlv *tlv);
 
 /**
  * Shallow search for a TLV node with a given specific tag.
