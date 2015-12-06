@@ -333,13 +333,11 @@ void txn_checker_free(struct chk *chk)
 	free(txn_checker);
 }
 
-/* 2EA.001.00 Entry of Amount Authorzed					      */
+/* 2EA.001.00 Entry of Amount Authorized				      */
 START_TEST(test_2EA_001_00)
 {
 	struct emv_txn txn = {
-		.type		   = txn_purchase,
-		.amount_other	   = 0,
-		.currency	   = { 0, 0 }
+		.type		   = txn_purchase
 	};
 	struct chk *checker = NULL;
 	int rc;
@@ -367,14 +365,31 @@ START_TEST(test_2EA_001_00)
 }
 END_TEST
 
+/* 2EA.002.00 Entry of Amount Authorized and Transaction Type 'Purchase'      */
+START_TEST(test_2EA_002_00)
+{
+	struct emv_txn txn = {
+		.type		   = txn_purchase,
+		.amount_authorized = 10
+	};
+	struct chk *checker = NULL;
+	int rc;
+
+	checker = txn_checker_new(&txn);
+	rc = emvco_ep_ta_tc("2EA.002.00 - Entry of Amount Authorized and "
+						  "Transaction Type 'Purchase'",
+			    termsetting4, ltsetting1_3, start_a, &txn, checker);
+	txn_checker_free(checker);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 /* 2EA.002.01 Entry of Amount Authorzed	and Transaction Type 'Cash Advance'   */
 START_TEST(test_2EA_002_01)
 {
 	struct emv_txn txn = {
 		.type		   = txn_cash_advance,
-		.amount_authorized = 20,
-		.amount_other	   = 0,
-		.currency	   = { 0, 0 }
+		.amount_authorized = 20
 	};
 	struct chk *checker = NULL;
 	int rc;
@@ -388,6 +403,55 @@ START_TEST(test_2EA_002_01)
 }
 END_TEST
 
+/* 2EA.002.02 Entry of Amount Authorized and Transaction Type 'Refund'	      */
+START_TEST(test_2EA_002_02)
+{
+	struct emv_txn txn = {
+		.type		   = txn_refund,
+		.amount_authorized = 30
+	};
+	struct chk *checker = NULL;
+	int rc;
+
+	checker = txn_checker_new(&txn);
+	rc = emvco_ep_ta_tc("2EA.002.02 - Entry of Amount Authorized and "
+						    "Transaction Type 'Refund'",
+			    termsetting4, ltsetting1_4, start_a, &txn, checker);
+	txn_checker_free(checker);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EA.003.00 Entry of Amount Authorized, Amount Other			      */
+START_TEST(test_2EA_003_00)
+{
+	struct emv_txn txn = {
+		.type		   = txn_purchase_with_cashback
+	};
+	struct chk *checker = NULL;
+	int rc;
+
+	txn.amount_authorized = 20;
+	txn.amount_other      = 10;
+	checker = txn_checker_new(&txn);
+	rc = emvco_ep_ta_tc("2EA.003.00 - Entry of Amount Authorized, Amount "
+							    "Other - Case 01",
+			  termsetting4, ltsetting1_3, start_a, &txn, checker);
+	txn_checker_free(checker);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 50;
+	txn.amount_other      = 20;
+	checker = txn_checker_new(&txn);
+	rc = emvco_ep_ta_tc("2EA.003.00 - Entry of Amount Authorized, Amount "
+							    "Other - Case 02",
+			  termsetting4, ltsetting1_3, start_a, &txn, checker);
+	txn_checker_free(checker);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -397,7 +461,10 @@ Suite *emvco_ep_ta_test_suite(void)
 
 	tc_general_reqs = tcase_create("emvco-ep-ta-general-requirements");
 	tcase_add_test(tc_general_reqs, test_2EA_001_00);
+	tcase_add_test(tc_general_reqs, test_2EA_002_00);
 	tcase_add_test(tc_general_reqs, test_2EA_002_01);
+	tcase_add_test(tc_general_reqs, test_2EA_002_02);
+	tcase_add_test(tc_general_reqs, test_2EA_003_00);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;

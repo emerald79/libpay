@@ -80,6 +80,8 @@
 	.app_label = "APP2", .app_label_len = 4
 #define APP_LABEL_APP3 \
 	.app_label = "APP3", .app_label_len = 4
+#define APP_LABEL_APP4 \
+	.app_label = "APP4", .app_label_len = 4
 
 /*-----------------------------------------------------------------------------+
 | PDOLs									       |
@@ -160,7 +162,8 @@ enum ltsetting {
 	ltsetting1_1 = 0,
 	ltsetting1_2 = 1,
 	ltsetting1_3 = 2,
-	ltsetting1_97 = 3,
+	ltsetting1_4 = 3,
+	ltsetting1_97 = 4,
 	num_ltsettings
 };
 

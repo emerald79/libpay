@@ -174,6 +174,44 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting1.4 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_1,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.present = {
+					.ui_request_on_outcome = true
+				},
+				.outcome = out_approved,
+				.ui_request_on_outcome = {
+					.msg_id = msg_approved,
+					.status = sts_card_read_successfully
+				}
+			}
+		}
+	},
 	/* LTsetting1.97 */
 	{
 		.ppse_entries = {
