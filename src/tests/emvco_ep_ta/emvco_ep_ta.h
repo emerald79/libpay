@@ -76,7 +76,48 @@
 
 #define APP_LABEL_APP1 \
 	.app_label = "APP1", .app_label_len = 4
+#define APP_LABEL_APP2 \
+	.app_label = "APP2", .app_label_len = 4
+#define APP_LABEL_APP3 \
+	.app_label = "APP3", .app_label_len = 4
 
+/*-----------------------------------------------------------------------------+
+| PDOLs									       |
++-----------------------------------------------------------------------------*/
+
+/* PDOL with Pre-Processing indicator, TTQ, Amount, Amount Other, Transaction
+ * Type, Restart flag, Unpredictable Number, Kernel ID			      */
+#define PDOL_1								       \
+	.pdol = {							       \
+		0xD1, 0x02, 0x9F, 0x66, 0x04, 0x9F, 0x02, 0x06, 0x9F, 0x03,    \
+		0x06, 0x9C, 0x01, 0x9F, 0x37, 0x04, 0x9F, 0x2A, 0x08	       \
+	},								       \
+	.pdol_len = 19
+
+
+/*-----------------------------------------------------------------------------+
+| TTQs									       |
++-----------------------------------------------------------------------------*/
+
+/* TTQ value '84008000': Mag-stripe mode supported, EMV mode not supported, EMV
+ * contact chip not supported, Online capable reader, Online PIN supported,
+ * Signature not supported, Online cryptogram not required, CVM not required,
+ * (Contact Chip) Offline PIN not supported, Issuer Update Processing supported.
+ */
+#define TTQ_1 .ttq = { 0x84, 0x00, 0x80, 0x00 }
+
+/* TTQ value '28000000': Mag-stripe mode not supported, EMV mode supported, EMV
+ * contact chip not supported, Offline-only reader, Online PIN not supported,
+ * Signature not supported, Online cryptogram not required, CVM not required,
+ * (Contact Chip) Offline PIN not supported, Issuer Update Processing not
+ * supported.								      */
+#define TTQ_2 .ttq = { 0x28, 0x00, 0x00, 0x00 }
+
+/* TTQ value '84C08000': Mag-stripe mode supported, EMV mode not supported, EMV
+ * contact chip not supported, Online capable reader, Online PIN supported,
+ * Signature not supported, Online cryptogram required, CVM required, (Contact
+ * Chip) Offline PIN not supported, Issuer Update Processing supported.	      */
+#define TTQ_3 .ttq = { 0x84, 0xC0, 0x80, 0x00 }
 
 /*-----------------------------------------------------------------------------+
 | Test Checker (chk)							       |
@@ -104,6 +145,7 @@ struct chk {
 
 enum termsetting {
 	termsetting2 = 0,
+	termsetting4 = 1,
 	num_termsettings
 };
 
@@ -116,6 +158,9 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
 
 enum ltsetting {
 	ltsetting1_1 = 0,
+	ltsetting1_2 = 1,
+	ltsetting1_3 = 2,
+	ltsetting1_97 = 3,
 	num_ltsettings
 };
 

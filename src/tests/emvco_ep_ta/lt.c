@@ -80,14 +80,122 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 1,
-				.pdol = {
-					0xD1, 0x02, 0x9F, 0x66, 0x04, 0x9F,
-					0x02, 0x06, 0x9F, 0x03, 0x06, 0x9C,
-					0x01, 0x9F, 0x37, 0x04, 0x9F, 0x2A,
-					0x08
+				PDOL_1,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.present = {
+					.ui_request_on_outcome = true
 				},
-				.pdol_len = 19
+				.outcome = out_approved,
+				.ui_request_on_outcome = {
+					.msg_id = msg_approved,
+					.status = sts_card_read_successfully
+				}
+			}
+		}
+	},
+	/* LTsetting1.2 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_1,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.present = {
+					.ui_request_on_outcome = true
+				},
+				.outcome = out_approved,
+				.ui_request_on_outcome = {
+					.msg_id = msg_approved,
+					.status = sts_card_read_successfully
+				}
+			}
+		}
+	},
+	/* LTsetting1.3 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_1,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.present = {
+					.ui_request_on_outcome = true
+				},
+				.outcome = out_approved,
+				.ui_request_on_outcome = {
+					.msg_id = msg_approved,
+					.status = sts_card_read_successfully
+				}
+			}
+		}
+	},
+	/* LTsetting1.97 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_25,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_1,
+				.app_prio = 1
 			}
 		},
 		.aid_fci_num = 1,

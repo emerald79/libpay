@@ -337,38 +337,52 @@ void txn_checker_free(struct chk *chk)
 START_TEST(test_2EA_001_00)
 {
 	struct emv_txn txn = {
-		.amount_authorized = 10,
+		.type		   = txn_purchase,
 		.amount_other	   = 0,
 		.currency	   = { 0, 0 }
 	};
 	struct chk *checker = NULL;
 	int rc;
 
-	txn.type = txn_purchase;
+	txn.amount_authorized = 10;
 	checker = txn_checker_new(&txn);
 	rc = emvco_ep_ta_tc("2EA.001.00 - Entry of Amount Authorized - Case01",
 			    termsetting2, ltsetting1_1, start_a, &txn, checker);
 	txn_checker_free(checker);
 	ck_assert(rc == EMV_RC_OK);
 
-	txn.type = txn_purchase_with_cashback;
+	txn.amount_authorized = 75;
 	checker = txn_checker_new(&txn);
-	rc = emvco_ep_ta_tc("2EA.001.00 - Entry of Amount Authorized - Case01",
-			    termsetting2, ltsetting1_1, start_a, &txn, checker);
+	rc = emvco_ep_ta_tc("2EA.001.00 - Entry of Amount Authorized - Case02",
+			    termsetting2, ltsetting1_2, start_a, &txn, checker);
 	txn_checker_free(checker);
 	ck_assert(rc == EMV_RC_OK);
 
-	txn.type = txn_cash_advance;
+	txn.amount_authorized = 45;
 	checker = txn_checker_new(&txn);
-	rc = emvco_ep_ta_tc("2EA.001.00 - Entry of Amount Authorized - Case01",
-			    termsetting2, ltsetting1_1, start_a, &txn, checker);
+	rc = emvco_ep_ta_tc("2EA.001.00 - Entry of Amount Authorized - Case03",
+			   termsetting2, ltsetting1_97, start_a, &txn, checker);
 	txn_checker_free(checker);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
 
-	txn.type = txn_refund;
+/* 2EA.002.01 Entry of Amount Authorzed	and Transaction Type 'Cash Advance'   */
+START_TEST(test_2EA_002_01)
+{
+	struct emv_txn txn = {
+		.type		   = txn_cash_advance,
+		.amount_authorized = 20,
+		.amount_other	   = 0,
+		.currency	   = { 0, 0 }
+	};
+	struct chk *checker = NULL;
+	int rc;
+
 	checker = txn_checker_new(&txn);
-	rc = emvco_ep_ta_tc("2EA.001.00 - Entry of Amount Authorized - Case01",
-			    termsetting2, ltsetting1_1, start_a, &txn, checker);
+	rc = emvco_ep_ta_tc("2EA.002.01 - Entry of Amount Authorized and "
+					       "Transaction Type 'Cash Adance'",
+			    termsetting4, ltsetting1_1, start_a, &txn, checker);
 	txn_checker_free(checker);
 	ck_assert(rc == EMV_RC_OK);
 }
@@ -383,6 +397,7 @@ Suite *emvco_ep_ta_test_suite(void)
 
 	tc_general_reqs = tcase_create("emvco-ep-ta-general-requirements");
 	tcase_add_test(tc_general_reqs, test_2EA_001_00);
+	tcase_add_test(tc_general_reqs, test_2EA_002_01);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;

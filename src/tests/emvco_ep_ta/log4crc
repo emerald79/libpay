@@ -12,7 +12,7 @@
 
 	<category name="root" priority="notice"/>
         <category name="six13log.log" priority="error" appender="stdout" />
-        <category name="emvco_ep_ta" priority="trace" appender="stdout" />
+        <category name="emvco_ep_ta" priority="info" appender="stdout" />
 
 	<rollingpolicy name="myrollingpolicy" type="sizewin" maxsize="1024" maxnum="10" />
 

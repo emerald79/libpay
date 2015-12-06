@@ -69,7 +69,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_txn_limit = 120,
 			.reader_ctls_floor_limit = 20,
-			.ttq = { 0x84, 0x00, 0x80, 0x00 }
+			TTQ_1
 		}
 	},
 	{
@@ -120,7 +120,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			.ttq = { 0x28, 0x00, 0x00, 0x00 }
+			TTQ_2
 		}
 	},
 	{
@@ -149,7 +149,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_floor_limit = 50,
 			.reader_cvm_reqd_limit = 20,
-			.ttq = { 0x84, 0xC0, 0x80, 0x00 }
+			TTQ_3
 		}
 	},
 	{
@@ -175,7 +175,7 @@ struct emv_ep_combination termset2[] = {
 				.ext_selection_support = true
 			},
 			.reader_ctls_floor_limit = 20,
-			.ttq = { 0x84, 0x00, 0x80, 0x00 }
+			TTQ_1
 		}
 	},
 	{
@@ -225,7 +225,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			.ttq = { 0x28, 0x00, 0x00, 0x00 }
+			TTQ_2
 		}
 	},
 	{
@@ -283,6 +283,204 @@ struct emv_ep_combination termset2[] = {
 	}
 };
 
+struct emv_ep_combination termset4[] = {
+	{
+		.txn_types = {
+			txn_purchase
+		},
+		.combinations = {
+			{ AID_A0000000030003, KERNEL_ID_21  }
+		},
+		.config = {
+			.present = {
+				.zero_amount_allowed = true,
+				.reader_ctls_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true,
+			},
+			.enabled = {
+				.zero_amount_allowed = true,
+				.ext_selection_support = true,
+			},
+			.reader_ctls_floor_limit = 20,
+			TTQ_1
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase
+		},
+		.combinations = {
+			{ AID_A0000000020002, KERNEL_ID_22  },
+			{ AID_A0000000030003, KERNEL_ID_25  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.reader_cvm_reqd_limit = true
+			},
+			.reader_cvm_reqd_limit = 10,
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase
+		},
+		.combinations = {
+			{ AID_A0000000010001, KERNEL_ID_23  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.terminal_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.status_check_support = true,
+			},
+			.reader_ctls_txn_limit = 200,
+			.terminal_floor_limit = 25,
+			TTQ_2
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase
+		},
+		.combinations = {
+			{ AID_A0000000040004, KERNEL_ID_24  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ttq = true,
+				.ext_selection_support = true,
+			},
+			.enabled = {
+				.ext_selection_support = true,
+			},
+			.reader_ctls_txn_limit = 120,
+			.reader_cvm_reqd_limit = 20,
+			TTQ_3
+		}
+	},
+	{
+		.txn_types = {
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000020002, KERNEL_ID_22  }
+		},
+		.config = {
+			.present = {
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.reader_ctls_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.zero_amount_allowed = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_txn_limit = 120,
+			.reader_ctls_floor_limit = 20,
+			TTQ_1
+		}
+	},
+	{
+		.txn_types = {
+			txn_cash_advance
+		},
+		.combinations = {
+			{ AID_A0000000010001, KERNEL_ID_23  },
+			{ AID_A0000000030003, KERNEL_ID_25  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.reader_cvm_reqd_limit = true,
+				.ext_selection_support = true
+			},
+			.reader_cvm_reqd_limit = 10
+		}
+	},
+	{
+		.txn_types = {
+			txn_purchase_with_cashback
+		},
+		.combinations = {
+			{ AID_A0000000030003, KERNEL_ID_21  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.terminal_floor_limit = true,
+				.ttq = true
+			},
+			.enabled = {
+				.status_check_support = true,
+				.zero_amount_allowed = true
+			},
+			.reader_ctls_txn_limit = 200,
+			.terminal_floor_limit = 25,
+			TTQ_2
+		}
+	},
+	{
+		.txn_types = {
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000040004, KERNEL_ID_24  }
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_floor_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.ext_selection_support = true
+			},
+			.reader_ctls_floor_limit = 50,
+			.reader_cvm_reqd_limit = 20
+		}
+	},
+	{
+		.txn_types = {
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000030003, KERNEL_ID_21  },
+		},
+		.config = {
+			.present = {
+				.reader_ctls_floor_limit = true,
+				.ttq = true,
+				.ext_selection_support = true
+			},
+			.enabled = {
+				.ext_selection_support = true
+			},
+			.reader_ctls_floor_limit = 50,
+			TTQ_1
+		}
+	}
+};
+
 struct termset {
 	struct emv_ep_combination *combination_sets;
 	size_t			   num_combination_sets;
@@ -292,6 +490,10 @@ struct termset termsettings[num_termsettings] = {
 	{
 		.combination_sets = termset2,
 		.num_combination_sets = ARRAY_SIZE(termset2)
+	},
+	{
+		.combination_sets = termset4,
+		.num_combination_sets = ARRAY_SIZE(termset4)
 	}
 };
 
