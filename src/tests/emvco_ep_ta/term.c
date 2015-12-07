@@ -721,7 +721,14 @@ struct emv_ep_combination termset4[] = {
 	}
 };
 
+struct emv_ep_autorun {
+	bool		  enabled;
+	enum emv_txn_type txn_type;
+	uint64_t	  amount_authorized;
+};
+
 struct termset {
+	struct emv_ep_autorun	   autorun;
 	struct emv_ep_combination *combination_sets;
 	size_t			   num_combination_sets;
 };
@@ -732,6 +739,11 @@ struct termset termsettings[num_termsettings] = {
 		.num_combination_sets = ARRAY_SIZE(termset2)
 	},
 	{
+		.autorun = {
+			.enabled	   = true,
+			.txn_type	   = txn_purchase,
+			.amount_authorized = 10
+		},
 		.combination_sets = termset3,
 		.num_combination_sets = ARRAY_SIZE(termset3)
 	},
@@ -766,6 +778,23 @@ static struct tlv *get_combinations(struct emv_ep_aid_kernel *aid_kernel)
 	return tlv_combinations;
 }
 
+static uint8_t get_txn_type(enum emv_txn_type txn_type)
+{
+	switch (txn_type) {
+	case txn_purchase:
+		return 0x00;
+	case txn_purchase_with_cashback:
+		return 0x09;
+	case txn_cash_advance:
+		return 0x01;
+	case txn_refund:
+		return 0x20;
+	default:
+		assert(false);
+		return 0xff;
+	}
+}
+
 static struct tlv *get_txn_types(enum emv_txn_type *txn_types)
 {
 	size_t len, i;
@@ -775,24 +804,8 @@ static struct tlv *get_txn_types(enum emv_txn_type *txn_types)
 		if (txn_types[len] == num_txn_types)
 			break;
 
-	for (i = 0; i < len; i++) {
-		switch (txn_types[i]) {
-		case txn_purchase:
-			value[i] = 0x00;
-			break;
-		case txn_purchase_with_cashback:
-			value[i] = 0x09;
-			break;
-		case txn_cash_advance:
-			value[i] = 0x01;
-			break;
-		case txn_refund:
-			value[i] = 0x20;
-			break;
-		default:
-			assert(false);
-		}
-	}
+	for (i = 0; i < len; i++)
+		value[i] = get_txn_type(txn_types[i]);
 
 	return tlv_new(EMV_ID_LIBEMV_TRANSACTION_TYPES, len, value);
 }
@@ -900,6 +913,35 @@ error:
 	return NULL;
 }
 
+static struct tlv *get_autorun(struct emv_ep_autorun *autorun)
+{
+	struct tlv *tlv = NULL, *tail = NULL;
+	uint8_t amount[6], txn_type = get_txn_type(autorun->txn_type);
+	int rc = EMV_RC_OK;
+
+	tlv = tlv_new(EMV_ID_LIBEMV_AUTORUN, 0, NULL);
+
+	rc = libtlv_u64_to_bcd(autorun->amount_authorized, amount,
+								sizeof(amount));
+	if (rc != EMV_RC_OK)
+		goto error;
+
+	tail = tlv_insert_below(tlv,
+				tlv_new(EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORIZED,
+						       sizeof(amount), amount));
+	tail = tlv_insert_after(tail,
+				 tlv_new(EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE,
+						  sizeof(txn_type), &txn_type));
+	if (!tail)
+		goto error;
+
+	return tlv;
+
+error:
+	tlv_free(tlv);
+	return NULL;
+}
+
 int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 {
 	struct tlv *tlv = NULL, *tail = NULL;
@@ -925,6 +967,9 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 	for (i = 1; i < settings->num_combination_sets; i++)
 		tail = tlv_insert_after(tail,
 			   get_combination_set(&settings->combination_sets[i]));
+
+	if (settings->autorun.enabled)
+		tail = tlv_insert_after(tail, get_autorun(&settings->autorun));
 
 	if (!tail) {
 		rc = TLV_RC_OUT_OF_MEMORY;

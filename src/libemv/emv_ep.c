@@ -111,10 +111,17 @@ enum emv_ep_state {
 	eps_done
 };
 
+struct emv_ep_autorun {
+	bool		  enabled;
+	enum emv_txn_type txn_type;
+	uint64_t	  amount_authorized;
+};
+
 struct emv_ep {
 	enum emv_ep_state		state;
 	struct emv_hal			*hal;
 	log4c_category_t		*log_cat;
+	struct emv_ep_autorun		autorun;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_reg_kernel_set	reg_kernel_set;
 	struct emv_ep_candidate_list	candidate_list;
@@ -1627,6 +1634,7 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 {
 	struct tlv *tlv_config = NULL;
 	struct tlv *tlv_combination_set = NULL;
+	struct tlv *tlv_autorun_parms = NULL;
 	int rc = EMV_RC_OK;
 
 	rc = tlv_parse(config, len, &tlv_config);
@@ -1677,6 +1685,33 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 			if (rc != EMV_RC_OK)
 				goto error;
 		}
+	}
+
+	tlv_autorun_parms = tlv_get_child(tlv_find(tlv_get_child(tlv_find(
+				      tlv_config, EMV_ID_LIBEMV_CONFIGURATION)),
+							EMV_ID_LIBEMV_AUTORUN));
+	if (tlv_autorun_parms) {
+		uint8_t amount[6], txn_type;
+		size_t amount_sz = sizeof(amount);
+		size_t txn_type_sz = sizeof(txn_type);
+		struct tlv *tlv = NULL;
+
+		ep->autorun.enabled = true;
+
+		tlv = tlv_find(tlv_autorun_parms,
+				       EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORIZED);
+		rc = tlv_encode_value(tlv, amount, &amount_sz);
+		if ((rc != EMV_RC_OK) || (amount_sz != sizeof(amount)))
+			goto error;
+		rc = libtlv_bcd_to_u64(amount, amount_sz,
+						&ep->autorun.amount_authorized);
+
+		tlv = tlv_find(tlv_autorun_parms,
+					EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE);
+		rc = tlv_encode_value(tlv, &txn_type, &txn_type_sz);
+		if ((rc != EMV_RC_OK) || txn_type_sz != sizeof(txn_type))
+			goto error;
+		ep->autorun.txn_type = get_emv_txn_type(txn_type);
 	}
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): success",
