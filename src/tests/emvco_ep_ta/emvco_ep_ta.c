@@ -170,9 +170,66 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 	if (rc != EMV_RC_OK)
 		goto done;
 
-	rc = emv_ep_activate(ep, start_a, txn);
-	if (rc != EMV_RC_OK)
-		goto done;
+	if (emv_ep_get_autorun(ep)->enabled) {
+		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.6"); */
+		/* If the value of the POS System configuration parameter
+		 * Autorun is 'Yes', then the reader shall do all of the
+		 * following:
+		 *  o Ensure the field is on.
+		 *  o Request message '15' (Present Card), status Ready to Read.
+		 *  o Activate Entry Point at Start B and make the following
+		 *    available to Entry Point:
+		 *     o for the selected type of transaction (as configured),
+		 *	 the corresponding set of supported Combinations and
+		 *	 Entry Point Configuration Data/fixed TTQ value.      */
+		struct emv_ui_request present_card = {
+			.msg_id = msg_present_card,
+			.status = sts_ready_to_read
+		};
+
+		rc = emv_ep_field_on(ep);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		rc = emv_ep_ui_request(ep, &present_card);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		rc = emv_ep_activate(ep, start_b, &emv_ep_get_autorun(ep)->txn);
+		if (rc != EMV_RC_OK)
+			goto done;
+	} else {
+		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.5"); */
+		/* If the value of the POS System configuration parameter
+		 * Autorun is 'No',then the reader shall do all of the
+		 * following:
+		 *  o Ensure the field is off.
+		 *  o Request message '14' (Welcome), status Idle.
+		 *  o Wait for instruction from the terminal and then activate
+		 *    Entry Point at Start A and make the following available to
+		 *    Entry Point:
+		 *     o Transaction Type
+		 *     o the corresponding set of supported Combinations and
+		 *	 Entry Point Configuration Data
+		 *     o Amount, Authorised
+		 *     o Amount, Other					      */
+		struct emv_ui_request welcome = {
+			.msg_id = msg_welcome,
+			.status = sts_idle
+		};
+
+		rc = emv_ep_field_off(ep);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		rc = emv_ep_ui_request(ep, &welcome);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		rc = emv_ep_activate(ep, start_a, txn);
+		if (rc != EMV_RC_OK)
+			goto done;
+	}
 
 	if (!chk->ops->pass_criteria_met(chk))
 		rc = EMV_RC_FAIL;

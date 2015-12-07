@@ -380,7 +380,16 @@ uint32_t lt_get_unpredictable_number(struct emv_hal *hal)
 	return 0x12345678u;
 }
 
-int lt_start_polling(struct emv_hal *hal)
+int lt_field_on(struct emv_hal *hal)
+{
+	struct lt *lt = (struct lt *)hal;
+
+	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
+						     "%s(): success", __func__);
+	return EMV_RC_OK;
+}
+
+int lt_field_off(struct emv_hal *hal)
 {
 	struct lt *lt = (struct lt *)hal;
 
@@ -574,7 +583,8 @@ void lt_ui_request(struct emv_hal *hal, const struct emv_ui_request *ui_request)
 
 const struct emv_hal_ops lt_ops  = {
 	.get_unpredictable_number = lt_get_unpredictable_number,
-	.start_polling		  = lt_start_polling,
+	.field_on		  = lt_field_on,
+	.field_off		  = lt_field_off,
 	.wait_for_card		  = lt_wait_for_card,
 	.transceive		  = lt_transceive,
 	.ui_request		  = lt_ui_request

@@ -111,17 +111,11 @@ enum emv_ep_state {
 	eps_done
 };
 
-struct emv_ep_autorun {
-	bool		  enabled;
-	enum emv_txn_type txn_type;
-	uint64_t	  amount_authorized;
-};
-
 struct emv_ep {
 	enum emv_ep_state		state;
 	struct emv_hal			*hal;
 	log4c_category_t		*log_cat;
-	struct emv_ep_autorun		autorun;
+	struct emv_autorun		autorun;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_reg_kernel_set	reg_kernel_set;
 	struct emv_ep_candidate_list	candidate_list;
@@ -559,8 +553,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 *   - Status: Ready to Read
 	 */
 	if (ep->parms.restart && ep->outcome.present.ui_request_on_restart) {
-		ep->hal->ops->ui_request(ep->hal,
-					    &ep->outcome.ui_request_on_restart);
+		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
 	} else {
 		struct emv_ui_request ui_request;
 
@@ -568,14 +561,14 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 		ui_request.msg_id = msg_present_card;
 		ui_request.status = sts_ready_to_read;
 
-		ep->hal->ops->ui_request(ep->hal, &ui_request);
+		emv_ep_ui_request(ep, &ui_request);
 	}
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.3");
 	/* The field shall be powered up and polling performed as defined in the
 	 * Main Loop of Book D.						      */
-	rc = ep->hal->ops->start_polling(ep->hal);
+	rc = emv_ep_field_on(ep);
 	if (rc != EMV_RC_OK)
 		goto done;
 
@@ -597,7 +590,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 			ui_request.msg_id = msg_present_one_card_only;
 			ui_request.status = sts_processing_error;
 
-			ep->hal->ops->ui_request(ep->hal, &ui_request);
+			emv_ep_ui_request(ep, &ui_request);
 
 			collision = true;
 		}
@@ -616,7 +609,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 			ui_request.msg_id = msg_present_one_card_only;
 			ui_request.status = sts_ready_to_read;
 
-			ep->hal->ops->ui_request(ep->hal, &ui_request);
+			emv_ep_ui_request(ep, &ui_request);
 
 			collision = false;
 		}
@@ -647,6 +640,33 @@ done:
 int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal)
 {
 	ep->hal = hal;
+	return EMV_RC_OK;
+}
+
+int emv_ep_field_on(struct emv_ep *ep)
+{
+	if (!ep || !ep->hal || !ep->hal->ops || !ep->hal->ops->field_on)
+		return EMV_RC_HAL_NOT_REGISTERED;
+
+	return ep->hal->ops->field_on(ep->hal);
+}
+
+int emv_ep_field_off(struct emv_ep *ep)
+{
+	if (!ep || !ep->hal || !ep->hal->ops || !ep->hal->ops->field_off)
+		return EMV_RC_HAL_NOT_REGISTERED;
+
+	return ep->hal->ops->field_off(ep->hal);
+}
+
+int emv_ep_ui_request(struct emv_ep *ep,
+					const struct emv_ui_request *ui_request)
+{
+	if (!ep || !ep->hal || !ep->hal->ops || !ep->hal->ops->ui_request)
+		return EMV_RC_HAL_NOT_REGISTERED;
+
+	ep->hal->ops->ui_request(ep->hal, ui_request);
+
 	return EMV_RC_OK;
 }
 
@@ -1334,8 +1354,7 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 	 * 'Yes', then Entry Point shall send the associated User Interface
 	 * Request.							      */
 	if (ep->outcome.present.ui_request_on_outcome)
-		ep->hal->ops->ui_request(ep->hal,
-					    &ep->outcome.ui_request_on_outcome);
+		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_outcome);
 
 	ep->state = eps_done;
 	return EMV_RC_OK;
@@ -1704,14 +1723,14 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 		if ((rc != EMV_RC_OK) || (amount_sz != sizeof(amount)))
 			goto error;
 		rc = libtlv_bcd_to_u64(amount, amount_sz,
-						&ep->autorun.amount_authorized);
+					    &ep->autorun.txn.amount_authorized);
 
 		tlv = tlv_find(tlv_autorun_parms,
 					EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE);
 		rc = tlv_encode_value(tlv, &txn_type, &txn_type_sz);
 		if ((rc != EMV_RC_OK) || txn_type_sz != sizeof(txn_type))
 			goto error;
-		ep->autorun.txn_type = get_emv_txn_type(txn_type);
+		ep->autorun.txn.type = get_emv_txn_type(txn_type);
 	}
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): success",
@@ -1727,6 +1746,11 @@ error:
 					  "%s(): failed. rc: %d", __func__, rc);
 
 	return rc;
+}
+
+const struct emv_autorun *emv_ep_get_autorun(struct emv_ep *ep)
+{
+	return &ep->autorun;
 }
 
 struct emv_ep *emv_ep_new(const char *log_cat)

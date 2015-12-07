@@ -5,5 +5,9 @@ emv_ep_configure
 emv_ep_activate
 emv_ep_free
 emv_transceive_apdu
+emv_ep_get_autorun
+emv_ep_field_on
+emv_ep_field_off
+emv_ep_ui_request
 emv_tag_parse_descriptors
 libemv_get_id_fmts

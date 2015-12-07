@@ -37,6 +37,7 @@
 #define EMV_RC_INVALID_ARG			10
 #define EMV_RC_COLLISION			11
 #define EMV_RC_CONTINUE				12
+#define EMV_RC_HAL_NOT_REGISTERED		13
 
 #define EMV_MAX_ONLINE_RESPONSE_LEN	256
 #define EMV_MAX_DATA_RECORD_LEN		512
@@ -229,7 +230,9 @@ struct emv_hal;
 struct emv_hal_ops {
 	uint32_t (*get_unpredictable_number)(struct emv_hal *hal);
 
-	int	(*start_polling)(struct emv_hal *hal);
+	int	(*field_on)(struct emv_hal *hal);
+
+	int	(*field_off)(struct emv_hal *hal);
 
 	int	(*wait_for_card)(struct emv_hal *hal);
 
@@ -260,6 +263,11 @@ struct emv_txn {
 	uint64_t	  amount_authorized;
 	uint64_t	  amount_other;
 	uint8_t		  currency[2];
+};
+
+struct emv_autorun {
+	bool	       enabled;
+	struct emv_txn txn;
 };
 
 struct emv_kernel_parms {
@@ -302,10 +310,19 @@ void emv_ep_free(struct emv_ep *ep);
 
 int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
 
+int emv_ep_field_on(struct emv_ep *ep);
+
+int emv_ep_field_off(struct emv_ep *ep);
+
+int emv_ep_ui_request(struct emv_ep *ep,
+				       const struct emv_ui_request *ui_request);
+
 int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
 				const uint8_t *kernel_id, size_t kernel_id_len);
 
 int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
+
+const struct emv_autorun *emv_ep_get_autorun(struct emv_ep *ep);
 
 int emv_ep_activate(struct emv_ep	 *ep,
 		    enum emv_start	  start,
