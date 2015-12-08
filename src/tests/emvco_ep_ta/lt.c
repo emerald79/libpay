@@ -212,6 +212,37 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting1.91 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_2,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.outcome = out_approved
+			}
+		}
+	},
 	/* LTsetting1.97 */
 	{
 		.ppse_entries = {
@@ -384,6 +415,9 @@ int lt_field_on(struct emv_hal *hal)
 {
 	struct lt *lt = (struct lt *)hal;
 
+	if (lt->checker && lt->checker->ops->field_on)
+		lt->checker->ops->field_on(lt->checker);
+
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 						     "%s(): success", __func__);
 	return EMV_RC_OK;
@@ -392,6 +426,9 @@ int lt_field_on(struct emv_hal *hal)
 int lt_field_off(struct emv_hal *hal)
 {
 	struct lt *lt = (struct lt *)hal;
+
+	if (lt->checker && lt->checker->ops->field_off)
+		lt->checker->ops->field_off(lt->checker);
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 						     "%s(): success", __func__);
@@ -462,7 +499,7 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 	if (rc != EMV_RC_OK)
 		goto done;
 
-	if (lt->checker && lt->checker->ops->check_gpo_data) {
+	if (lt->checker && lt->checker->ops->gpo_data) {
 		struct tlv *tlv = NULL;
 
 		rc = dol_and_del_to_tlv(lt->selected_aid->pdol,
@@ -470,7 +507,7 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		lt->checker->ops->check_gpo_data(lt->checker, tlv);
+		lt->checker->ops->gpo_data(lt->checker, tlv);
 
 		tlv_free(tlv);
 	}
@@ -577,8 +614,8 @@ void lt_ui_request(struct emv_hal *hal, const struct emv_ui_request *ui_request)
 {
 	struct lt *lt = (struct lt *)hal;
 
-	if (lt->checker && lt->checker->ops->check_ui_request)
-		lt->checker->ops->check_ui_request(lt->checker, ui_request);
+	if (lt->checker && lt->checker->ops->ui_request)
+		lt->checker->ops->ui_request(lt->checker, ui_request);
 }
 
 const struct emv_hal_ops lt_ops  = {

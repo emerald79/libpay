@@ -195,6 +195,8 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		if (rc != EMV_RC_OK)
 			goto done;
 
+		chk->ops->txn_start(chk);
+
 		rc = emv_ep_activate(ep, start_b, &emv_ep_get_autorun(ep)->txn);
 		if (rc != EMV_RC_OK)
 			goto done;
@@ -225,6 +227,8 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		rc = emv_ep_ui_request(ep, &welcome);
 		if (rc != EMV_RC_OK)
 			goto done;
+
+		chk->ops->txn_start(chk);
 
 		rc = emv_ep_activate(ep, start_a, txn);
 		if (rc != EMV_RC_OK)
@@ -362,6 +366,56 @@ START_TEST(test_2EA_004_00)
 }
 END_TEST
 
+/* 2EA.005.00 Field off at new transaction (Autorun = 'No')		      */
+START_TEST(test_2EA_005_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 10;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2ea_005_00, &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EA.005.01 Reader status Idle at new transaction (Autorun = 'No')	      */
+START_TEST(test_2EA_005_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 10;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2ea_005_01, &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EA.006.00 Field on at new transaction (Autorun = 'Yes')		      */
+START_TEST(test_2EA_006_00)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ea_006_00, NULL);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EA.006.01 Reader status Ready to Read at new transaction (Autorun = 'Yes')*/
+START_TEST(test_2EA_006_01)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ea_006_01, NULL);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 
 Suite *emvco_ep_ta_test_suite(void)
 {
@@ -377,6 +431,10 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_002_02);
 	tcase_add_test(tc_general_reqs, test_2EA_003_00);
 	tcase_add_test(tc_general_reqs, test_2EA_004_00);
+	tcase_add_test(tc_general_reqs, test_2EA_005_00);
+	tcase_add_test(tc_general_reqs, test_2EA_005_01);
+	tcase_add_test(tc_general_reqs, test_2EA_006_00);
+	tcase_add_test(tc_general_reqs, test_2EA_006_01);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;

@@ -96,6 +96,24 @@
 	},								       \
 	.pdol_len = 19
 
+/* PDOL with Acquirer Identifier, Additional Terminal Capabilities, Application
+ * Identifier (AID) – terminal, Application Version Number, Interface Device
+ * (IFD) Serial Number, Merchant Category Code, Merchant Identifier, Merchant
+ * Name and Location, Point-of-Service (POS) Entry Mode, Terminal Capabilities,
+ * Terminal Country Code, Terminal Identification, Terminal Type, Transaction
+ * Date, Transaction Sequence Counter, Transaction Status Information,
+ * Transaction Time, Transaction Type					      */
+#define PDOL_2								       \
+	.pdol = {							       \
+		0x9F, 0x01, 0x06, 0x9F, 0x40, 0x05, 0x9F, 0x06, 0x07, 0x9F,    \
+		0x09, 0x02, 0x9F, 0x1E, 0x08, 0x9F, 0x15, 0x02, 0x9F, 0x16,    \
+		0x0F, 0x9F, 0x4E, 0x60, 0x9F, 0x39, 0x01, 0x9F, 0x33, 0x03,    \
+		0x9F, 0x1A, 0x02, 0x9F, 0x1C, 0x08, 0x9F, 0x35, 0x01, 0x9A,    \
+		0x03, 0x9F, 0x41, 0x04, 0x9B, 0x02, 0x9F, 0x21, 0x03, 0x9C,    \
+		0x01							       \
+	},								       \
+	.pdol_len = 51
+
 
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
@@ -128,10 +146,13 @@
 struct chk;
 
 struct chk_ops {
-	void (*check_gpo_data)(struct chk *chk, struct tlv *gpo_data);
-	void (*check_ui_request)(struct chk *chk,
+	void (*txn_start)(struct chk *chk);
+	void (*field_on)(struct chk *chk);
+	void (*field_off)(struct chk *chk);
+	void (*gpo_data)(struct chk *chk, struct tlv *gpo_data);
+	void (*ui_request)(struct chk *chk,
 				       const struct emv_ui_request *ui_request);
-	void (*check_outcome)(struct chk *chk,
+	void (*outcome)(struct chk *chk,
 				       const struct emv_outcome_parms *outcome);
 	bool (*pass_criteria_met)(struct chk *chk);
 	void (*free)(struct chk *chk);
@@ -153,6 +174,10 @@ enum pass_criteria {
 	pc_2ea_003_00_case02,
 	pc_2ea_004_00_case01,
 	pc_2ea_004_00_case02,
+	pc_2ea_005_00,
+	pc_2ea_005_01,
+	pc_2ea_006_00,
+	pc_2ea_006_01
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria);
@@ -176,11 +201,12 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
 +-----------------------------------------------------------------------------*/
 
 enum ltsetting {
-	ltsetting1_1 = 0,
-	ltsetting1_2 = 1,
-	ltsetting1_3 = 2,
-	ltsetting1_4 = 3,
-	ltsetting1_97 = 4,
+	ltsetting1_1  = 0,
+	ltsetting1_2  = 1,
+	ltsetting1_3  = 2,
+	ltsetting1_4  = 3,
+	ltsetting1_91 = 4,
+	ltsetting1_97 = 5,
 	num_ltsettings
 };
 

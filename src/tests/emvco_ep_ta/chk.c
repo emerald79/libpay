@@ -26,9 +26,13 @@
 
 struct checker {
 	const struct chk_ops *ops;
+
 	enum pass_criteria    pass_criteria;
 	bool		      pass_criteria_checked;
 	bool		      pass_criteria_met;
+
+	bool		      field_is_on;
+	struct emv_ui_request ui_request;
 };
 
 static bool get_value(struct tlv *tlv, const char *tag, void *value,
@@ -65,7 +69,7 @@ static bool check_value(struct tlv *tlv, const char *tag, const void *value,
 	return true;
 }
 
-static void checker_check_gpo_data(struct chk *chk, struct tlv *gpo_data)
+static void checker_gpo_data(struct chk *chk, struct tlv *gpo_data)
 {
 	struct checker *checker = (struct checker *)chk;
 	uint8_t val[256];
@@ -174,7 +178,68 @@ static void checker_check_gpo_data(struct chk *chk, struct tlv *gpo_data)
 	}
 }
 
-static bool checker_check_pass_criteria_met(struct chk *chk)
+static void checker_txn_start(struct chk *chk)
+{
+	struct checker *checker = (struct checker *)chk;
+
+	switch (checker->pass_criteria) {
+
+	case pc_2ea_005_00:
+		if (checker->field_is_on ||
+		    (checker->ui_request.msg_id != msg_welcome))
+			checker->pass_criteria_met = false;
+		checker->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_005_01:
+		if (checker->field_is_on ||
+		    (checker->ui_request.status != sts_idle))
+			checker->pass_criteria_met = false;
+		checker->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_006_00:
+		if (!checker->field_is_on ||
+		    (checker->ui_request.msg_id != msg_present_card))
+			checker->pass_criteria_met = false;
+		checker->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_006_01:
+		if (!checker->field_is_on ||
+		    (checker->ui_request.status != sts_ready_to_read))
+			checker->pass_criteria_met = false;
+		checker->pass_criteria_checked = true;
+		break;
+
+	default:
+		break;
+	}
+}
+
+static void checker_field_on(struct chk *chk)
+{
+	struct checker *checker = (struct checker *)chk;
+
+	checker->field_is_on = true;
+}
+
+static void checker_field_off(struct chk *chk)
+{
+	struct checker *checker = (struct checker *)chk;
+
+	checker->field_is_on = false;
+}
+
+static void checker_ui_request(struct chk *chk,
+					const struct emv_ui_request *ui_request)
+{
+	struct checker *checker = (struct checker *)chk;
+
+	memcpy(&checker->ui_request, ui_request, sizeof(*ui_request));
+}
+
+static bool checker_pass_criteria_met(struct chk *chk)
 {
 	struct checker *checker = (struct checker *)chk;
 
@@ -187,8 +252,12 @@ void checker_free(struct chk *chk)
 }
 
 static const struct chk_ops checker_ops = {
-	.check_gpo_data	   = checker_check_gpo_data,
-	.pass_criteria_met = checker_check_pass_criteria_met,
+	.txn_start	   = checker_txn_start,
+	.field_on	   = checker_field_on,
+	.field_off	   = checker_field_off,
+	.gpo_data	   = checker_gpo_data,
+	.ui_request	   = checker_ui_request,
+	.pass_criteria_met = checker_pass_criteria_met,
 	.free		   = checker_free
 };
 
