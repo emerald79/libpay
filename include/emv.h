@@ -62,14 +62,29 @@
 #define EMV_ID_DF_NAME				"\x84"
 #define EMV_ID_RESP_MSG_TEMPLATE_FMT_2		"\x77"
 #define EMV_ID_APPLICATION_PRIORITY_INDICATOR	"\x87"
+#define EMV_ID_TRANSACTION_DATE			"\x9A"
+#define EMV_ID_TRANSACTION_STATUS_INFORMATION	"\x9B"
 #define EMV_ID_TRANSACTION_TYPE			"\x9C"
+#define EMV_ID_ACQUIRER_IDENTIFIER		"\x9F\x01"
 #define EMV_ID_AMOUNT_AUTHORIZED		"\x9F\x02"
 #define EMV_ID_AMOUNT_OTHER			"\x9F\x03"
+#define EMV_ID_APPLICATION_IDENTIFIER_TERMINAL	"\x9F\x06"
+#define EMV_ID_MERCHANT_CATEGORY_CODE		"\x9F\x15"
+#define EMV_ID_MERCHANT_IDENTIFIER		"\x9F\x16"
+#define EMV_ID_TERMINAL_COUNTRY_CODE		"\x9F\x1A"
+#define EMV_ID_TERMINAL_IDENTIFICATION		"\x9F\x1C"
+#define EMV_ID_INTERFACE_DEVICE_SERIAL_NUMBER	"\x9F\x1E"
+#define EMV_ID_TRANSACTION_TIME			"\x9F\x21"
 #define EMV_ID_KERNEL_IDENTIFIER		"\x9F\x2A"
 #define EMV_ID_EXTENDED_SELECTION		"\x9F\x29"
-#define EMV_ID_UN				"\x9F\x37"
+#define EMV_ID_TERMINAL_CAPABILITIES		"\x9F\x37"
+#define EMV_ID_UNPREDICTABLE_NUMBER		"\x9F\x37"
 #define EMV_ID_PDOL				"\x9F\x38"
-#define EMV_ID_TTQ				"\x9F\x66"
+#define EMV_ID_POS_ENTRY_MODE			"\x9F\x39"
+#define EMV_ID_ADDITIONAL_TERMINAL_CAPABILITIES "\x9F\x40"
+#define EMV_ID_TRANSACTION_SEQUENCE_COUNTER	"\x9F\x41"
+#define EMV_ID_MERCHANT_NAME_AND_LOCATION	"\x9F\x4E"
+#define EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS	"\x9F\x66"
 #define EMV_ID_FCI_PROPRIETARY_TEMPLATE		"\xA5"
 #define EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA	"\xBF\x0C"
 
@@ -90,6 +105,7 @@
 #define EMV_ID_LIBEMV_AUTORUN			"\xFF\x8F\xE3\x71"
 #define EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE	"\xDF\x90\xE3\x71"
 #define EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORIZED	"\xDF\x91\xE3\x71"
+#define EMV_ID_LIBENV_TERMINAL_CONFIGURATION	"\xFF\x92\xE3\x71"
 
 enum emv_message_identifier {
 	msg_approved			= 0x03,
@@ -230,6 +246,9 @@ struct emv_hal;
 struct emv_hal_ops {
 	uint32_t (*get_unpredictable_number)(struct emv_hal *hal);
 
+	int	(*get_interface_device_serial_number)(struct emv_hal *hal,
+						      char serial_number[8]);
+
 	int	(*field_on)(struct emv_hal *hal);
 
 	int	(*field_off)(struct emv_hal *hal);
@@ -263,6 +282,7 @@ struct emv_txn {
 	uint64_t	  amount_authorized;
 	uint64_t	  amount_other;
 	uint8_t		  currency[2];
+	uint32_t	  txn_seq_ctr;
 };
 
 struct emv_autorun {
@@ -318,7 +338,8 @@ int emv_ep_ui_request(struct emv_ep *ep,
 				       const struct emv_ui_request *ui_request);
 
 int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
-				const uint8_t *kernel_id, size_t kernel_id_len);
+				 const uint8_t *kernel_id, size_t kernel_id_len,
+						  const uint8_t app_ver_num[2]);
 
 int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 

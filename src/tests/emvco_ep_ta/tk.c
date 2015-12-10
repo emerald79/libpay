@@ -102,8 +102,9 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 
 	tlv = tlv_kernel_parms =
 		     tlv_new(EMV_ID_TEST_FLAGS, sizeof(test_flags), test_flags);
-	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_TTQ, sizeof(ind->ttq),
-								     ind->ttq));
+	tlv = tlv_insert_after(tlv, tlv_new(
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+						   sizeof(ind->ttq), ind->ttq));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_KERNEL_IDENTIFIER,
 				       parms->kernel_id_len, parms->kernel_id));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_AMOUNT_AUTHORIZED,
@@ -112,8 +113,8 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 					   sizeof(amount_other), amount_other));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_TRANSACTION_TYPE,
 						  sizeof(txn_type), &txn_type));
-	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_UN, sizeof(un), &un));
-
+	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_UNPREDICTABLE_NUMBER,
+							      sizeof(un), &un));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_START_POINT,
 							sizeof(start), &start));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_FCI_TEMPLATE,

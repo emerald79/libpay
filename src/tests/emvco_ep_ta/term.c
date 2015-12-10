@@ -727,18 +727,45 @@ struct emv_ep_autorun {
 	uint64_t	  amount_authorized;
 };
 
+struct emv_ep_terminal_configuration {
+	uint8_t	    acquirer_identifier[6];
+	uint8_t	    merchant_category_code[2];
+	char	    merchant_identifier[15];
+	uint8_t	    terminal_country_code[2];
+	char	    terminal_identification[8];
+	uint8_t	    terminal_type;
+	uint8_t	    pos_entry_mode;
+	uint8_t	    additional_terminal_capabilities[5];
+	const char *merchant_name_and_location;
+};
+
 struct termset {
-	struct emv_ep_autorun	   autorun;
-	struct emv_ep_combination *combination_sets;
-	size_t			   num_combination_sets;
+	struct emv_ep_terminal_configuration	*terminal_configuration;
+	struct emv_ep_autorun			 autorun;
+	struct emv_ep_combination		*combination_sets;
+	size_t					 num_combination_sets;
+};
+
+struct emv_ep_terminal_configuration terminal_configuration = {
+	.acquirer_identifier		  = ACQUIRER_IDENTIFIER,
+	.merchant_category_code		  = MERCHANT_CATEGORY_CODE,
+	.merchant_identifier		  = MERCHANT_IDENTIFIER,
+	.terminal_country_code		  = TERMINAL_COUNTRY_CODE,
+	.terminal_identification	  = TERMINAL_IDENTIFICATION,
+	.terminal_type			  = TERMINAL_TYPE,
+	.pos_entry_mode			  = POS_ENTRY_MODE,
+	.additional_terminal_capabilities = ADDITIONAL_TERMINAL_CAPABILITIES,
+	.merchant_name_and_location	  = MERCHANT_NAME_AND_LOCATION
 };
 
 struct termset termsettings[num_termsettings] = {
 	{
-		.combination_sets = termset2,
-		.num_combination_sets = ARRAY_SIZE(termset2)
+		.terminal_configuration	= &terminal_configuration,
+		.combination_sets	= termset2,
+		.num_combination_sets	= ARRAY_SIZE(termset2)
 	},
 	{
+		.terminal_configuration	= &terminal_configuration,
 		.autorun = {
 			.enabled	   = true,
 			.txn_type	   = txn_purchase,
@@ -748,6 +775,7 @@ struct termset termsettings[num_termsettings] = {
 		.num_combination_sets = ARRAY_SIZE(termset3)
 	},
 	{
+		.terminal_configuration	= &terminal_configuration,
 		.combination_sets = termset4,
 		.num_combination_sets = ARRAY_SIZE(termset4)
 	}

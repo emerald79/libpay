@@ -124,7 +124,8 @@ struct emv_ep {
 };
 
 int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
-				 const uint8_t *kernel_id, size_t kernel_id_len)
+				 const uint8_t *kernel_id, size_t kernel_id_len,
+						   const uint8_t app_ver_num[2])
 {
 	struct emv_ep_reg_kernel_set *set = &ep->reg_kernel_set;
 	int rc = EMV_RC_OK;

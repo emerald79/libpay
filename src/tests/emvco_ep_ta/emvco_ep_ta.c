@@ -100,6 +100,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 						      const struct emv_txn *txn)
 {
 	uint8_t cfg[4096];
+	uint8_t app_ver_num[2] = { 0x00, 0x01 };
 	size_t cfg_sz = sizeof(cfg);
 	struct emv_ep *ep = NULL;
 	struct emv_hal *lt = NULL;
@@ -161,7 +162,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		}
 
 		rc = emv_ep_register_kernel(ep, tk[i_tk], tk_id[i_tk].kernel_id,
-						     tk_id[i_tk].kernel_id_len);
+					tk_id[i_tk].kernel_id_len, app_ver_num);
 		if (rc != EMV_RC_OK)
 			goto done;
 	}

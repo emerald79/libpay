@@ -186,6 +186,16 @@ struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria);
 | Terminal Settings (term)						       |
 +-----------------------------------------------------------------------------*/
 
+#define ACQUIRER_IDENTIFIER		 { 0x00, 0x01, 0x23, 0x45, 0x67, 0x89 }
+#define MERCHANT_CATEGORY_CODE		 { 0x30, 0x08 }
+#define MERCHANT_IDENTIFIER		 "Lufthansa AG   "
+#define TERMINAL_COUNTRY_CODE		 { 0x02, 0x76 }
+#define TERMINAL_IDENTIFICATION		 "COUNTER3"
+#define TERMINAL_TYPE			 0x25
+#define POS_ENTRY_MODE			 0x05
+#define ADDITIONAL_TERMINAL_CAPABILITIES { 0x02, 0x00, 0x00, 0x00, 0x00 }
+#define MERCHANT_NAME_AND_LOCATION	 "Lufthansa - Rhein-Main Airport"
+
 enum termsetting {
 	termsetting2 = 0,
 	termsetting3 = 1,
