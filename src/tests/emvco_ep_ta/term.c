@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include <tlv.h>
@@ -727,7 +728,7 @@ struct emv_ep_autorun {
 	uint64_t	  amount_authorized;
 };
 
-struct emv_ep_terminal_configuration {
+struct emv_ep_terminal_data {
 	uint8_t	    acquirer_identifier[6];
 	uint8_t	    merchant_category_code[2];
 	char	    merchant_identifier[15];
@@ -740,13 +741,13 @@ struct emv_ep_terminal_configuration {
 };
 
 struct termset {
-	struct emv_ep_terminal_configuration	*terminal_configuration;
-	struct emv_ep_autorun			 autorun;
-	struct emv_ep_combination		*combination_sets;
-	size_t					 num_combination_sets;
+	struct emv_ep_terminal_data	*terminal_data;
+	struct emv_ep_autorun		 autorun;
+	struct emv_ep_combination	*combination_sets;
+	size_t				 num_combination_sets;
 };
 
-struct emv_ep_terminal_configuration terminal_configuration = {
+struct emv_ep_terminal_data terminal_data = {
 	.acquirer_identifier		  = ACQUIRER_IDENTIFIER,
 	.merchant_category_code		  = MERCHANT_CATEGORY_CODE,
 	.merchant_identifier		  = MERCHANT_IDENTIFIER,
@@ -760,24 +761,24 @@ struct emv_ep_terminal_configuration terminal_configuration = {
 
 struct termset termsettings[num_termsettings] = {
 	{
-		.terminal_configuration	= &terminal_configuration,
 		.combination_sets	= termset2,
-		.num_combination_sets	= ARRAY_SIZE(termset2)
+		.num_combination_sets	= ARRAY_SIZE(termset2),
+		.terminal_data		= &terminal_data
 	},
 	{
-		.terminal_configuration	= &terminal_configuration,
+		.combination_sets	= termset3,
+		.num_combination_sets	= ARRAY_SIZE(termset3),
+		.terminal_data		= &terminal_data,
 		.autorun = {
 			.enabled	   = true,
 			.txn_type	   = txn_purchase,
 			.amount_authorized = 10
-		},
-		.combination_sets = termset3,
-		.num_combination_sets = ARRAY_SIZE(termset3)
+		}
 	},
 	{
-		.terminal_configuration	= &terminal_configuration,
-		.combination_sets = termset4,
-		.num_combination_sets = ARRAY_SIZE(termset4)
+		.combination_sets	= termset4,
+		.num_combination_sets	= ARRAY_SIZE(termset4),
+		.terminal_data		= &terminal_data
 	}
 };
 
@@ -970,6 +971,44 @@ error:
 	return NULL;
 }
 
+static struct tlv *get_terminal_data(struct emv_ep_terminal_data *data)
+{
+	struct tlv *term_data = NULL, *tail = NULL;
+
+	term_data = tlv_new(EMV_ID_LIBEMV_TERMINAL_DATA, 0, NULL);
+
+	tail = tlv_insert_below(term_data, tlv_new(EMV_ID_ACQUIRER_IDENTIFIER,
+		 sizeof(data->acquirer_identifier), data->acquirer_identifier));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_MERCHANT_CATEGORY_CODE,
+					   sizeof(data->merchant_category_code),
+						 data->merchant_category_code));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_MERCHANT_IDENTIFIER,
+		 strlen(data->merchant_identifier), data->merchant_identifier));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_TERMINAL_COUNTRY_CODE,
+					    sizeof(data->terminal_country_code),
+						  data->terminal_country_code));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_TERMINAL_IDENTIFICATION,
+					  sizeof(data->terminal_identification),
+						data->terminal_identification));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_TERMINAL_TYPE,
+			    sizeof(data->terminal_type), &data->terminal_type));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_POS_ENTRY_MODE,
+			  sizeof(data->pos_entry_mode), &data->pos_entry_mode));
+	tail = tlv_insert_after(tail,
+				tlv_new(EMV_ID_ADDITIONAL_TERMINAL_CAPABILITIES,
+				 sizeof(data->additional_terminal_capabilities),
+				       data->additional_terminal_capabilities));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_MERCHANT_NAME_AND_LOCATION,
+				       strlen(data->merchant_name_and_location),
+					     data->merchant_name_and_location));
+	if (!tail) {
+		tlv_free(term_data);
+		term_data = NULL;
+	}
+
+	return term_data;
+};
+
 int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 {
 	struct tlv *tlv = NULL, *tail = NULL;
@@ -999,13 +1038,15 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 	if (settings->autorun.enabled)
 		tail = tlv_insert_after(tail, get_autorun(&settings->autorun));
 
+	if (settings->terminal_data)
+		tail = tlv_insert_after(tail,
+				    get_terminal_data(settings->terminal_data));
 	if (!tail) {
 		rc = TLV_RC_OUT_OF_MEMORY;
 		goto done;
 	}
 
 	rc = tlv_encode(tlv, buffer, size);
-
 done:
 	tlv_free(tlv);
 

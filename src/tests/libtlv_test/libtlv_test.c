@@ -37,7 +37,7 @@ START_TEST(test_tlv_malformed_input)
 	ck_assert(rc == TLV_RC_INVALID_ARG);
 
 	rc = tlv_parse(tag_number_too_large, 0, &tlv);
-	ck_assert(rc == TLV_RC_INVALID_ARG);
+	ck_assert((rc == TLV_RC_OK) && (!tlv));
 
 	rc = tlv_parse(tag_number_too_large, sizeof(tag_number_too_large),
 									  NULL);

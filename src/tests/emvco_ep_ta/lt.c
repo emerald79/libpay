@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <arpa/inet.h>
 #include <log4c.h>
+#include <assert.h>
 
 #include <emv.h>
 #include <tlv.h>
@@ -212,6 +213,37 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting1.90 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_2,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.outcome = out_approved
+			}
+		}
+	},
 	/* LTsetting1.91 */
 	{
 		.ppse_entries = {
@@ -278,6 +310,37 @@ static const struct lt_setting ltsetting[] = {
 					.msg_id = msg_approved,
 					.status = sts_card_read_successfully
 				}
+			}
+		}
+	},
+	/* LTsetting1.98 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_25,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_2,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			.outcome_parms = {
+				.outcome = out_approved
 			}
 		}
 	}
@@ -504,8 +567,26 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 
 		rc = dol_and_del_to_tlv(lt->selected_aid->pdol,
 				    lt->selected_aid->pdol_len, data, lc, &tlv);
-		if (rc != EMV_RC_OK)
+		if (rc == EMV_RC_OK) {
+			uint8_t ber_tlv[2048];
+			size_t ber_tlv_len = sizeof(ber_tlv);
+			char ber_tlv_hex[4096];
+
+			rc = tlv_encode(tlv, ber_tlv, &ber_tlv_len);
+			if (rc != TLV_RC_OK) {
+				log4c_category_log(lt->log_cat,
+							   LOG4C_PRIORITY_ERROR,
+					    "%s() failed. rc %d", __func__, rc);
+				goto done;
+			}
+
+			log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
+				"%s(): TLV(PDOL, DEL) = '%s'", __func__,
+					 libtlv_bin_to_hex(ber_tlv, ber_tlv_len,
+								  ber_tlv_hex));
+		} else {
 			goto done;
+		}
 
 		lt->checker->ops->gpo_data(lt->checker, tlv);
 

@@ -77,7 +77,8 @@
 #define EMV_ID_TRANSACTION_TIME			"\x9F\x21"
 #define EMV_ID_KERNEL_IDENTIFIER		"\x9F\x2A"
 #define EMV_ID_EXTENDED_SELECTION		"\x9F\x29"
-#define EMV_ID_TERMINAL_CAPABILITIES		"\x9F\x37"
+#define EMV_ID_TERMINAL_CAPABILITIES		"\x9F\x33"
+#define EMV_ID_TERMINAL_TYPE			"\x9F\x35"
 #define EMV_ID_UNPREDICTABLE_NUMBER		"\x9F\x37"
 #define EMV_ID_PDOL				"\x9F\x38"
 #define EMV_ID_POS_ENTRY_MODE			"\x9F\x39"
@@ -105,7 +106,7 @@
 #define EMV_ID_LIBEMV_AUTORUN			"\xFF\x8F\xE3\x71"
 #define EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE	"\xDF\x90\xE3\x71"
 #define EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORIZED	"\xDF\x91\xE3\x71"
-#define EMV_ID_LIBENV_TERMINAL_CONFIGURATION	"\xFF\x92\xE3\x71"
+#define EMV_ID_LIBEMV_TERMINAL_DATA		"\xFF\x92\xE3\x71"
 
 enum emv_message_identifier {
 	msg_approved			= 0x03,
@@ -301,6 +302,8 @@ struct emv_kernel_parms {
 	size_t					fci_len;
 	uint8_t					sw[2];
 	const struct emv_ep_preproc_indicators *preproc_indicators;
+	const uint8_t			       *terminal_data;
+	size_t					terminal_data_len;
 };
 
 struct emv_kernel;

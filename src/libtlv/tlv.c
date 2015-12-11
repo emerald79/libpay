@@ -204,6 +204,11 @@ void tlv_free(struct tlv *tlv)
 
 int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 {
+	if (!length) {
+		*tlv = NULL;
+		return TLV_RC_OK;
+	}
+
 	return tlv_parse_recursive(&buffer, length, tlv, NULL, NULL);
 }
 
@@ -520,7 +525,10 @@ struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
 	if (!tlv1)
 		return tlv2;
 
-	if (!tlv2 || tlv2->prev)
+	if (!tlv2)
+		return tlv1;
+
+	if (tlv2->prev)
 		return NULL;
 
 	for (tail_of_tlv2 = tlv2; tail_of_tlv2->next; )
@@ -555,7 +563,7 @@ struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child)
 	return child;
 }
 
-static inline size_t tlv_get_tag_length(const void *tag)
+size_t libtlv_get_tag_length(const void *tag)
 {
 	uint8_t *p = (uint8_t *)tag;
 	size_t i;
@@ -580,7 +588,7 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag)
 	if (!tlv)
 		return NULL;
 
-	tag_len = tlv_get_tag_length(tag);
+	tag_len = libtlv_get_tag_length(tag);
 
 	for (tlv_i = tlv; tlv_i; tlv_i = tlv_i->next) {
 		uint8_t encoded_tag[6];
@@ -599,10 +607,10 @@ int tlv_get_depth(struct tlv *tlv)
 {
 	int depth = 0;
 
-	do {
+	while (tlv_get_parent(tlv)) {
 		tlv = tlv_get_parent(tlv);
 		depth++;
-	} while (tlv);
+	};
 
 	return depth;
 }
@@ -637,7 +645,7 @@ struct tlv *tlv_deep_find(struct tlv *tlv, const void *tag)
 	if (!tlv)
 		return NULL;
 
-	tag_len = tlv_get_tag_length(tag);
+	tag_len = libtlv_get_tag_length(tag);
 
 	while (tlv) {
 		uint8_t encoded_tag[6];
@@ -671,7 +679,7 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 	if (!tlv)
 		goto error;
 
-	rc = tlv_parse_identifier(&tag, tlv_get_tag_length(tag), tlv);
+	rc = tlv_parse_identifier(&tag, libtlv_get_tag_length(tag), tlv);
 	if (rc != TLV_RC_OK)
 		goto error;
 
@@ -769,18 +777,24 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 
 		/* tlv_do.length > tlv_de->length */
 		switch (libtlv_id_to_fmt(tag)) {
-		case fmt_cn:
+		case fmt_cn:			/* trailing hexadecimal 'FF's */
 			memcpy(&out_data[out_data_sz], tlv_de->value,
 								tlv_de->length);
 			memset(&out_data[out_data_sz + tlv_de->length], 0xff,
 						tlv_do.length - tlv_de->length);
 			break;
-		default:
+		case fmt_n:			/* leading hexadecimal zeroes */
 			memset(&out_data[out_data_sz], 0x00,
 						tlv_do.length - tlv_de->length);
 			memcpy(&out_data[out_data_sz +
 						tlv_do.length - tlv_de->length],
 						 tlv_de->value, tlv_de->length);
+		default:		       /* trailing hexadecimal zeroes */
+			memcpy(&out_data[out_data_sz], tlv_de->value,
+								tlv_de->length);
+			memset(&out_data[out_data_sz + tlv_de->length], 0x00,
+						tlv_do.length - tlv_de->length);
+
 			break;
 		}
 		out_data_sz += tlv_do.length;

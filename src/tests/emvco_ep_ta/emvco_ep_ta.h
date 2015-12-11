@@ -177,23 +177,28 @@ enum pass_criteria {
 	pc_2ea_005_00,
 	pc_2ea_005_01,
 	pc_2ea_006_00,
-	pc_2ea_006_01
+	pc_2ea_006_01,
+	pc_2ea_006_02_case01,
+	pc_2ea_006_02_case02
 };
 
-struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria);
+struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
+						    const char *log4c_category);
 
 /*-----------------------------------------------------------------------------+
 | Terminal Settings (term)						       |
 +-----------------------------------------------------------------------------*/
 
-#define ACQUIRER_IDENTIFIER		 { 0x00, 0x01, 0x23, 0x45, 0x67, 0x89 }
-#define MERCHANT_CATEGORY_CODE		 { 0x30, 0x08 }
+#define ACQUIRER_IDENTIFIER		 ((const uint8_t [])		       \
+					 { 0x00, 0x01, 0x23, 0x45, 0x67, 0x89 })
+#define MERCHANT_CATEGORY_CODE		 ((const uint8_t []){ 0x30, 0x08 })
 #define MERCHANT_IDENTIFIER		 "Lufthansa AG   "
-#define TERMINAL_COUNTRY_CODE		 { 0x02, 0x76 }
+#define TERMINAL_COUNTRY_CODE		 ((const uint8_t []){ 0x02, 0x76 })
 #define TERMINAL_IDENTIFICATION		 "COUNTER3"
 #define TERMINAL_TYPE			 0x25
 #define POS_ENTRY_MODE			 0x05
-#define ADDITIONAL_TERMINAL_CAPABILITIES { 0x02, 0x00, 0x00, 0x00, 0x00 }
+#define ADDITIONAL_TERMINAL_CAPABILITIES ((const uint8_t [])		       \
+					       { 0x02, 0x00, 0x00, 0x00, 0x00 })
 #define MERCHANT_NAME_AND_LOCATION	 "Lufthansa - Rhein-Main Airport"
 
 enum termsetting {
@@ -215,8 +220,10 @@ enum ltsetting {
 	ltsetting1_2  = 1,
 	ltsetting1_3  = 2,
 	ltsetting1_4  = 3,
-	ltsetting1_91 = 4,
-	ltsetting1_97 = 5,
+	ltsetting1_90 = 4,
+	ltsetting1_91 = 5,
+	ltsetting1_97 = 6,
+	ltsetting1_98 = 7,
 	num_ltsettings
 };
 

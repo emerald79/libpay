@@ -24,7 +24,7 @@ static int tk_configure(struct emv_kernel *kernel, const void *config,
 static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 {
 	const struct emv_ep_preproc_indicators *ind = parms->preproc_indicators;
-	struct tlv *tlv_kernel_parms = NULL, *tlv = NULL;
+	struct tlv *tlv_kernel_parms = NULL, *tlv = NULL, *tlv_term_data = NULL;
 	uint8_t amount_authorized[6], amount_other[6], txn_type, start;
 	uint8_t test_flags[2] = { 0, 0 };
 	uint32_t un = ntohl(parms->unpredictable_number);
@@ -121,6 +121,18 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 						   parms->fci_len, parms->fci));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_SELECT_RESPONSE_SW,
 						 sizeof(parms->sw), parms->sw));
+
+	rc = tlv_parse(parms->terminal_data, parms->terminal_data_len,
+								&tlv_term_data);
+	if (rc != TLV_RC_OK)
+		goto done;
+
+	tlv = tlv_insert_after(tlv, tlv_term_data);
+
+	if (!tlv) {
+		rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
 
 done:
 	if (rc != TLV_RC_OK) {

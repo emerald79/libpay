@@ -113,14 +113,16 @@ enum emv_ep_state {
 
 struct emv_ep {
 	enum emv_ep_state		state;
-	struct emv_hal			*hal;
-	log4c_category_t		*log_cat;
+	struct emv_hal		       *hal;
+	log4c_category_t	       *log_cat;
 	struct emv_autorun		autorun;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_reg_kernel_set	reg_kernel_set;
 	struct emv_ep_candidate_list	candidate_list;
 	struct emv_kernel_parms		parms;
 	struct emv_outcome_parms	outcome;
+	uint8_t				terminal_data[2048];
+	size_t				terminal_data_len;
 };
 
 int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
@@ -1314,6 +1316,8 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	memcpy(ep->parms.kernel_id, candidate->combination->kernel_id,
 						       ep->parms.kernel_id_len);
 	ep->parms.preproc_indicators = &candidate->combination->indicators;
+	ep->parms.terminal_data	= ep->terminal_data;
+	ep->parms.terminal_data_len = ep->terminal_data_len;
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.1");
 	/* Entry Point shall activate the kernel identified in the selected
@@ -1655,6 +1659,7 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 	struct tlv *tlv_config = NULL;
 	struct tlv *tlv_combination_set = NULL;
 	struct tlv *tlv_autorun_parms = NULL;
+	struct tlv *tlv_terminal_data = NULL;
 	int rc = EMV_RC_OK;
 
 	rc = tlv_parse(config, len, &tlv_config);
@@ -1734,9 +1739,21 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 		ep->autorun.txn.type = get_emv_txn_type(txn_type);
 	}
 
+	tlv_terminal_data = tlv_get_child(tlv_find(tlv_get_child(
+			     tlv_find(tlv_config, EMV_ID_LIBEMV_CONFIGURATION)),
+						  EMV_ID_LIBEMV_TERMINAL_DATA));
+	if (tlv_terminal_data) {
+		ep->terminal_data_len = sizeof(ep->terminal_data);
+		rc = tlv_encode(tlv_terminal_data, ep->terminal_data,
+							&ep->terminal_data_len);
+		if (rc != EMV_RC_OK)
+			goto error;
+	} else {
+		ep->terminal_data_len = 0;
+	}
+
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): success",
 								      __func__);
-
 	return EMV_RC_OK;
 
 error:

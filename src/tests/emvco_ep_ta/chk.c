@@ -33,6 +33,8 @@ struct checker {
 
 	bool		      field_is_on;
 	struct emv_ui_request ui_request;
+
+	log4c_category_t     *log_cat;
 };
 
 static bool get_value(struct tlv *tlv, const char *tag, void *value,
@@ -41,8 +43,10 @@ static bool get_value(struct tlv *tlv, const char *tag, void *value,
 	struct tlv *mytlv = tlv_find(tlv, tag);
 	int rc = EMV_RC_OK;
 
-	if (!mytlv)
+	if (!mytlv) {
+		*size = 0;
 		return false;
+	}
 
 	rc = tlv_encode_value(mytlv, value, size);
 	if (rc != EMV_RC_OK)
@@ -51,126 +55,187 @@ static bool get_value(struct tlv *tlv, const char *tag, void *value,
 	return true;
 }
 
-static bool check_value(struct tlv *tlv, const char *tag, const void *value,
-								    size_t size)
+static bool check_value(struct checker *chk, struct tlv *tlv, const char *tag,
+						 const void *value, size_t size)
 {
-	uint8_t myval[256];
-	size_t myval_sz = sizeof(myval);
+	uint8_t val[256];
+	size_t val_sz = sizeof(val);
+	bool ok = false;
 
-	if (!get_value(tlv, tag, myval, &myval_sz))
+	if (!get_value(tlv, tag, val, &val_sz))
+		goto done;
+
+	if (size != val_sz)
+		goto done;
+
+	if (memcmp(value, val, size))
+		goto done;
+
+	ok = true;
+
+done:
+	if (!ok) {
+		char hex_tag[TLV_MAX_TAG_LENGTH * 2 + 1];
+		char hex_value[size * 2 + 1];
+		char hex_val[val_sz * 2 + 1];
+
+		libtlv_bin_to_hex(tag, libtlv_get_tag_length(tag), hex_tag);
+		libtlv_bin_to_hex(value, size, hex_value);
+		libtlv_bin_to_hex(val, val_sz, hex_val);
+
+		log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+			       "Wrong value: tag '%s', expected '%s', got '%s'",
+						   hex_tag, hex_value, hex_val);
+	}
+
+	return ok;
+}
+
+static bool check_terminal_data(struct checker *chk, struct tlv *data)
+{
+	uint8_t pos_entry_mode = POS_ENTRY_MODE;
+
+	if (!check_value(chk, data, EMV_ID_ACQUIRER_IDENTIFIER,
+			      ACQUIRER_IDENTIFIER, sizeof(ACQUIRER_IDENTIFIER)))
 		return false;
 
-	if (size != myval_sz)
+	if (!check_value(chk, data, EMV_ID_ADDITIONAL_TERMINAL_CAPABILITIES,
+					       ADDITIONAL_TERMINAL_CAPABILITIES,
+				      sizeof(ADDITIONAL_TERMINAL_CAPABILITIES)))
 		return false;
 
-	if (memcmp(value, myval, size))
+	if (!check_value(chk, data, EMV_ID_MERCHANT_CATEGORY_CODE,
+			MERCHANT_CATEGORY_CODE, sizeof(MERCHANT_CATEGORY_CODE)))
+		return false;
+
+	if (!check_value(chk, data, EMV_ID_MERCHANT_IDENTIFIER,
+			      MERCHANT_IDENTIFIER, strlen(MERCHANT_IDENTIFIER)))
+		return false;
+#if 0
+	if (!check_value(chk, data, EMV_ID_MERCHANT_NAME_AND_LOCATION,
+		MERCHANT_NAME_AND_LOCATION, strlen(MERCHANT_NAME_AND_LOCATION)))
+		return false;
+#endif
+	if (!check_value(chk, data, EMV_ID_POS_ENTRY_MODE, &pos_entry_mode,
+							sizeof(pos_entry_mode)))
 		return false;
 
 	return true;
 }
 
-static void checker_gpo_data(struct chk *chk, struct tlv *gpo_data)
+static void checker_gpo_data(struct chk *checker, struct tlv *data)
 {
-	struct checker *checker = (struct checker *)chk;
+	struct checker *chk = (struct checker *)checker;
 	uint8_t val[256];
 	size_t val_sz = sizeof(val);
 
-	switch (checker->pass_criteria) {
+	switch (chk->pass_criteria) {
 
 	case pc_2ea_001_00_case01:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x10", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x00", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_001_00_case02:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x75", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x00", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_001_00_case03:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x45", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x00", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_002_00:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x10", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x00", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_002_01:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x01", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x01", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x20", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x00", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_002_02:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x20", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x20", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x30", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x00", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_003_00_case01:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x09", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x09", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x30", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x10", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_003_00_case02:
-		if (!check_value(gpo_data, EMV_ID_TRANSACTION_TYPE, "\x09", 1)
+		if (!check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x09", 1)
 									      ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_AUTHORIZED,
+		    !check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
 					       "\x00\x00\x00\x00\x00\x70", 6) ||
-		    !check_value(gpo_data, EMV_ID_AMOUNT_OTHER,
+		    !check_value(chk, data, EMV_ID_AMOUNT_OTHER,
 						 "\x00\x00\x00\x00\x00\x20", 6))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	case pc_2ea_004_00_case01:
 	case pc_2ea_004_00_case02:
-		if (!get_value(gpo_data, EMV_ID_TEST_FLAGS, val, &val_sz) ||
+		if (!get_value(data, EMV_ID_TEST_FLAGS, val, &val_sz) ||
 		    (val_sz != 2) || (val[1] & 0x80u))
-			checker->pass_criteria_met = false;
-		checker->pass_criteria_checked = true;
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_006_02_case01:
+		if (!check_terminal_data(chk, data))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+
+	case pc_2ea_006_02_case02:
+		if (!check_terminal_data(chk, data))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	default:
@@ -261,15 +326,21 @@ static const struct chk_ops checker_ops = {
 	.free		   = checker_free
 };
 
-struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria)
+struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
+						     const char *log4c_category)
 {
 	struct checker *checker = NULL;
+	char cat[64];
 
 	checker = malloc(sizeof(struct checker));
 	if (!checker)
 		return (struct chk *)checker;
 
 	checker->ops			= &checker_ops;
+
+	snprintf(cat, sizeof(cat), "%s.chk", log4c_category);
+	checker->log_cat = log4c_category_get(cat);
+
 	checker->pass_criteria		= pass_criteria;
 	checker->pass_criteria_checked	= false;
 	checker->pass_criteria_met	= true;

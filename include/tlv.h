@@ -274,6 +274,8 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 			      const void *del, size_t del_sz, struct tlv **tlv);
 
+size_t libtlv_get_tag_length(const void *tag);
+
 /**
  * Convert a BCD encoded value into a 64 bit wide unsigned integer.
  */

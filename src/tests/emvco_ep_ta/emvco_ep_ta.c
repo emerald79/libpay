@@ -136,7 +136,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		goto done;
 	}
 
-	chk = chk_pass_criteria_new(pc);
+	chk = chk_pass_criteria_new(pc, log4c_category);
 	if (!chk) {
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;
@@ -417,6 +417,27 @@ START_TEST(test_2EA_006_01)
 }
 END_TEST
 
+/* 2EA.006.02 Terminal EMV Data available for Kernel for a Purchase
+ * transaction.								      */
+START_TEST(test_2EA_006_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_90, pc_2ea_006_02_case01,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 5;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_98, pc_2ea_006_02_case02,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
 
 Suite *emvco_ep_ta_test_suite(void)
 {
@@ -436,6 +457,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_005_01);
 	tcase_add_test(tc_general_reqs, test_2EA_006_00);
 	tcase_add_test(tc_general_reqs, test_2EA_006_01);
+	tcase_add_test(tc_general_reqs, test_2EA_006_02);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;
