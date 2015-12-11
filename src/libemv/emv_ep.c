@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <time.h>
 #include <log4c.h>
 
 #include <emv.h>
@@ -116,6 +117,7 @@ struct emv_ep {
 	enum emv_ep_state		state;
 	struct emv_hal		       *hal;
 	log4c_category_t	       *log_cat;
+	uint32_t			txn_seq_ctr;
 	struct emv_autorun		autorun;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_reg_kernel_set	reg_kernel_set;
@@ -1307,9 +1309,27 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	return EMV_RC_OK;
 }
 
+static void get_time_and_date(uint8_t txn_time[3], uint8_t txn_date[3])
+{
+	time_t now;
+	struct tm tm_local;
+
+	time(&now);
+	localtime_r(&now, &tm_local);
+
+	libtlv_u64_to_bcd(tm_local.tm_hour, &txn_time[0], 1);
+	libtlv_u64_to_bcd(tm_local.tm_min,  &txn_time[1], 1);
+	libtlv_u64_to_bcd(tm_local.tm_sec,  &txn_time[2], 1);
+
+	libtlv_u64_to_bcd(tm_local.tm_year % 100, &txn_date[0], 1);
+	libtlv_u64_to_bcd(tm_local.tm_mon + 1,	  &txn_date[1], 1);
+	libtlv_u64_to_bcd(tm_local.tm_mday,	  &txn_date[2], 1);
+}
+
 int emv_ep_kernel_activation(struct emv_ep *ep)
 {
-	uint8_t term_data[2048], app_ver_num[2];
+	uint8_t term_data[2048], app_ver_num[2], txn_seq_ctr[4];
+	uint8_t txn_date[3], txn_time[3];
 	struct emv_kernel *kernel = NULL;
 	struct emv_ep_candidate *candidate = NULL;
 	struct tlv *terminal_data = NULL;
@@ -1339,6 +1359,14 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	if (rc != TLV_RC_OK)
 		goto done;
 
+	get_time_and_date(txn_time, txn_date);
+
+	tlv_insert_after(terminal_data,
+		  tlv_new(EMV_ID_TRANSACTION_TIME, sizeof(txn_time), txn_time));
+
+	tlv_insert_after(terminal_data,
+		  tlv_new(EMV_ID_TRANSACTION_DATE, sizeof(txn_date), txn_date));
+
 	if (ep->hal->ops->get_interface_device_serial_number) {
 		char ifd_sn[8];
 
@@ -1349,6 +1377,14 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 								       ifd_sn));
 	}
 
+	rc = libtlv_u64_to_bcd(ep->txn_seq_ctr, txn_seq_ctr,
+							   sizeof(txn_seq_ctr));
+	if (rc != TLV_RC_OK)
+		goto done;
+
+	tlv_insert_after(terminal_data,
+				    tlv_new(EMV_ID_TRANSACTION_SEQUENCE_COUNTER,
+					     sizeof(txn_seq_ctr), txn_seq_ctr));
 	tlv_insert_after(terminal_data,
 				 tlv_new(EMV_ID_APPLICATION_VERSION_NUMBER_TERM,
 					     sizeof(app_ver_num), app_ver_num));
@@ -1401,7 +1437,7 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 }
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
-						      const struct emv_txn *txn)
+				    const struct emv_txn *txn, uint32_t seq_ctr)
 {
 	bool started_at_b = (start == start_b);
 	int rc = EMV_RC_OK;
@@ -1425,6 +1461,7 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 		goto done;
 	}
 
+	ep->txn_seq_ctr		       = seq_ctr;
 	ep->parms.start		       = start;
 	ep->parms.txn		       = txn;
 	ep->parms.unpredictable_number =

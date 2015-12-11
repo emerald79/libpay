@@ -17,6 +17,7 @@
  */
 
 #include <string.h>
+#include <time.h>
 #include <log4c.h>
 
 #include <tlv.h>
@@ -82,9 +83,13 @@ done:
 		libtlv_bin_to_hex(dol_val, val_sz, hex_dol_val);
 		libtlv_bin_to_hex(val, val_sz, hex_val);
 
-		log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+		if (val_sz)
+			log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
 			       "Wrong value: tag '%s', expected '%s', got '%s'",
 						 hex_tag, hex_dol_val, hex_val);
+		else
+			log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+						  "Missing: tag '%s'", hex_tag);
 	}
 
 	return ok;
@@ -143,6 +148,49 @@ static bool check_terminal_data(struct checker *chk, struct tlv *data)
 
 	if (!check_value(chk, data, EMV_ID_INTERFACE_DEVICE_SERIAL_NUMBER,
 					     INTERFACE_DEVICE_SERIAL_NUMBER, 8))
+		return false;
+
+	/* FIXME: TSI (tag '9B') not checked for now.			      */
+
+	return true;
+}
+
+static bool check_txn_date_and_time(struct checker *chk, struct tlv *data)
+{
+	uint8_t txn_time[3], txn_date[3];
+	size_t txn_time_sz = sizeof(txn_time), txn_date_sz = sizeof(txn_date);
+	struct tm tm_txn;
+	time_t time_txn, time_now = time(NULL);
+	uint64_t sec, min, hour, mday, mon, year;
+
+	if (!get_value(data, EMV_ID_TRANSACTION_TIME, txn_time, &txn_time_sz) ||
+	    txn_time_sz != sizeof(txn_time))
+		return false;
+
+	if (!get_value(data, EMV_ID_TRANSACTION_DATE, txn_date, &txn_date_sz) ||
+	    txn_date_sz != sizeof(txn_date))
+		return false;
+
+	libtlv_bcd_to_u64(&txn_time[2], 1, &sec);
+	libtlv_bcd_to_u64(&txn_time[1], 1, &min);
+	libtlv_bcd_to_u64(&txn_time[0], 1, &hour);
+	libtlv_bcd_to_u64(&txn_date[2], 1, &mday);
+	libtlv_bcd_to_u64(&txn_date[1], 1, &mon);
+	libtlv_bcd_to_u64(&txn_date[0], 1, &year);
+
+	memset(&tm_txn, 0, sizeof(tm_txn));
+	tm_txn.tm_sec  = (int)sec;
+	tm_txn.tm_min  = (int)min;
+	tm_txn.tm_hour = (int)hour;
+	tm_txn.tm_mday = (int)mday;
+	tm_txn.tm_mon  = (int)mon - 1;
+	tm_txn.tm_year = (int)year + 100;
+	time_txn = mktime(&tm_txn);
+
+	if (time_now - time_txn > 3)
+		return false;
+
+	if (time_now - time_txn < 0)
 		return false;
 
 	return true;
@@ -254,6 +302,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 
 	case pc_2ea_006_02_case01:
 		if (!check_terminal_data(chk, data)			      ||
+		    !check_txn_date_and_time(chk, data)			      ||
 		    !check_value(chk, data,
 					 EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
 					   "\xA0\x00\x00\x00\x01\x00\x01", 7) ||
@@ -264,10 +313,44 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 
 	case pc_2ea_006_02_case02:
 		if (!check_terminal_data(chk, data)			      ||
+		    !check_txn_date_and_time(chk, data)			      ||
 		    !check_value(chk, data,
 					 EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
 					   "\xA0\x00\x00\x00\x03\x00\x03", 7) ||
 		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_006_03:
+		if (!check_terminal_data(chk, data)			      ||
+		    !check_txn_date_and_time(chk, data)			      ||
+		    !check_value(chk, data,
+					 EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
+					   "\xA0\x00\x00\x00\x03\x00\x03", 7) ||
+		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x09", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_006_04:
+		if (!check_terminal_data(chk, data)			      ||
+		    !check_txn_date_and_time(chk, data)			      ||
+		    !check_value(chk, data,
+					 EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
+					   "\xA0\x00\x00\x00\x01\x00\x01", 7) ||
+		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x01", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_006_05:
+		if (!check_terminal_data(chk, data)			      ||
+		    !check_txn_date_and_time(chk, data)			      ||
+		    !check_value(chk, data,
+					 EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
+					   "\xA0\x00\x00\x00\x03\x00\x03", 7) ||
+		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x20", 1))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
 		break;

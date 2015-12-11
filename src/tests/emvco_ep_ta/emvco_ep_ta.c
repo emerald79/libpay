@@ -28,6 +28,8 @@
 
 #include "emvco_ep_ta.h"
 
+uint32_t transaction_sequence_counter;
+
 static const char log4c_category[] = "emvco_ep_ta";
 static log4c_category_t *log_cat;
 static const struct tlv_id_to_fmt id_fmts[] = {
@@ -198,7 +200,8 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		chk->ops->txn_start(chk);
 
-		rc = emv_ep_activate(ep, start_b, &emv_ep_get_autorun(ep)->txn);
+		rc = emv_ep_activate(ep, start_b, &emv_ep_get_autorun(ep)->txn,
+						++transaction_sequence_counter);
 		if (rc != EMV_RC_OK)
 			goto done;
 	} else {
@@ -231,7 +234,8 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		chk->ops->txn_start(chk);
 
-		rc = emv_ep_activate(ep, start_a, txn);
+		rc = emv_ep_activate(ep, start_a, txn,
+						++transaction_sequence_counter);
 		if (rc != EMV_RC_OK)
 			goto done;
 	}
@@ -439,6 +443,54 @@ START_TEST(test_2EA_006_02)
 }
 END_TEST
 
+/* 2EA.006.03 Terminal EMV Data available for Kernel for a Purchase with
+ * Cashback transaction.						      */
+START_TEST(test_2EA_006_03)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase_with_cashback;
+	txn.amount_authorized = 2;
+	txn.amount_other = 1;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_91, pc_2ea_006_03, &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EA.006.04 Terminal EMV Data available for Kernel for a Cash Advance
+ * transaction.								      */
+START_TEST(test_2EA_006_04)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_cash_advance;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_90, pc_2ea_006_04, &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EA.006.05 Terminal EMV Data available for Kernel for a Refund transaction.*/
+START_TEST(test_2EA_006_05)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_refund;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_91, pc_2ea_006_05, &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -458,6 +510,9 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_006_00);
 	tcase_add_test(tc_general_reqs, test_2EA_006_01);
 	tcase_add_test(tc_general_reqs, test_2EA_006_02);
+	tcase_add_test(tc_general_reqs, test_2EA_006_03);
+	tcase_add_test(tc_general_reqs, test_2EA_006_04);
+	tcase_add_test(tc_general_reqs, test_2EA_006_05);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;
@@ -481,6 +536,7 @@ int main(int argc, char **argv)
 
 	suite = emvco_ep_ta_test_suite();
 	srunner = srunner_create(suite);
+	srunner_set_fork_status(srunner, CK_NOFORK);
 	srunner_run_all(srunner, CK_VERBOSE);
 	failed = srunner_ntests_failed(srunner);
 	srunner_free(srunner);

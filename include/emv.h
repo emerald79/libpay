@@ -284,7 +284,6 @@ struct emv_txn {
 	uint64_t	  amount_authorized;
 	uint64_t	  amount_other;
 	uint8_t		  currency[2];
-	uint32_t	  txn_seq_ctr;
 };
 
 struct emv_autorun {
@@ -351,7 +350,8 @@ const struct emv_autorun *emv_ep_get_autorun(struct emv_ep *ep);
 
 int emv_ep_activate(struct emv_ep	 *ep,
 		    enum emv_start	  start,
-		    const struct emv_txn *txn);
+		    const struct emv_txn *txn,
+		    uint32_t		  seq_ctr);
 
 #define EMV_CMD_SELECT_CLA		0x00u
 #define EMV_CMD_SELECT_INS		0xA4u

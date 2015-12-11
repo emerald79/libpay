@@ -22,6 +22,12 @@
 #include <emv.h>
 
 /*-----------------------------------------------------------------------------+
+| Global Data								       |
++-----------------------------------------------------------------------------*/
+
+extern uint32_t transaction_sequence_counter;
+
+/*-----------------------------------------------------------------------------+
 | Helper Macros                                                                |
 +-----------------------------------------------------------------------------*/
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
@@ -179,7 +185,10 @@ enum pass_criteria {
 	pc_2ea_006_00,
 	pc_2ea_006_01,
 	pc_2ea_006_02_case01,
-	pc_2ea_006_02_case02
+	pc_2ea_006_02_case02,
+	pc_2ea_006_03,
+	pc_2ea_006_04,
+	pc_2ea_006_05
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
