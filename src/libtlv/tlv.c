@@ -705,6 +705,43 @@ error:
 	return NULL;
 }
 
+void libtlv_get_dol_field(const void *tag, const void *in, size_t in_sz,
+						       void *out, size_t out_sz)
+{
+	const uint8_t *i = (const uint8_t *)in;
+	uint8_t *o = (uint8_t *)out;
+
+	assert(tag && in && out);
+
+	if (out_sz == in_sz) {
+		memcpy(o, i, out_sz);
+	} else if (out_sz < in_sz) {
+		switch (libtlv_id_to_fmt(tag)) {
+		case fmt_n:	       /* truncate leftmost bytes if numeric. */
+			memcpy(o, &i[in_sz - out_sz], out_sz);
+			break;
+		default:	       /* truncate rightmost bytes otherwise. */
+			memcpy(o, i, out_sz);
+			break;
+		}
+	} else {
+		switch (libtlv_id_to_fmt(tag)) {
+		case fmt_cn:			/* trailing hexadecimal 'FF's */
+			memcpy(o, i, in_sz);
+			memset(&o[in_sz], 0xff, out_sz - in_sz);
+			break;
+		case fmt_n:			/* leading hexadecimal zeroes */
+			memset(o, 0x00, out_sz - in_sz);
+			memcpy(&o[out_sz - in_sz], i, in_sz);
+			break;
+		default:		       /* trailing hexadecimal zeroes */
+			memcpy(o, i, in_sz);
+			memset(&o[in_sz], 0x00, out_sz - in_sz);
+			break;
+		}
+	}
+}
+
 int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 				       size_t dol_sz, void *del, size_t *del_sz)
 {
@@ -749,56 +786,12 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 		if (!tlv_de || tlv_is_constructed(tlv_de)) {
 			memset(&out_data[out_data_sz], 0, tlv_do.length);
 			out_data_sz += tlv_do.length;
-			continue;
-		}
-
-		if (tlv_do.length == tlv_de->length) {
-			memcpy(&out_data[out_data_sz], tlv_de->value,
+		} else {
+			libtlv_get_dol_field(tlv_do.tag, tlv_de->value,
+					 tlv_de->length, &out_data[out_data_sz],
 								 tlv_do.length);
 			out_data_sz += tlv_do.length;
-			continue;
 		}
-
-		if (tlv_do.length < tlv_de->length) {
-			switch (libtlv_id_to_fmt(tag)) {
-			case fmt_n:
-				memcpy(&out_data[out_data_sz], tlv_de->value +
-						 tlv_de->length - tlv_do.length,
-								 tlv_do.length);
-				break;
-			default:
-				memcpy(&out_data[out_data_sz],
-						  tlv_de->value, tlv_do.length);
-				break;
-			}
-			out_data_sz += tlv_do.length;
-			continue;
-		}
-
-		/* tlv_do.length > tlv_de->length */
-		switch (libtlv_id_to_fmt(tag)) {
-		case fmt_cn:			/* trailing hexadecimal 'FF's */
-			memcpy(&out_data[out_data_sz], tlv_de->value,
-								tlv_de->length);
-			memset(&out_data[out_data_sz + tlv_de->length], 0xff,
-						tlv_do.length - tlv_de->length);
-			break;
-		case fmt_n:			/* leading hexadecimal zeroes */
-			memset(&out_data[out_data_sz], 0x00,
-						tlv_do.length - tlv_de->length);
-			memcpy(&out_data[out_data_sz +
-						tlv_do.length - tlv_de->length],
-						 tlv_de->value, tlv_de->length);
-		default:		       /* trailing hexadecimal zeroes */
-			memcpy(&out_data[out_data_sz], tlv_de->value,
-								tlv_de->length);
-			memset(&out_data[out_data_sz + tlv_de->length], 0x00,
-						tlv_do.length - tlv_de->length);
-
-			break;
-		}
-		out_data_sz += tlv_do.length;
-		continue;
 	}
 
 	*del_sz = out_data_sz;

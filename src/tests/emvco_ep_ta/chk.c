@@ -58,17 +58,16 @@ static bool get_value(struct tlv *tlv, const char *tag, void *value,
 static bool check_value(struct checker *chk, struct tlv *tlv, const char *tag,
 						 const void *value, size_t size)
 {
-	uint8_t val[256];
+	uint8_t val[256], dol_val[256];
 	size_t val_sz = sizeof(val);
 	bool ok = false;
 
 	if (!get_value(tlv, tag, val, &val_sz))
 		goto done;
 
-	if (size != val_sz)
-		goto done;
+	libtlv_get_dol_field(tag, value, size, dol_val, val_sz);
 
-	if (memcmp(value, val, size))
+	if (memcmp(dol_val, val, val_sz))
 		goto done;
 
 	ok = true;
@@ -76,16 +75,16 @@ static bool check_value(struct checker *chk, struct tlv *tlv, const char *tag,
 done:
 	if (!ok) {
 		char hex_tag[TLV_MAX_TAG_LENGTH * 2 + 1];
-		char hex_value[size * 2 + 1];
+		char hex_dol_val[val_sz * 2 + 1];
 		char hex_val[val_sz * 2 + 1];
 
 		libtlv_bin_to_hex(tag, libtlv_get_tag_length(tag), hex_tag);
-		libtlv_bin_to_hex(value, size, hex_value);
+		libtlv_bin_to_hex(dol_val, val_sz, hex_dol_val);
 		libtlv_bin_to_hex(val, val_sz, hex_val);
 
 		log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
 			       "Wrong value: tag '%s', expected '%s', got '%s'",
-						   hex_tag, hex_value, hex_val);
+						 hex_tag, hex_dol_val, hex_val);
 	}
 
 	return ok;
@@ -94,6 +93,7 @@ done:
 static bool check_terminal_data(struct checker *chk, struct tlv *data)
 {
 	uint8_t pos_entry_mode = POS_ENTRY_MODE;
+	uint8_t terminal_type = TERMINAL_TYPE;
 
 	if (!check_value(chk, data, EMV_ID_ACQUIRER_IDENTIFIER,
 			      ACQUIRER_IDENTIFIER, sizeof(ACQUIRER_IDENTIFIER)))
@@ -111,13 +111,29 @@ static bool check_terminal_data(struct checker *chk, struct tlv *data)
 	if (!check_value(chk, data, EMV_ID_MERCHANT_IDENTIFIER,
 			      MERCHANT_IDENTIFIER, strlen(MERCHANT_IDENTIFIER)))
 		return false;
-#if 0
+
 	if (!check_value(chk, data, EMV_ID_MERCHANT_NAME_AND_LOCATION,
 		MERCHANT_NAME_AND_LOCATION, strlen(MERCHANT_NAME_AND_LOCATION)))
 		return false;
-#endif
+
 	if (!check_value(chk, data, EMV_ID_POS_ENTRY_MODE, &pos_entry_mode,
 							sizeof(pos_entry_mode)))
+		return false;
+
+	if (!check_value(chk, data, EMV_ID_TERMINAL_CAPABILITIES,
+			 TERMINAL_CAPABILITIES,  sizeof(TERMINAL_CAPABILITIES)))
+		return false;
+
+	if (!check_value(chk, data, EMV_ID_TERMINAL_COUNTRY_CODE,
+			 TERMINAL_COUNTRY_CODE,  sizeof(TERMINAL_COUNTRY_CODE)))
+		return false;
+
+	if (!check_value(chk, data, EMV_ID_TERMINAL_IDENTIFICATION,
+		     TERMINAL_IDENTIFICATION,  sizeof(TERMINAL_IDENTIFICATION)))
+		return false;
+
+	if (!check_value(chk, data, EMV_ID_TERMINAL_TYPE, &terminal_type,
+							 sizeof(terminal_type)))
 		return false;
 
 	return true;
@@ -228,12 +244,14 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		break;
 
 	case pc_2ea_006_02_case01:
-		if (!check_terminal_data(chk, data))
+		if (!check_terminal_data(chk, data)			      ||
+		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
 
 	case pc_2ea_006_02_case02:
-		if (!check_terminal_data(chk, data))
+		if (!check_terminal_data(chk, data)			      ||
+		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
 		break;

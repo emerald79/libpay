@@ -17,6 +17,7 @@ tlv_insert_after
 tlv_insert_below
 tlv_and_dol_to_del
 dol_and_del_to_tlv
+libtlv_get_dol_field
 libtlv_get_tag_length
 libtlv_bcd_to_u64
 libtlv_u64_to_bcd

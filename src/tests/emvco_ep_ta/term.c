@@ -736,6 +736,7 @@ struct emv_ep_terminal_data {
 	char	    terminal_identification[8];
 	uint8_t	    terminal_type;
 	uint8_t	    pos_entry_mode;
+	uint8_t	    terminal_capabilities[3];
 	uint8_t	    additional_terminal_capabilities[5];
 	const char *merchant_name_and_location;
 };
@@ -755,6 +756,7 @@ struct emv_ep_terminal_data terminal_data = {
 	.terminal_identification	  = TERMINAL_IDENTIFICATION,
 	.terminal_type			  = TERMINAL_TYPE,
 	.pos_entry_mode			  = POS_ENTRY_MODE,
+	.terminal_capabilities		  = TERMINAL_CAPABILITIES,
 	.additional_terminal_capabilities = ADDITIONAL_TERMINAL_CAPABILITIES,
 	.merchant_name_and_location	  = MERCHANT_NAME_AND_LOCATION
 };
@@ -998,6 +1000,9 @@ static struct tlv *get_terminal_data(struct emv_ep_terminal_data *data)
 				tlv_new(EMV_ID_ADDITIONAL_TERMINAL_CAPABILITIES,
 				 sizeof(data->additional_terminal_capabilities),
 				       data->additional_terminal_capabilities));
+	tail = tlv_insert_after(tail, tlv_new(EMV_ID_TERMINAL_CAPABILITIES,
+					    sizeof(data->terminal_capabilities),
+						  data->terminal_capabilities));
 	tail = tlv_insert_after(tail, tlv_new(EMV_ID_MERCHANT_NAME_AND_LOCATION,
 				       strlen(data->merchant_name_and_location),
 					     data->merchant_name_and_location));
