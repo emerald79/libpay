@@ -201,6 +201,7 @@ struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 #define ADDITIONAL_TERMINAL_CAPABILITIES ((const uint8_t [])		       \
 					       { 0x02, 0x00, 0x00, 0x00, 0x00 })
 #define MERCHANT_NAME_AND_LOCATION	"Lufthansa - Rhein-Main Airport"
+#define INTERFACE_DEVICE_SERIAL_NUMBER  "0000FE16"
 
 enum termsetting {
 	termsetting2 = 0,
@@ -250,6 +251,8 @@ void lt_free(struct emv_hal *lt);
 #define KERNEL_ID_24  .kernel_id = { 0x24 }, .kernel_id_len = 1
 #define KERNEL_ID_25  .kernel_id = { 0x25 }, .kernel_id_len = 1
 #define KERNEL_ID_2B  .kernel_id = { 0x26 }, .kernel_id_len = 1
+
+#define TK_APPLICATION_VERSION_NUMBER { 0x02, 0x03 }
 
 struct tk_id {
 	uint8_t kernel_id[8];

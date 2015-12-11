@@ -93,6 +93,7 @@ struct emv_ep_candidate_list {
 struct emv_ep_reg_kernel {
 	uint8_t		   kernel_id[8];
 	size_t		   kernel_id_len;
+	uint8_t		   app_ver_num[2];
 	struct emv_kernel *kernel;
 };
 
@@ -143,6 +144,7 @@ int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
 
 	set->kernel[i_kernel].kernel = kernel;
 	set->kernel[i_kernel].kernel_id_len = kernel_id_len;
+	memcpy(set->kernel[i_kernel].app_ver_num, app_ver_num, 2);
 	memcpy(set->kernel[i_kernel].kernel_id, kernel_id, kernel_id_len);
 
 done:
@@ -167,7 +169,7 @@ done:
 };
 
 static struct emv_kernel *get_kernel(struct emv_ep *ep,
-					   const uint8_t *kernel_id, size_t len)
+		   const uint8_t *kernel_id, size_t len, uint8_t app_ver_num[2])
 {
 	struct emv_kernel *kernel = NULL;
 	size_t i_krn;
@@ -183,6 +185,9 @@ static struct emv_kernel *get_kernel(struct emv_ep *ep,
 	}
 
 	if (kernel) {
+		memcpy(app_ver_num,
+			       ep->reg_kernel_set.kernel[i_krn].app_ver_num, 2);
+
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 						  "%s('%s'): success", __func__,
 					libtlv_bin_to_hex(kernel_id, len, hex));
@@ -1304,8 +1309,10 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 
 int emv_ep_kernel_activation(struct emv_ep *ep)
 {
+	uint8_t term_data[2048], app_ver_num[2];
 	struct emv_kernel *kernel = NULL;
 	struct emv_ep_candidate *candidate = NULL;
+	struct tlv *terminal_data = NULL;
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
@@ -1316,18 +1323,46 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	memcpy(ep->parms.kernel_id, candidate->combination->kernel_id,
 						       ep->parms.kernel_id_len);
 	ep->parms.preproc_indicators = &candidate->combination->indicators;
-	ep->parms.terminal_data	= ep->terminal_data;
-	ep->parms.terminal_data_len = ep->terminal_data_len;
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.1");
 	/* Entry Point shall activate the kernel identified in the selected
 	 * Combination.							      */
-	kernel = get_kernel(ep, ep->parms.kernel_id, ep->parms.kernel_id_len);
+	kernel = get_kernel(ep, ep->parms.kernel_id, ep->parms.kernel_id_len,
+								   app_ver_num);
 	if (!kernel) {
 		rc = EMV_RC_NO_KERNEL;
 		goto done;
 	}
 
+	rc = tlv_parse(ep->terminal_data, ep->terminal_data_len,
+								&terminal_data);
+	if (rc != TLV_RC_OK)
+		goto done;
+
+	if (ep->hal->ops->get_interface_device_serial_number) {
+		char ifd_sn[8];
+
+		ep->hal->ops->get_interface_device_serial_number(ep->hal,
+									ifd_sn);
+		tlv_insert_after(terminal_data, tlv_new(
+			  EMV_ID_INTERFACE_DEVICE_SERIAL_NUMBER, sizeof(ifd_sn),
+								       ifd_sn));
+	}
+
+	tlv_insert_after(terminal_data,
+				 tlv_new(EMV_ID_APPLICATION_VERSION_NUMBER_TERM,
+					     sizeof(app_ver_num), app_ver_num));
+	tlv_insert_after(terminal_data,
+				 tlv_new(EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
+						candidate->combination->aid_len,
+						  candidate->combination->aid));
+
+	ep->parms.terminal_data_len = sizeof(term_data);
+	ep->parms.terminal_data = term_data;
+
+	rc = tlv_encode(terminal_data, term_data, &ep->parms.terminal_data_len);
+	if (rc != TLV_RC_OK)
+		goto done;
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.2");
 	/* Entry Point shall make the Entry Point Pre-Processing Indicators (as

@@ -94,6 +94,7 @@ static bool check_terminal_data(struct checker *chk, struct tlv *data)
 {
 	uint8_t pos_entry_mode = POS_ENTRY_MODE;
 	uint8_t terminal_type = TERMINAL_TYPE;
+	uint8_t app_ver_num[2] = TK_APPLICATION_VERSION_NUMBER;
 
 	if (!check_value(chk, data, EMV_ID_ACQUIRER_IDENTIFIER,
 			      ACQUIRER_IDENTIFIER, sizeof(ACQUIRER_IDENTIFIER)))
@@ -134,6 +135,14 @@ static bool check_terminal_data(struct checker *chk, struct tlv *data)
 
 	if (!check_value(chk, data, EMV_ID_TERMINAL_TYPE, &terminal_type,
 							 sizeof(terminal_type)))
+		return false;
+
+	if (!check_value(chk, data, EMV_ID_APPLICATION_VERSION_NUMBER_TERM,
+					      app_ver_num, sizeof(app_ver_num)))
+		return false;
+
+	if (!check_value(chk, data, EMV_ID_INTERFACE_DEVICE_SERIAL_NUMBER,
+					     INTERFACE_DEVICE_SERIAL_NUMBER, 8))
 		return false;
 
 	return true;
@@ -245,12 +254,19 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 
 	case pc_2ea_006_02_case01:
 		if (!check_terminal_data(chk, data)			      ||
+		    !check_value(chk, data,
+					 EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
+					   "\xA0\x00\x00\x00\x01\x00\x01", 7) ||
 		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
+		break;
 
 	case pc_2ea_006_02_case02:
 		if (!check_terminal_data(chk, data)			      ||
+		    !check_value(chk, data,
+					 EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
+					   "\xA0\x00\x00\x00\x03\x00\x03", 7) ||
 		    !check_value(chk, data, EMV_ID_TRANSACTION_TYPE, "\x00", 1))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;

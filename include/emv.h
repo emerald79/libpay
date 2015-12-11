@@ -69,6 +69,7 @@
 #define EMV_ID_AMOUNT_AUTHORIZED		"\x9F\x02"
 #define EMV_ID_AMOUNT_OTHER			"\x9F\x03"
 #define EMV_ID_APPLICATION_IDENTIFIER_TERMINAL	"\x9F\x06"
+#define EMV_ID_APPLICATION_VERSION_NUMBER_TERM	"\x9F\x09"
 #define EMV_ID_MERCHANT_CATEGORY_CODE		"\x9F\x15"
 #define EMV_ID_MERCHANT_IDENTIFIER		"\x9F\x16"
 #define EMV_ID_TERMINAL_COUNTRY_CODE		"\x9F\x1A"
@@ -247,7 +248,7 @@ struct emv_hal;
 struct emv_hal_ops {
 	uint32_t (*get_unpredictable_number)(struct emv_hal *hal);
 
-	int	(*get_interface_device_serial_number)(struct emv_hal *hal,
+	void	(*get_interface_device_serial_number)(struct emv_hal *hal,
 						      char serial_number[8]);
 
 	int	(*field_on)(struct emv_hal *hal);

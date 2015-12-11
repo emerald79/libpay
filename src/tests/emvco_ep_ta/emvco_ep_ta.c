@@ -100,7 +100,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 						      const struct emv_txn *txn)
 {
 	uint8_t cfg[4096];
-	uint8_t app_ver_num[2] = { 0x00, 0x01 };
+	uint8_t app_ver_num[2] = TK_APPLICATION_VERSION_NUMBER;
 	size_t cfg_sz = sizeof(cfg);
 	struct emv_ep *ep = NULL;
 	struct emv_hal *lt = NULL;

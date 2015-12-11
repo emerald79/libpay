@@ -699,7 +699,14 @@ void lt_ui_request(struct emv_hal *hal, const struct emv_ui_request *ui_request)
 		lt->checker->ops->ui_request(lt->checker, ui_request);
 }
 
+void lt_get_interface_device_serial_number(struct emv_hal *hal, char sn[8])
+{
+	memcpy(sn, INTERFACE_DEVICE_SERIAL_NUMBER, 8);
+}
+
 const struct emv_hal_ops lt_ops  = {
+	.get_interface_device_serial_number =
+				    lt_get_interface_device_serial_number,
 	.get_unpredictable_number = lt_get_unpredictable_number,
 	.field_on		  = lt_field_on,
 	.field_off		  = lt_field_off,
