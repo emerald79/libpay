@@ -40,6 +40,7 @@ static const struct tlv_id_to_fmt id_fmts[] = {
 void gpo_outcome_to_outcome(const struct outcome_gpo_resp *in,
 						  struct emv_outcome_parms *out)
 {
+	memset(out, 0, sizeof(*out));
 	out->outcome		      = (enum emv_outcome)in->outcome;
 	out->start		      = (enum emv_start)in->start;
 	out->cvm		      = (enum emv_cvm)in->cvm;
@@ -61,6 +62,7 @@ void gpo_outcome_to_outcome(const struct outcome_gpo_resp *in,
 void outcome_to_gpo_outcome(const struct emv_outcome_parms *in,
 						   struct outcome_gpo_resp *out)
 {
+	memset(out, 0, sizeof(*out));
 	out->outcome		= (uint8_t)in->outcome;
 	out->start		= (uint8_t)in->start;
 	out->online_resp	= (uint8_t)in->online_response.type;
@@ -76,6 +78,7 @@ void outcome_to_gpo_outcome(const struct emv_outcome_parms *in,
 void gpo_ui_req_to_ui_req(const struct ui_req_gpo_resp *in,
 						     struct emv_ui_request *out)
 {
+	memset(out, 0, sizeof(*out));
 	out->msg_id	     = (enum emv_message_identifier)in->msg_id;
 	out->status	     = (uint8_t)out->status;
 	out->value_qualifier = (enum emv_value_qualifier)in->value_qual;
@@ -88,6 +91,7 @@ void gpo_ui_req_to_ui_req(const struct ui_req_gpo_resp *in,
 void ui_req_to_gpo_ui_req(const struct emv_ui_request *in,
 						    struct ui_req_gpo_resp *out)
 {
+	memset(out, 0, sizeof(*out));
 	out->status     = (uint8_t)in->status;
 	out->hold_time  = htons(in->hold_time);
 	out->value_qual = (uint8_t)in->value_qualifier;
@@ -97,17 +101,36 @@ void ui_req_to_gpo_ui_req(const struct emv_ui_request *in,
 						     sizeof(in->currency_code));
 }
 
-static int emvco_ep_ta_tc(enum termsetting termsetting,
-				enum ltsetting ltsetting, enum pass_criteria pc,
-						      const struct emv_txn *txn)
+struct emvco_ep_ta_tc_fixture {
+	struct emv_ep	  *ep;
+	struct emv_hal	  *lt;
+	struct emv_kernel *tk[13];
+};
+
+static void emvco_ep_ta_tc_fixture_teardown(
+					 struct emvco_ep_ta_tc_fixture *fixture)
+{
+	size_t i_tk = 0;
+
+	for (i_tk = 0; i_tk < ARRAY_SIZE(fixture->tk); i_tk++)
+		if (fixture->tk[i_tk])
+			tk_free(fixture->tk[i_tk]);
+
+	if (fixture->lt)
+		lt_free(fixture->lt);
+
+	if (fixture->ep)
+		emv_ep_free(fixture->ep);
+
+	memset(fixture, 0, sizeof(*fixture));
+}
+
+static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
+	struct chk *chk, enum termsetting termsetting, enum ltsetting ltsetting)
 {
 	uint8_t cfg[4096];
-	uint8_t app_ver_num[2] = TK_APPLICATION_VERSION_NUMBER;
 	size_t cfg_sz = sizeof(cfg);
-	struct emv_ep *ep = NULL;
-	struct emv_hal *lt = NULL;
-	struct emv_kernel *tk[13];
-	struct chk *chk = NULL;
+	uint8_t app_ver_num[2] = TK_APPLICATION_VERSION_NUMBER;
 	struct tk_id tk_id[13] = {
 		{ KERNEL_ID_TK1 },
 		{ KERNEL_ID_TK2 },
@@ -126,17 +149,62 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 	size_t i_tk = 0;
 	int rc = EMV_RC_OK;
 
-	memset(tk, 0, sizeof(tk));
+	memset(fixture, 0, sizeof(*fixture));
 
 	rc = term_get_setting(termsetting, cfg, &cfg_sz);
 	if (rc != EMV_RC_OK)
 		goto done;
 
-	ep = emv_ep_new(log4c_category);
-	if (!ep) {
+	fixture->ep = emv_ep_new(log4c_category);
+	if (!fixture->ep) {
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;
 	}
+
+	fixture->lt = lt_new(ltsetting, chk, log4c_category);
+	if (!fixture->lt) {
+		rc = EMV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	rc = emv_ep_register_hal(fixture->ep, fixture->lt);
+	if (rc != EMV_RC_OK)
+		goto done;
+
+	for (i_tk = 0; i_tk < ARRAY_SIZE(fixture->tk); i_tk++) {
+
+		fixture->tk[i_tk] = tk_new(log4c_category);
+
+		if (!fixture->tk[i_tk]) {
+			rc = EMV_RC_OUT_OF_MEMORY;
+			goto done;
+		}
+
+		rc = emv_ep_register_kernel(fixture->ep, fixture->tk[i_tk],
+			       tk_id[i_tk].kernel_id, tk_id[i_tk].kernel_id_len,
+								   app_ver_num);
+		if (rc != EMV_RC_OK)
+			goto done;
+	}
+
+	rc = emv_ep_configure(fixture->ep, cfg, cfg_sz);
+	if (rc != EMV_RC_OK)
+		goto done;
+
+done:
+	if (rc != EMV_RC_OK)
+		emvco_ep_ta_tc_fixture_teardown(fixture);
+
+	return rc;
+}
+
+static int emvco_ep_ta_tc(enum termsetting termsetting,
+				enum ltsetting ltsetting, enum pass_criteria pc,
+						      const struct emv_txn *txn)
+{
+	struct emvco_ep_ta_tc_fixture fixture;
+	struct chk *chk = NULL;
+	int rc = EMV_RC_OK;
 
 	chk = chk_pass_criteria_new(pc, log4c_category);
 	if (!chk) {
@@ -144,36 +212,12 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		goto done;
 	}
 
-	lt = lt_new(ltsetting, chk, log4c_category);
-	if (!lt) {
-		rc = EMV_RC_OUT_OF_MEMORY;
-		goto done;
-	}
-
-	rc = emv_ep_register_hal(ep, lt);
+	rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk, termsetting,
+								     ltsetting);
 	if (rc != EMV_RC_OK)
 		goto done;
 
-	for (i_tk = 0; i_tk < ARRAY_SIZE(tk); i_tk++) {
-
-		tk[i_tk] = tk_new(log4c_category);
-
-		if (!tk[i_tk]) {
-			rc = EMV_RC_OUT_OF_MEMORY;
-			goto done;
-		}
-
-		rc = emv_ep_register_kernel(ep, tk[i_tk], tk_id[i_tk].kernel_id,
-					tk_id[i_tk].kernel_id_len, app_ver_num);
-		if (rc != EMV_RC_OK)
-			goto done;
-	}
-
-	rc = emv_ep_configure(ep, cfg, cfg_sz);
-	if (rc != EMV_RC_OK)
-		goto done;
-
-	if (emv_ep_get_autorun(ep)->enabled) {
+	if (emv_ep_get_autorun(fixture.ep)->enabled) {
 		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.6"); */
 		/* If the value of the POS System configuration parameter
 		 * Autorun is 'Yes', then the reader shall do all of the
@@ -190,17 +234,18 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 			.status = sts_ready_to_read
 		};
 
-		rc = emv_ep_field_on(ep);
+		rc = emv_ep_field_on(fixture.ep);
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		rc = emv_ep_ui_request(ep, &present_card);
+		rc = emv_ep_ui_request(fixture.ep, &present_card);
 		if (rc != EMV_RC_OK)
 			goto done;
 
 		chk->ops->txn_start(chk);
 
-		rc = emv_ep_activate(ep, start_b, &emv_ep_get_autorun(ep)->txn,
+		rc = emv_ep_activate(fixture.ep, start_b,
+					   &emv_ep_get_autorun(fixture.ep)->txn,
 						++transaction_sequence_counter);
 		if (rc != EMV_RC_OK)
 			goto done;
@@ -224,17 +269,17 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 			.status = sts_idle
 		};
 
-		rc = emv_ep_field_off(ep);
+		rc = emv_ep_field_off(fixture.ep);
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		rc = emv_ep_ui_request(ep, &welcome);
+		rc = emv_ep_ui_request(fixture.ep, &welcome);
 		if (rc != EMV_RC_OK)
 			goto done;
 
 		chk->ops->txn_start(chk);
 
-		rc = emv_ep_activate(ep, start_a, txn,
+		rc = emv_ep_activate(fixture.ep, start_a, txn,
 						++transaction_sequence_counter);
 		if (rc != EMV_RC_OK)
 			goto done;
@@ -244,12 +289,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		rc = EMV_RC_FAIL;
 
 done:
-	for (i_tk = 0; i_tk < ARRAY_SIZE(tk); i_tk++)
-		tk_free(tk[i_tk]);
-
-	lt_free(lt);
-
-	emv_ep_free(ep);
+	emvco_ep_ta_tc_fixture_teardown(&fixture);
 
 	if (chk && chk->ops && chk->ops->free)
 		chk->ops->free(chk);
@@ -491,6 +531,53 @@ START_TEST(test_2EA_006_05)
 }
 END_TEST
 
+/* 2EA.007.00 Unpredictable Number different at each transaction.	      */
+START_TEST(test_2EA_007_00)
+{
+	enum ltsetting ltset[3] = { ltsetting1_1, ltsetting1_2, ltsetting2_40 };
+	struct emvco_ep_ta_tc_fixture fixture;
+	struct chk *chk = NULL;
+	struct emv_txn txn;
+	int rc, i;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	chk = chk_pass_criteria_new(pc_2ea_007_00, log4c_category);
+	ck_assert(chk != NULL);
+
+	for (i = 0; i < 500; i++) {
+		rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk,
+						    termsetting2, ltset[i % 3]);
+		ck_assert(rc == EMV_RC_OK);
+
+		rc = emv_ep_activate(fixture.ep, start_a, &txn,
+						++transaction_sequence_counter);
+		ck_assert(rc == EMV_RC_OK);
+
+		emvco_ep_ta_tc_fixture_teardown(&fixture);
+	}
+
+	for (i = 0; i < 500; i++) {
+		rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk,
+						    termsetting3, ltset[i % 3]);
+		ck_assert(rc == EMV_RC_OK);
+
+		rc = emv_ep_activate(fixture.ep, start_a, &txn,
+						++transaction_sequence_counter);
+		ck_assert(rc == EMV_RC_OK);
+
+		emvco_ep_ta_tc_fixture_teardown(&fixture);
+	}
+
+	ck_assert(chk->ops->pass_criteria_met(chk));
+
+	if (chk && chk->ops && chk->ops->free)
+		chk->ops->free(chk);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -513,6 +600,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_006_03);
 	tcase_add_test(tc_general_reqs, test_2EA_006_04);
 	tcase_add_test(tc_general_reqs, test_2EA_006_05);
+	tcase_add_test(tc_general_reqs, test_2EA_007_00);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;
@@ -540,6 +628,8 @@ int main(int argc, char **argv)
 	srunner_run_all(srunner, CK_VERBOSE);
 	failed = srunner_ntests_failed(srunner);
 	srunner_free(srunner);
+
+	libtlv_free_fmts();
 	log4c_fini();
 
 	return failed ? EXIT_FAILURE : EXIT_SUCCESS;

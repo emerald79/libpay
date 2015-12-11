@@ -23,4 +23,5 @@ libtlv_bcd_to_u64
 libtlv_u64_to_bcd
 libtlv_bin_to_hex
 libtlv_register_fmts
+libtlv_free_fmts
 libtlv_id_to_fmt

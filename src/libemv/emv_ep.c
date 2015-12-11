@@ -1343,6 +1343,8 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	memcpy(ep->parms.kernel_id, candidate->combination->kernel_id,
 						       ep->parms.kernel_id_len);
 	ep->parms.preproc_indicators = &candidate->combination->indicators;
+	ep->parms.unpredictable_number =
+				ep->hal->ops->get_unpredictable_number(ep->hal);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.1");
 	/* Entry Point shall activate the kernel identified in the selected
@@ -1399,6 +1401,8 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	rc = tlv_encode(terminal_data, term_data, &ep->parms.terminal_data_len);
 	if (rc != TLV_RC_OK)
 		goto done;
+
+	tlv_free(terminal_data);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.2");
 	/* Entry Point shall make the Entry Point Pre-Processing Indicators (as
@@ -1464,8 +1468,6 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 	ep->txn_seq_ctr		       = seq_ctr;
 	ep->parms.start		       = start;
 	ep->parms.txn		       = txn;
-	ep->parms.unpredictable_number =
-				ep->hal->ops->get_unpredictable_number(ep->hal);
 
 	do {
 		switch (ep->state) {
@@ -1519,6 +1521,7 @@ static int parse_combination(struct tlv *tlv_combination,
 	int rc = EMV_RC_OK;
 	struct tlv *tlv_attr = NULL;
 
+	memset(comb, 0, sizeof(struct emv_ep_combination));
 	memcpy(&comb->config, cfg, sizeof(struct emv_ep_config));
 
 	for (tlv_attr = tlv_get_child(tlv_combination);
@@ -1594,6 +1597,8 @@ static int parse_emv_ep_config(struct tlv *tlv_set, struct emv_ep_config *cfg)
 {
 	struct tlv *tlv = NULL;
 	int rc = EMV_RC_OK;
+
+	memset(cfg, 0, sizeof(*cfg));
 
 	for (tlv = tlv_get_child(tlv_set); tlv; tlv = tlv_get_next(tlv)) {
 		uint8_t tag[4];
@@ -1824,6 +1829,8 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 		ep->terminal_data_len = 0;
 	}
 
+	tlv_free(tlv_config);
+
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): success",
 								      __func__);
 	return EMV_RC_OK;
@@ -1859,5 +1866,16 @@ struct emv_ep *emv_ep_new(const char *log_cat)
 
 void emv_ep_free(struct emv_ep *ep)
 {
+	int i;
+
+	if (ep->reg_kernel_set.kernel)
+		free(ep->reg_kernel_set.kernel);
+
+	if (ep->candidate_list.candidates)
+		free(ep->candidate_list.candidates);
+
+	for (i = 0; i < num_txn_types; i++)
+		if (ep->combination_set[i].combinations)
+			free(ep->combination_set[i].combinations);
 	free(ep);
 }

@@ -1025,6 +1025,12 @@ done:
 	return rc;
 }
 
+void libtlv_free_fmts(void)
+{
+	free(known_formats);
+	known_formats = NULL;
+}
+
 enum tlv_fmt libtlv_id_to_fmt(const void *id)
 {
 	const struct tlv_id_to_fmt *fmt = NULL;

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <arpa/inet.h>
 #include <log4c.h>
 #include <assert.h>
@@ -57,7 +58,8 @@ struct lt_setting {
 	size_t		  ppse_entries_num;
 	struct aid_fci	  aid_fci[8];
 	size_t		  aid_fci_num;
-	struct gpo_resp	  gpo_resp;
+	struct gpo_resp	  gpo_resp[8];
+	size_t		  gpo_resp_num;
 };
 
 static const struct lt_setting ltsetting[] = {
@@ -87,17 +89,21 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.present = {
-					.ui_request_on_outcome = true
-				},
-				.outcome = out_approved,
-				.ui_request_on_outcome = {
-					.msg_id = msg_approved,
-					.status = sts_card_read_successfully
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						      sts_card_read_successfully
+					}
 				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting1.2 */
 	{
@@ -125,17 +131,21 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.present = {
-					.ui_request_on_outcome = true
-				},
-				.outcome = out_approved,
-				.ui_request_on_outcome = {
-					.msg_id = msg_approved,
-					.status = sts_card_read_successfully
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						      sts_card_read_successfully
+					}
 				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting1.3 */
 	{
@@ -163,17 +173,21 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.present = {
-					.ui_request_on_outcome = true
-				},
-				.outcome = out_approved,
-				.ui_request_on_outcome = {
-					.msg_id = msg_approved,
-					.status = sts_card_read_successfully
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						      sts_card_read_successfully
+					}
 				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting1.4 */
 	{
@@ -201,17 +215,21 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.present = {
-					.ui_request_on_outcome = true
-				},
-				.outcome = out_approved,
-				.ui_request_on_outcome = {
-					.msg_id = msg_approved,
-					.status = sts_card_read_successfully
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						      sts_card_read_successfully
+					}
 				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting1.90 */
 	{
@@ -239,10 +257,13 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.outcome = out_approved
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting1.91 */
 	{
@@ -270,10 +291,13 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.outcome = out_approved
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting1.97 */
 	{
@@ -301,17 +325,21 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.present = {
-					.ui_request_on_outcome = true
-				},
-				.outcome = out_approved,
-				.ui_request_on_outcome = {
-					.msg_id = msg_approved,
-					.status = sts_card_read_successfully
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						      sts_card_read_successfully
+					}
 				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting1.98 */
 	{
@@ -339,8 +367,90 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
-			.outcome_parms = {
-				.outcome = out_approved
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting2.40 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 1,
+			},
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 2,
+			},
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP3,
+				KERNEL_ID_22,
+				.app_prio = 3,
+			}
+		},
+		.ppse_entries_num = 3,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_4,
+				.app_prio = 1
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_4,
+				.app_prio = 2
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_4,
+				.app_prio = 3
+			}
+		},
+		.aid_fci_num = 3,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_select_next,
+					.start	 = start_c
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_select_next,
+					.start	 = start_c
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
 			}
 		}
 	}
@@ -464,14 +574,14 @@ static int ber_get_aid_fci(const struct aid_fci *aid_fci, void *ber,
 struct lt {
 	const struct emv_hal_ops *ops;
 	const struct lt_setting	 *setting;
-	const struct aid_fci	 *selected_aid;
+	int			  selected_aid;
 	struct chk		 *checker;
 	log4c_category_t	 *log_cat;
 };
 
 uint32_t lt_get_unpredictable_number(struct emv_hal *hal)
 {
-	return 0x12345678u;
+	return (uint32_t)random();
 }
 
 int lt_field_on(struct emv_hal *hal)
@@ -533,7 +643,7 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 			if (rc != EMV_RC_OK)
 				goto done;
 
-			lt->selected_aid = &lt->setting->aid_fci[i_aid];
+			lt->selected_aid = i_aid;
 
 			memcpy(sw, EMV_SW_9000_OK, 2);
 			goto done;
@@ -558,15 +668,18 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 						"%s(PDOL data: '%s')", __func__,
 					      libtlv_bin_to_hex(data, lc, hex));
 
-	rc = ber_get_gpo_resp(&lt->setting->gpo_resp, resp, le);
+	rc = ber_get_gpo_resp(&lt->setting->gpo_resp[lt->selected_aid],
+								      resp, le);
 	if (rc != EMV_RC_OK)
 		goto done;
 
 	if (lt->checker && lt->checker->ops->gpo_data) {
 		struct tlv *tlv = NULL;
 
-		rc = dol_and_del_to_tlv(lt->selected_aid->pdol,
-				    lt->selected_aid->pdol_len, data, lc, &tlv);
+		rc = dol_and_del_to_tlv(
+				    lt->setting->aid_fci[lt->selected_aid].pdol,
+				lt->setting->aid_fci[lt->selected_aid].pdol_len,
+								data, lc, &tlv);
 		if (rc == EMV_RC_OK) {
 			uint8_t ber_tlv[2048];
 			size_t ber_tlv_len = sizeof(ber_tlv);

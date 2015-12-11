@@ -318,6 +318,7 @@ struct tlv_id_to_fmt {
 };
 
 int libtlv_register_fmts(const struct tlv_id_to_fmt *fmts);
+void libtlv_free_fmts(void);
 
 enum tlv_fmt libtlv_id_to_fmt(const void *id);
 
