@@ -474,7 +474,17 @@ static void checker_ui_request(struct chk *chk,
 {
 	struct checker *checker = (struct checker *)chk;
 
-	memcpy(&checker->ui_request, ui_request, sizeof(*ui_request));
+	switch (checker->pass_criteria) {
+	case pc_2ea_011_00_case01:
+		if (ui_request->msg_id == msg_approved) {
+			checker->pass_criteria_checked = true;
+			if (ui_request->hold_time != 100)
+				checker->pass_criteria_met = false;
+		}
+		break;
+	default:
+		memcpy(&checker->ui_request, ui_request, sizeof(*ui_request));
+	}
 }
 
 static bool checker_pass_criteria_met(struct chk *chk)

@@ -40,8 +40,94 @@ struct emv_ep_aid_kernel {
 
 struct emv_ep_combination {
 	enum emv_txn_type txn_types[4];
-	struct emv_ep_aid_kernel combinations[5];
+	struct emv_ep_aid_kernel combinations[54];
 	struct emv_ep_config config;
+};
+
+struct emv_ep_combination termset1[] = {
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000031010, KERNEL_ID_TK1	},
+			{ AID_A0000000041010, KERNEL_ID_TK1	},
+			{ AID_A0000000651010, KERNEL_ID_TK1	},
+			{ AID_A0000000251010, KERNEL_ID_TK1	},
+			{ AID_A0000000041010, KERNEL_ID_TK2	},
+			{ AID_A0000000651010, KERNEL_ID_TK2	},
+			{ AID_A0000000031010, KERNEL_ID_TK3	},
+			{ AID_A0000000041010, KERNEL_ID_TK3	},
+			{ AID_A0000000651010, KERNEL_ID_TK3	},
+			{ AID_A0000000251010, KERNEL_ID_TK3	},
+			{ AID_A0000000041010, KERNEL_ID_TK4	},
+			{ AID_A0000000651010, KERNEL_ID_TK4	},
+			{ AID_A0000000251010, KERNEL_ID_TK4	},
+			{ AID_A0000000651010, KERNEL_ID_TK5	},
+			{ AID_A0000000251010, KERNEL_ID_TK5	},
+			{ AID_A0000001523010, KERNEL_ID_TK6	},
+			{ AID_A0000003241010, KERNEL_ID_TK6	},
+			{ AID_A0000003330101, KERNEL_ID_TK7	},
+			{ AID_A0000000010001, KERNEL_ID_21	},
+			{ AID_A0000000020002, KERNEL_ID_21	},
+			{ AID_A0000000030003, KERNEL_ID_21	},
+			{ AID_A0000000040004, KERNEL_ID_21	},
+			{ AID_A0000000020002, KERNEL_ID_22	},
+			{ AID_A0000000030003, KERNEL_ID_22	},
+			{ AID_A0000000010001, KERNEL_ID_23	},
+			{ AID_A0000000020002, KERNEL_ID_23	},
+			{ AID_A0000000030003, KERNEL_ID_23	},
+			{ AID_A0000000040004, KERNEL_ID_23	},
+			{ AID_A0000000020002, KERNEL_ID_24	},
+			{ AID_A0000000030003, KERNEL_ID_24	},
+			{ AID_A0000000040004, KERNEL_ID_24	},
+			{ AID_A0000000030003, KERNEL_ID_25	},
+			{ AID_A0000000040004, KERNEL_ID_25	},
+			{ AID_A0000000010001, KERNEL_ID_32	},
+			{ AID_A0000000020002, KERNEL_ID_32	},
+			{ AID_A0000000030003, KERNEL_ID_32	},
+			{ AID_A0000000040004, KERNEL_ID_32	},
+			{ AID_A0000000010001, KERNEL_ID_810978	},
+			{ AID_A0000000020002, KERNEL_ID_810978	},
+			{ AID_A0000000030003, KERNEL_ID_810978	},
+			{ AID_A0000000040004, KERNEL_ID_810978	},
+			{ AID_A0000000010001, KERNEL_ID_BF0840	},
+			{ AID_A0000000020002, KERNEL_ID_BF0840	},
+			{ AID_A0000000030003, KERNEL_ID_BF0840	},
+			{ AID_A0000000040004, KERNEL_ID_BF0840	},
+			{ AID_A0000000010001, KERNEL_ID_C11111	},
+			{ AID_A0000000020002, KERNEL_ID_C11111	},
+			{ AID_A0000000030003, KERNEL_ID_C11111	},
+			{ AID_A0000000040004, KERNEL_ID_C11111	},
+			{ AID_A0000000010001, KERNEL_ID_FF2222	},
+			{ AID_A0000000020002, KERNEL_ID_FF2222	},
+			{ AID_A0000000030003, KERNEL_ID_FF2222	},
+			{ AID_A0000000040004, KERNEL_ID_FF2222	}
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.reader_ctls_floor_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ttq = true,
+				.ext_selection_support = true,
+			},
+			.enabled = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.ext_selection_support = true,
+			},
+			.reader_ctls_txn_limit = 120,
+			.reader_ctls_floor_limit = 12,
+			.reader_cvm_reqd_limit = 15,
+			TTQ_B6208000
+		}
+	}
 };
 
 struct emv_ep_combination termset2[] = {
@@ -70,7 +156,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_txn_limit = 120,
 			.reader_ctls_floor_limit = 20,
-			TTQ_1
+			TTQ_84008000
 		}
 	},
 	{
@@ -121,7 +207,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			TTQ_2
+			TTQ_28000000
 		}
 	},
 	{
@@ -150,7 +236,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_floor_limit = 50,
 			.reader_cvm_reqd_limit = 20,
-			TTQ_3
+			TTQ_84C08000
 		}
 	},
 	{
@@ -176,7 +262,7 @@ struct emv_ep_combination termset2[] = {
 				.ext_selection_support = true
 			},
 			.reader_ctls_floor_limit = 20,
-			TTQ_1
+			TTQ_84008000
 		}
 	},
 	{
@@ -226,7 +312,7 @@ struct emv_ep_combination termset2[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			TTQ_2
+			TTQ_28000000
 		}
 	},
 	{
@@ -310,7 +396,7 @@ struct emv_ep_combination termset3[] = {
 			},
 			.reader_ctls_txn_limit = 120,
 			.reader_ctls_floor_limit = 20,
-			TTQ_1
+			TTQ_84008000
 		}
 	},
 	{
@@ -361,7 +447,7 @@ struct emv_ep_combination termset3[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			TTQ_2
+			TTQ_28000000
 		}
 	},
 	{
@@ -390,7 +476,7 @@ struct emv_ep_combination termset3[] = {
 			},
 			.reader_ctls_floor_limit = 50,
 			.reader_cvm_reqd_limit = 20,
-			TTQ_3
+			TTQ_84C08000
 		}
 	},
 	{
@@ -416,7 +502,7 @@ struct emv_ep_combination termset3[] = {
 				.ext_selection_support = true
 			},
 			.reader_ctls_floor_limit = 20,
-			TTQ_1
+			TTQ_84008000
 		}
 	},
 	{
@@ -466,7 +552,7 @@ struct emv_ep_combination termset3[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			TTQ_2
+			TTQ_28000000
 		}
 	},
 	{
@@ -544,7 +630,7 @@ struct emv_ep_combination termset4[] = {
 				.ext_selection_support = true,
 			},
 			.reader_ctls_floor_limit = 20,
-			TTQ_1
+			TTQ_84008000
 		}
 	},
 	{
@@ -584,7 +670,7 @@ struct emv_ep_combination termset4[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			TTQ_2
+			TTQ_28000000
 		}
 	},
 	{
@@ -608,7 +694,7 @@ struct emv_ep_combination termset4[] = {
 			},
 			.reader_ctls_txn_limit = 120,
 			.reader_cvm_reqd_limit = 20,
-			TTQ_3
+			TTQ_84C08000
 		}
 	},
 	{
@@ -632,7 +718,7 @@ struct emv_ep_combination termset4[] = {
 			},
 			.reader_ctls_txn_limit = 120,
 			.reader_ctls_floor_limit = 20,
-			TTQ_1
+			TTQ_84008000
 		}
 	},
 	{
@@ -673,7 +759,7 @@ struct emv_ep_combination termset4[] = {
 			},
 			.reader_ctls_txn_limit = 200,
 			.terminal_floor_limit = 25,
-			TTQ_2
+			TTQ_28000000
 		}
 	},
 	{
@@ -717,7 +803,7 @@ struct emv_ep_combination termset4[] = {
 				.ext_selection_support = true
 			},
 			.reader_ctls_floor_limit = 50,
-			TTQ_1
+			TTQ_84008000
 		}
 	}
 };
@@ -762,6 +848,11 @@ struct emv_ep_terminal_data terminal_data = {
 };
 
 struct termset termsettings[num_termsettings] = {
+	{
+		.combination_sets	= termset1,
+		.num_combination_sets	= ARRAY_SIZE(termset1),
+		.terminal_data		= &terminal_data
+	},
 	{
 		.combination_sets	= termset2,
 		.num_combination_sets	= ARRAY_SIZE(termset2),

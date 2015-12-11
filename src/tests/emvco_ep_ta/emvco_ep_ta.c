@@ -80,7 +80,8 @@ void gpo_ui_req_to_ui_req(const struct ui_req_gpo_resp *in,
 {
 	memset(out, 0, sizeof(*out));
 	out->msg_id	     = (enum emv_message_identifier)in->msg_id;
-	out->status	     = (uint8_t)out->status;
+	out->status	     = (enum emv_status)in->status;
+	out->hold_time	     = ntohs(in->hold_time);
 	out->value_qualifier = (enum emv_value_qualifier)in->value_qual;
 	memcpy(out->lang_pref, in->lang_pref, sizeof(in->lang_pref));
 	memcpy(out->value, in->value, sizeof(in->value));
@@ -92,6 +93,7 @@ void ui_req_to_gpo_ui_req(const struct emv_ui_request *in,
 						    struct ui_req_gpo_resp *out)
 {
 	memset(out, 0, sizeof(*out));
+	out->msg_id	= (uint8_t)in->msg_id;
 	out->status     = (uint8_t)in->status;
 	out->hold_time  = htons(in->hold_time);
 	out->value_qual = (uint8_t)in->value_qualifier;
@@ -104,7 +106,7 @@ void ui_req_to_gpo_ui_req(const struct emv_ui_request *in,
 struct emvco_ep_ta_tc_fixture {
 	struct emv_ep	  *ep;
 	struct emv_hal	  *lt;
-	struct emv_kernel *tk[13];
+	struct emv_kernel *tk[18];
 };
 
 static void emvco_ep_ta_tc_fixture_teardown(
@@ -131,20 +133,25 @@ static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
 	uint8_t cfg[4096];
 	size_t cfg_sz = sizeof(cfg);
 	uint8_t app_ver_num[2] = TK_APPLICATION_VERSION_NUMBER;
-	struct tk_id tk_id[13] = {
-		{ KERNEL_ID_TK1 },
-		{ KERNEL_ID_TK2 },
-		{ KERNEL_ID_TK3 },
-		{ KERNEL_ID_TK4 },
-		{ KERNEL_ID_TK5 },
-		{ KERNEL_ID_TK6 },
-		{ KERNEL_ID_TK7 },
-		{ KERNEL_ID_21  },
-		{ KERNEL_ID_22  },
-		{ KERNEL_ID_23  },
-		{ KERNEL_ID_24  },
-		{ KERNEL_ID_25  },
-		{ KERNEL_ID_2B  }
+	struct tk_id tk_id[18] = {
+		{ KERNEL_ID_TK1	   },
+		{ KERNEL_ID_TK2	   },
+		{ KERNEL_ID_TK3	   },
+		{ KERNEL_ID_TK4	   },
+		{ KERNEL_ID_TK5	   },
+		{ KERNEL_ID_TK6	   },
+		{ KERNEL_ID_TK7	   },
+		{ KERNEL_ID_21	   },
+		{ KERNEL_ID_22	   },
+		{ KERNEL_ID_23	   },
+		{ KERNEL_ID_24	   },
+		{ KERNEL_ID_25	   },
+		{ KERNEL_ID_2B	   },
+		{ KERNEL_ID_32	   },
+		{ KERNEL_ID_810978 },
+		{ KERNEL_ID_BF0840 },
+		{ KERNEL_ID_C11111 },
+		{ KERNEL_ID_FF2222 }
 	};
 	size_t i_tk = 0;
 	int rc = EMV_RC_OK;
@@ -578,6 +585,22 @@ START_TEST(test_2EA_007_00)
 }
 END_TEST
 
+/* 2EA.011.00 User Interface Request Hold Time */
+START_TEST(test_2EA_011_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_60, pc_2ea_011_00_case01,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -601,6 +624,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_006_04);
 	tcase_add_test(tc_general_reqs, test_2EA_006_05);
 	tcase_add_test(tc_general_reqs, test_2EA_007_00);
+	tcase_add_test(tc_general_reqs, test_2EA_011_00);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;

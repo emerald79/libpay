@@ -139,20 +139,26 @@ extern uint32_t transaction_sequence_counter;
  * Signature not supported, Online cryptogram not required, CVM not required,
  * (Contact Chip) Offline PIN not supported, Issuer Update Processing supported.
  */
-#define TTQ_1 .ttq = { 0x84, 0x00, 0x80, 0x00 }
+#define TTQ_84008000 .ttq = { 0x84, 0x00, 0x80, 0x00 }
 
 /* TTQ value '28000000': Mag-stripe mode not supported, EMV mode supported, EMV
  * contact chip not supported, Offline-only reader, Online PIN not supported,
  * Signature not supported, Online cryptogram not required, CVM not required,
  * (Contact Chip) Offline PIN not supported, Issuer Update Processing not
  * supported.								      */
-#define TTQ_2 .ttq = { 0x28, 0x00, 0x00, 0x00 }
+#define TTQ_28000000 .ttq = { 0x28, 0x00, 0x00, 0x00 }
 
 /* TTQ value '84C08000': Mag-stripe mode supported, EMV mode not supported, EMV
  * contact chip not supported, Online capable reader, Online PIN supported,
  * Signature not supported, Online cryptogram required, CVM required, (Contact
  * Chip) Offline PIN not supported, Issuer Update Processing supported.	      */
-#define TTQ_3 .ttq = { 0x84, 0xC0, 0x80, 0x00 }
+#define TTQ_84C08000 .ttq = { 0x84, 0xC0, 0x80, 0x00 }
+
+/* TTQ: Mag-stripe mode supported, EMV mode supported, EMV contact chip
+ * supported, Online capable reader, Online PIN supported, Signature supported,
+ * Online cryptogram not required, CVM not required, (Contact Chip) Offline PIN
+ * supported, Issuer Update Processing supported.			      */
+#define TTQ_B6208000 .ttq = { 0xB6, 0x20, 0x80, 0x00 }
 
 /*-----------------------------------------------------------------------------+
 | Test Checker (chk)							       |
@@ -198,7 +204,10 @@ enum pass_criteria {
 	pc_2ea_006_03,
 	pc_2ea_006_04,
 	pc_2ea_006_05,
-	pc_2ea_007_00
+	pc_2ea_007_00,
+	pc_2ea_011_00_case01,
+	pc_2ea_011_00_case02,
+	pc_2ea_011_00_case03,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -223,9 +232,10 @@ struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 #define INTERFACE_DEVICE_SERIAL_NUMBER  "0000FE16"
 
 enum termsetting {
-	termsetting2 = 0,
-	termsetting3 = 1,
-	termsetting4 = 2,
+	termsetting1 = 0,
+	termsetting2 = 1,
+	termsetting3 = 2,
+	termsetting4 = 3,
 	num_termsettings
 };
 
@@ -237,15 +247,17 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
 +-----------------------------------------------------------------------------*/
 
 enum ltsetting {
-	ltsetting1_1  = 0,
-	ltsetting1_2  = 1,
-	ltsetting1_3  = 2,
-	ltsetting1_4  = 3,
-	ltsetting1_90 = 4,
-	ltsetting1_91 = 5,
-	ltsetting1_97 = 6,
-	ltsetting1_98 = 7,
-	ltsetting2_40 = 8,
+	ltsetting1_1  =  0,
+	ltsetting1_2  =  1,
+	ltsetting1_3  =  2,
+	ltsetting1_4  =  3,
+	ltsetting1_60 =  4,
+	ltsetting1_61 =  5,
+	ltsetting1_90 =  6,
+	ltsetting1_91 =  7,
+	ltsetting1_97 =  8,
+	ltsetting1_98 =  9,
+	ltsetting2_40 = 10,
 	num_ltsettings
 };
 
@@ -258,19 +270,24 @@ void lt_free(struct emv_hal *lt);
 | Test Kernel (tk)							       |
 +-----------------------------------------------------------------------------*/
 
-#define KERNEL_ID_TK1 .kernel_id = { 0x01 }, .kernel_id_len = 1
-#define KERNEL_ID_TK2 .kernel_id = { 0x02 }, .kernel_id_len = 1
-#define KERNEL_ID_TK3 .kernel_id = { 0x03 }, .kernel_id_len = 1
-#define KERNEL_ID_TK4 .kernel_id = { 0x04 }, .kernel_id_len = 1
-#define KERNEL_ID_TK5 .kernel_id = { 0x05 }, .kernel_id_len = 1
-#define KERNEL_ID_TK6 .kernel_id = { 0x06 }, .kernel_id_len = 1
-#define KERNEL_ID_TK7 .kernel_id = { 0x07 }, .kernel_id_len = 1
-#define KERNEL_ID_21  .kernel_id = { 0x21 }, .kernel_id_len = 1
-#define KERNEL_ID_22  .kernel_id = { 0x22 }, .kernel_id_len = 1
-#define KERNEL_ID_23  .kernel_id = { 0x23 }, .kernel_id_len = 1
-#define KERNEL_ID_24  .kernel_id = { 0x24 }, .kernel_id_len = 1
-#define KERNEL_ID_25  .kernel_id = { 0x25 }, .kernel_id_len = 1
-#define KERNEL_ID_2B  .kernel_id = { 0x26 }, .kernel_id_len = 1
+#define KERNEL_ID_TK1	 .kernel_id = { 0x01 },		    .kernel_id_len = 1
+#define KERNEL_ID_TK2	 .kernel_id = { 0x02 },		    .kernel_id_len = 1
+#define KERNEL_ID_TK3	 .kernel_id = { 0x03 },		    .kernel_id_len = 1
+#define KERNEL_ID_TK4	 .kernel_id = { 0x04 },		    .kernel_id_len = 1
+#define KERNEL_ID_TK5	 .kernel_id = { 0x05 },		    .kernel_id_len = 1
+#define KERNEL_ID_TK6	 .kernel_id = { 0x06 },		    .kernel_id_len = 1
+#define KERNEL_ID_TK7	 .kernel_id = { 0x07 },		    .kernel_id_len = 1
+#define KERNEL_ID_21	 .kernel_id = { 0x21 },		    .kernel_id_len = 1
+#define KERNEL_ID_22	 .kernel_id = { 0x22 },		    .kernel_id_len = 1
+#define KERNEL_ID_23	 .kernel_id = { 0x23 },		    .kernel_id_len = 1
+#define KERNEL_ID_24	 .kernel_id = { 0x24 },		    .kernel_id_len = 1
+#define KERNEL_ID_25	 .kernel_id = { 0x25 },		    .kernel_id_len = 1
+#define KERNEL_ID_2B	 .kernel_id = { 0x26 },		    .kernel_id_len = 1
+#define KERNEL_ID_32	 .kernel_id = { 0x32 },		    .kernel_id_len = 1
+#define KERNEL_ID_810978 .kernel_id = { 0x81, 0x09, 0x78 }, .kernel_id_len = 3
+#define KERNEL_ID_BF0840 .kernel_id = { 0xBF, 0x08, 0x40 }, .kernel_id_len = 3
+#define KERNEL_ID_C11111 .kernel_id = { 0xC1, 0x11, 0x11 }, .kernel_id_len = 3
+#define KERNEL_ID_FF2222 .kernel_id = { 0xFF, 0x22, 0x22 }, .kernel_id_len = 3
 
 #define TK_APPLICATION_VERSION_NUMBER { 0x02, 0x03 }
 

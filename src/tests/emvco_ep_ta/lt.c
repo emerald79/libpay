@@ -231,6 +231,90 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting1.60 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						     sts_card_read_successfully,
+						.hold_time = 100
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.61 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_declined,
+					.ui_request_on_outcome = {
+						.msg_id = msg_not_authorized,
+						.status =
+						     sts_card_read_successfully,
+						.hold_time = 200
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting1.90 */
 	{
 		.ppse_entries = {
@@ -668,9 +752,14 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 						"%s(PDOL data: '%s')", __func__,
 					      libtlv_bin_to_hex(data, lc, hex));
 
+	memcpy(sw, EMV_SW_9000_OK, 2);
+
 	rc = ber_get_gpo_resp(&lt->setting->gpo_resp[lt->selected_aid],
 								      resp, le);
 	if (rc != EMV_RC_OK)
+		goto done;
+
+	if (!lc)
 		goto done;
 
 	if (lt->checker && lt->checker->ops->gpo_data) {
@@ -705,8 +794,6 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 
 		tlv_free(tlv);
 	}
-
-	memcpy(sw, EMV_SW_9000_OK, 2);
 
 done:
 	return rc;
