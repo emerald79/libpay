@@ -31,6 +31,7 @@ struct checker {
 	enum pass_criteria    pass_criteria;
 	bool		      pass_criteria_checked;
 	bool		      pass_criteria_met;
+	int		      state;
 
 	bool		      field_is_on;
 	struct emv_ui_request ui_request;
@@ -469,21 +470,45 @@ static void checker_field_off(struct chk *chk)
 	checker->field_is_on = false;
 }
 
-static void checker_ui_request(struct chk *chk,
+static void checker_ui_request(struct chk *checker,
 					const struct emv_ui_request *ui_request)
 {
-	struct checker *checker = (struct checker *)chk;
+	struct checker *chk = (struct checker *)checker;
 
-	switch (checker->pass_criteria) {
+	switch (chk->pass_criteria) {
 	case pc_2ea_011_00_case01:
 		if (ui_request->msg_id == msg_approved) {
-			checker->pass_criteria_checked = true;
+			chk->pass_criteria_checked = true;
 			if (ui_request->hold_time != 100)
-				checker->pass_criteria_met = false;
+				chk->pass_criteria_met = false;
+		}
+		break;
+	case pc_2ea_011_00_case02:
+		if (ui_request->msg_id == msg_not_authorized) {
+			chk->pass_criteria_checked = true;
+			if (ui_request->hold_time != 200)
+				chk->pass_criteria_met = false;
+		}
+		break;
+	case pc_2ea_011_00_case03:
+		switch (chk->state) {
+		case 0:
+			if (ui_request->msg_id == msg_present_card_again &&
+			    ui_request->status == sts_ready_to_read)
+				chk->state = 1;
+			break;
+		case 1:
+			if (ui_request->msg_id == msg_approved &&
+			    ui_request->status == sts_card_read_successfully)
+				chk->pass_criteria_checked = true;
+			break;
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
 		}
 		break;
 	default:
-		memcpy(&checker->ui_request, ui_request, sizeof(*ui_request));
+		memcpy(&chk->ui_request, ui_request, sizeof(*ui_request));
 	}
 }
 

@@ -249,6 +249,23 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		outcome->present.ui_request_on_outcome = true;
 	}
 
+	tlv = tlv_find(tlv_get_child(tlv_resp), EMV_ID_UI_REQ_ON_RESTART);
+	if (tlv) {
+		struct ui_req_gpo_resp gpo_ui_req;
+		size_t gpo_ui_req_sz = sizeof(gpo_ui_req);
+
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
+			       "%s(): UI Request on Restart present", __func__);
+
+		rc = tlv_encode_value(tlv, &gpo_ui_req, &gpo_ui_req_sz);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		gpo_ui_req_to_ui_req(&gpo_ui_req,
+					       &outcome->ui_request_on_restart);
+		outcome->present.ui_request_on_restart = true;
+	}
+
 done:
 	tlv_free(tlv_resp);
 	tlv_free(tlv_parms);

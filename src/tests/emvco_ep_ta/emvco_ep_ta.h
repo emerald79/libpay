@@ -130,6 +130,9 @@ extern uint32_t transaction_sequence_counter;
 	},								       \
 	.pdol_len = 9
 
+/* PDOL with TTQ */
+#define PDOL_5 .pdol = { 0x9F, 0x66, 0x04 }, .pdol_len = 3
+
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
 +-----------------------------------------------------------------------------*/
@@ -253,11 +256,12 @@ enum ltsetting {
 	ltsetting1_4  =  3,
 	ltsetting1_60 =  4,
 	ltsetting1_61 =  5,
-	ltsetting1_90 =  6,
-	ltsetting1_91 =  7,
-	ltsetting1_97 =  8,
-	ltsetting1_98 =  9,
-	ltsetting2_40 = 10,
+	ltsetting1_62 =  6,
+	ltsetting1_90 =  7,
+	ltsetting1_91 =  8,
+	ltsetting1_97 =  9,
+	ltsetting1_98 = 10,
+	ltsetting2_40 = 11,
 	num_ltsettings
 };
 

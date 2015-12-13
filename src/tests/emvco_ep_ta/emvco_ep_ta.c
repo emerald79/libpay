@@ -209,6 +209,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 				enum ltsetting ltsetting, enum pass_criteria pc,
 						      const struct emv_txn *txn)
 {
+	struct emv_outcome_parms outcome;
 	struct emvco_ep_ta_tc_fixture fixture;
 	struct chk *chk = NULL;
 	int rc = EMV_RC_OK;
@@ -253,7 +254,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		rc = emv_ep_activate(fixture.ep, start_b,
 					   &emv_ep_get_autorun(fixture.ep)->txn,
-						++transaction_sequence_counter);
+				      ++transaction_sequence_counter, &outcome);
 		if (rc != EMV_RC_OK)
 			goto done;
 	} else {
@@ -287,9 +288,17 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		chk->ops->txn_start(chk);
 
 		rc = emv_ep_activate(fixture.ep, start_a, txn,
-						++transaction_sequence_counter);
+				      ++transaction_sequence_counter, &outcome);
 		if (rc != EMV_RC_OK)
 			goto done;
+
+		if (outcome.start != start_na) {
+			printf("restart\n");
+			rc = emv_ep_activate(fixture.ep, outcome.start, txn,
+					transaction_sequence_counter, &outcome);
+			if (rc != EMV_RC_OK)
+				goto done;
+		}
 	}
 
 	if (!chk->ops->pass_criteria_met(chk))
@@ -542,6 +551,7 @@ END_TEST
 START_TEST(test_2EA_007_00)
 {
 	enum ltsetting ltset[3] = { ltsetting1_1, ltsetting1_2, ltsetting2_40 };
+	struct emv_outcome_parms outcome;
 	struct emvco_ep_ta_tc_fixture fixture;
 	struct chk *chk = NULL;
 	struct emv_txn txn;
@@ -560,7 +570,7 @@ START_TEST(test_2EA_007_00)
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
-						++transaction_sequence_counter);
+				      ++transaction_sequence_counter, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 
 		emvco_ep_ta_tc_fixture_teardown(&fixture);
@@ -572,7 +582,7 @@ START_TEST(test_2EA_007_00)
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
-						++transaction_sequence_counter);
+				      ++transaction_sequence_counter, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 
 		emvco_ep_ta_tc_fixture_teardown(&fixture);
@@ -596,6 +606,14 @@ START_TEST(test_2EA_011_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_60, pc_2ea_011_00_case01,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_61, pc_2ea_011_00_case02,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_62, pc_2ea_011_00_case03,
 									  &txn);
 	ck_assert(rc == EMV_RC_OK);
 }

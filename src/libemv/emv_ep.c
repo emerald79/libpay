@@ -1441,13 +1441,17 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 }
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
-				    const struct emv_txn *txn, uint32_t seq_ctr)
+				    const struct emv_txn *txn, uint32_t seq_ctr,
+					      struct emv_outcome_parms *outcome)
 {
 	bool started_at_b = (start == start_b);
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
+
+	if (ep->outcome.present.ui_request_on_restart)
+		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
 
 	switch (start) {
 	case start_a:
@@ -1506,6 +1510,8 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 	} while ((rc == EMV_RC_OK) && (ep->state != eps_done));
 
 done:
+	memcpy(outcome, &ep->outcome, sizeof(*outcome));
+
 	if (rc == EMV_RC_OK)
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 						     "%s(): success", __func__);
