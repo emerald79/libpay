@@ -129,6 +129,18 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 
 	tlv = tlv_insert_after(tlv, tlv_term_data);
 
+	if (parms->online_response && parms->online_response->len &&
+	    parms->online_response->type == ort_emv_data) {
+		struct tlv *tlv_online_response = NULL;
+
+		rc = tlv_parse(parms->online_response->data,
+			     parms->online_response->len, &tlv_online_response);
+		if (rc != TLV_RC_OK)
+			goto done;
+
+		tlv = tlv_insert_after(tlv, tlv_online_response);
+	}
+
 	if (!tlv) {
 		rc = TLV_RC_OUT_OF_MEMORY;
 		goto done;
@@ -146,13 +158,11 @@ done:
 }
 
 static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
-						 struct emv_kernel_parms *parms,
-			      struct emv_outcome_parms *outcome, void *txn_data,
-							   size_t *txn_data_len)
+	      struct emv_kernel_parms *parms, struct emv_outcome_parms *outcome)
 {
 	struct tk *tk = (struct tk *)kernel;
 	struct tlv *tlv_fci = NULL, *tlv = NULL, *tlv_parms = NULL;
-	struct tlv *tlv_resp = NULL;
+	struct tlv *tlv_resp = NULL, *tlv_data_record = NULL;
 	uint8_t pdol[256], gpo_data[256], gpo_resp[256], sw[2];
 	char hex[513];
 	size_t pdol_sz = sizeof(pdol), gpo_data_sz = sizeof(gpo_data);
@@ -265,10 +275,26 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		outcome->present.ui_request_on_restart = true;
 	}
 
+	tlv_data_record = tlv_insert_after(tlv_data_record, tlv_copy(tlv_find(
+		  tlv_get_child(tlv_resp), EMV_ID_ISSUER_AUTHENTICATION_DATA)));
+	tlv_data_record = tlv_insert_after(tlv_data_record, tlv_copy(tlv_find(
+		  tlv_get_child(tlv_resp), EMV_ID_ISSUER_SCRIPT_TEMPLATE_1)));
+	tlv_data_record = tlv_insert_after(tlv_data_record, tlv_copy(tlv_find(
+		  tlv_get_child(tlv_resp), EMV_ID_ISSUER_SCRIPT_TEMPLATE_2)));
+
+	if (tlv_data_record) {
+		outcome->data_record.len = sizeof(outcome->data_record.data);
+		rc = tlv_encode(tlv_data_record, outcome->data_record.data,
+						     &outcome->data_record.len);
+		if (rc != EMV_RC_OK)
+			goto done;
+	}
+
 done:
 	tlv_free(tlv_resp);
 	tlv_free(tlv_parms);
 	tlv_free(tlv_fci);
+	tlv_free(tlv_data_record);
 
 	if (rc == EMV_RC_OK) {
 		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,

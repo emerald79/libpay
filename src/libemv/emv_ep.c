@@ -115,21 +115,21 @@ enum emv_ep_state {
 
 struct emv_ep {
 	/* Entry point state */
-	enum emv_ep_state		state;
-	bool				restart;
-	uint32_t			txn_seq_ctr;
-	struct emv_ep_candidate_list	candidate_list;
-	struct emv_kernel_parms		parms;
-	struct emv_outcome_parms	outcome;
-	uint8_t				terminal_data[2048];
-	size_t				terminal_data_len;
+	enum emv_ep_state		  state;
+	bool				  restart;
+	uint32_t			  txn_seq_ctr;
+	struct emv_ep_candidate_list	  candidate_list;
+	struct emv_kernel_parms		  parms;
+	struct emv_outcome_parms	  outcome;
+	uint8_t				  terminal_data[2048];
+	size_t				  terminal_data_len;
 
 	/* Entry point configuration */
-	log4c_category_t	       *log_cat;
-	struct emv_hal		       *hal;
-	struct emv_autorun		autorun;
-	struct emv_ep_combination_set	combination_set[num_txn_types];
-	struct emv_ep_reg_kernel_set	reg_kernel_set;
+	log4c_category_t		 *log_cat;
+	struct emv_hal			 *hal;
+	struct emv_autorun		  autorun;
+	struct emv_ep_combination_set	  combination_set[num_txn_types];
+	struct emv_ep_reg_kernel_set	  reg_kernel_set;
 };
 
 int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
@@ -1417,8 +1417,8 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	 * (both received from the card in the SELECT (AID) response) to the
 	 * selected kernel. This requirement does not apply if Entry Point is
 	 * restarted at Start D after Outcome Processing.		      */
-	rc = kernel->ops->activate(kernel, ep->hal, &ep->parms, &ep->outcome,
-								    NULL, NULL);
+	rc = kernel->ops->activate(kernel, ep->hal, &ep->parms, &ep->outcome);
+
 	ep->state = eps_outcome_processing;
 
 done:
@@ -1452,6 +1452,7 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 				    const struct emv_txn *txn, uint32_t seq_ctr,
+			      const struct emv_online_response *online_response,
 					      struct emv_outcome_parms *outcome)
 {
 	bool started_at_b = (start_at == start_b);
@@ -1477,6 +1478,7 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 	}
 
 	ep->txn_seq_ctr		  = seq_ctr;
+	ep->parms.online_response = online_response;
 	ep->parms.restart	  = ep->restart;
 	ep->parms.start		  = start_at;
 	ep->parms.txn		  = txn;

@@ -233,6 +233,56 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting1.20 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_6,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_a,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10",
+						.len = 18
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved,
+				}
+			},
+		},
+		.gpo_resp_num = 2
+	},
+
+
+
 	/* LTsetting1.60 */
 	{
 		.ppse_entries = {
@@ -1096,8 +1146,21 @@ static int ber_get_gpo_resp(const struct gpo_resp *resp, void *ber,
 					    sizeof(ui_req_resp), &ui_req_resp));
 	}
 
+	if (resp->outcome_parms.data_record.len) {
+		struct tlv *tlv_data_record = NULL;
+
+		rc = tlv_parse(resp->outcome_parms.data_record.data,
+					    resp->outcome_parms.data_record.len,
+							      &tlv_data_record);
+		if (rc != TLV_RC_OK)
+			goto done;
+
+		tlv = tlv_insert_after(tlv, tlv_data_record);
+	}
+
 	rc = tlv_encode(gpo_resp, ber, ber_sz);
 
+done:
 	tlv_free(gpo_resp);
 
 	return rc;
@@ -1212,6 +1275,9 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 {
 	size_t i_aid;
 	int rc = EMV_RC_OK;
+
+	if (lt->checker && lt->checker->ops->select)
+		lt->checker->ops->select(lt->checker, data, lc);
 
 	if ((lc == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
 	    !memcmp(data, DF_NAME_2PAY_SYS_DDF01, lc)) {

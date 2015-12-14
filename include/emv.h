@@ -61,8 +61,11 @@
 #define EMV_ID_DIRECTORY_ENTRY			"\x61"
 #define EMV_ID_FCI_TEMPLATE			"\x6F"
 #define EMV_ID_DF_NAME				"\x84"
+#define EMV_ID_ISSUER_SCRIPT_TEMPLATE_1		"\x71"
+#define EMV_ID_ISSUER_SCRIPT_TEMPLATE_2		"\x72"
 #define EMV_ID_RESP_MSG_TEMPLATE_FMT_2		"\x77"
 #define EMV_ID_APPLICATION_PRIORITY_INDICATOR	"\x87"
+#define EMV_ID_ISSUER_AUTHENTICATION_DATA	"\x91"
 #define EMV_ID_TRANSACTION_DATE			"\x9A"
 #define EMV_ID_TRANSACTION_STATUS_INFORMATION	"\x9B"
 #define EMV_ID_TRANSACTION_TYPE			"\x9C"
@@ -306,6 +309,7 @@ struct emv_kernel_parms {
 	const struct emv_ep_preproc_indicators *preproc_indicators;
 	const uint8_t			       *terminal_data;
 	size_t					terminal_data_len;
+	const struct emv_online_response       *online_response;
 };
 
 struct emv_kernel;
@@ -318,9 +322,7 @@ struct emv_kernel_ops {
 	int (*activate)	(struct emv_kernel	  *kernel,
 			 struct emv_hal		  *hal,
 			 struct emv_kernel_parms  *parms,
-			 struct emv_outcome_parms *outcome,
-			 void			  *txn_data,
-			 size_t			  *txn_data_len);
+			 struct emv_outcome_parms *outcome);
 };
 
 struct emv_kernel {
@@ -350,11 +352,12 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 
 const struct emv_autorun *emv_ep_get_autorun(struct emv_ep *ep);
 
-int emv_ep_activate(struct emv_ep		*ep,
-		    enum emv_start		 start_at,
-		    const struct emv_txn	*txn,
-		    uint32_t			 seq_ctr,
-		    struct emv_outcome_parms	*outcome);
+int emv_ep_activate(struct emv_ep		     *ep,
+		    enum emv_start		      start_at,
+		    const struct emv_txn	     *txn,
+		    uint32_t			      seq_ctr,
+		    const struct emv_online_response *online_response,
+		    struct emv_outcome_parms	     *outcome);
 
 #define EMV_CMD_SELECT_CLA		0x00u
 #define EMV_CMD_SELECT_INS		0xA4u

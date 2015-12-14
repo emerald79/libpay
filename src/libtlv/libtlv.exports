@@ -1,4 +1,5 @@
 tlv_new
+tlv_copy
 tlv_parse
 tlv_free
 tlv_encode

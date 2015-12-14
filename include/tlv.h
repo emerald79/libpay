@@ -82,6 +82,8 @@ int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
  */
 struct tlv *tlv_new(const void *tag, size_t length, const void *value);
 
+struct tlv *tlv_copy(const struct tlv *tlv);
+
 /**
  * Free resources allocated by a TLV data structure
  *

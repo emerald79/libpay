@@ -254,7 +254,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		rc = emv_ep_activate(fixture.ep, start_b,
 					   &emv_ep_get_autorun(fixture.ep)->txn,
-				      ++transaction_sequence_counter, &outcome);
+				++transaction_sequence_counter, NULL, &outcome);
 		if (rc != EMV_RC_OK)
 			goto done;
 	} else {
@@ -288,13 +288,30 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		chk->ops->txn_start(chk);
 
 		rc = emv_ep_activate(fixture.ep, start_a, txn,
-				      ++transaction_sequence_counter, &outcome);
+				++transaction_sequence_counter, NULL, &outcome);
 		if (rc != EMV_RC_OK)
 			goto done;
 
+#if 0
+		if (outcome.data_record.len) {
+			char hex[outcome.data_record.len * 2 + 1];
+			printf("DATA RECORD: '%s'\n", libtlv_bin_to_hex(
+						       outcome.data_record.data,
+						 outcome.data_record.len, hex));
+		}
+#endif
+
 		if (outcome.start != start_na) {
+			struct emv_online_response on_resp;
+
+			on_resp.type = ort_emv_data;
+			on_resp.len  = outcome.data_record.len;
+			memcpy(on_resp.data, outcome.data_record.data,
+								   on_resp.len);
+
 			rc = emv_ep_activate(fixture.ep, outcome.start, txn,
-					transaction_sequence_counter, &outcome);
+					 transaction_sequence_counter, &on_resp,
+								      &outcome);
 			if (rc != EMV_RC_OK)
 				goto done;
 		}
@@ -569,7 +586,7 @@ START_TEST(test_2EA_007_00)
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
-				      ++transaction_sequence_counter, &outcome);
+				++transaction_sequence_counter, NULL, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 
 		emvco_ep_ta_tc_fixture_teardown(&fixture);
@@ -581,7 +598,7 @@ START_TEST(test_2EA_007_00)
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
-				      ++transaction_sequence_counter, &outcome);
+				++transaction_sequence_counter, NULL, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 
 		emvco_ep_ta_tc_fixture_teardown(&fixture);
@@ -690,6 +707,22 @@ START_TEST(test_2EA_013_01)
 }
 END_TEST
 
+/* 2EA.014.00 Restart after an Outcome (Response with EMV data) */
+START_TEST(test_2EA_014_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_20, pc_2ea_014_00_case01,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 
 Suite *emvco_ep_ta_test_suite(void)
 {
@@ -718,6 +751,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_012_00);
 	tcase_add_test(tc_general_reqs, test_2EA_013_00);
 	tcase_add_test(tc_general_reqs, test_2EA_013_01);
+	tcase_add_test(tc_general_reqs, test_2EA_014_00);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;

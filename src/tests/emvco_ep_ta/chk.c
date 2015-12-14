@@ -99,6 +99,51 @@ done:
 	return ok;
 }
 
+static bool check_value_under_mask(struct checker *chk, struct tlv *tlv,
+			  const char *tag, void *value, void *mask, size_t size)
+{
+	uint8_t val[256], dol_val[256], mask_val[256];
+	size_t val_sz = sizeof(val), i;
+	bool ok = false;
+
+	if (!get_value(tlv, tag, val, &val_sz))
+		goto done;
+
+	libtlv_get_dol_field(tag, value, size, dol_val, val_sz);
+	libtlv_get_dol_field(tag, mask, size, mask_val, val_sz);
+
+	for (i = 0; i < val_sz; i++) {
+		val[i] &= mask_val[i];
+		dol_val[i] &= mask_val[i];
+	}
+
+	if (memcmp(dol_val, val, val_sz))
+		goto done;
+
+	ok = true;
+
+done:
+	if (!ok) {
+		char hex_tag[TLV_MAX_TAG_LENGTH * 2 + 1];
+		char hex_dol_val[val_sz * 2 + 1];
+		char hex_val[val_sz * 2 + 1];
+
+		libtlv_bin_to_hex(tag, libtlv_get_tag_length(tag), hex_tag);
+		libtlv_bin_to_hex(dol_val, val_sz, hex_dol_val);
+		libtlv_bin_to_hex(val, val_sz, hex_val);
+
+		if (val_sz)
+			log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+			       "Wrong value: tag '%s', expected '%s', got '%s'",
+						 hex_tag, hex_dol_val, hex_val);
+		else
+			log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+						  "Missing: tag '%s'", hex_tag);
+	}
+
+	return ok;
+}
+
 static bool check_terminal_data(struct checker *chk, struct tlv *data)
 {
 	uint8_t pos_entry_mode = POS_ENTRY_MODE;
@@ -247,6 +292,53 @@ static bool check_unpredictable_numbers(struct checker *chk)
 		return false;
 
 	return true;
+}
+
+static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
+{
+	struct checker *chk = (struct checker *)checker;
+
+	switch (chk->pass_criteria) {
+
+	case pc_2ea_014_00_case01:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 2;
+			break;
+
+		case 2:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 3;
+
+			break;
+
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 4;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	default:
+		break;
+	}
 }
 
 static void checker_gpo_data(struct chk *checker, struct tlv *data)
@@ -410,6 +502,20 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 
 	case pc_2ea_007_00:
 		store_unpredictable_number(chk, data);
+		break;
+
+	case pc_2ea_014_00_case01:
+		if (chk->state != 4)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0A", 1)    ||
+		    !check_value(chk, data, EMV_ID_ISSUER_AUTHENTICATION_DATA,
+				  "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B"
+						    "\x0C\x0D\x0E\x0F\x10", 16))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	default:
@@ -645,6 +751,7 @@ static const struct chk_ops checker_ops = {
 	.txn_start	   = checker_txn_start,
 	.field_on	   = checker_field_on,
 	.field_off	   = checker_field_off,
+	.select		   = checker_select,
 	.gpo_data	   = checker_gpo_data,
 	.ui_request	   = checker_ui_request,
 	.pass_criteria_met = checker_pass_criteria_met,

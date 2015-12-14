@@ -133,6 +133,14 @@ extern uint32_t transaction_sequence_counter;
 /* PDOL with TTQ */
 #define PDOL_5 .pdol = { 0x9F, 0x66, 0x04 }, .pdol_len = 3
 
+/* PDOL with Pre-Processing indicator, Start Point ,TTQ, Issuer Authentication
+ * Data */
+#define PDOL_6								       \
+	.pdol = {							       \
+		0xD1, 0x02, 0xD2, 0x01, 0x9F, 0x66, 0x04, 0x91, 0x10	       \
+	},								       \
+	.pdol_len = 9
+
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
 +-----------------------------------------------------------------------------*/
@@ -173,6 +181,7 @@ struct chk_ops {
 	void (*txn_start)(struct chk *chk);
 	void (*field_on)(struct chk *chk);
 	void (*field_off)(struct chk *chk);
+	void (*select)(struct chk *chk, const uint8_t *data, size_t len);
 	void (*gpo_data)(struct chk *chk, struct tlv *gpo_data);
 	void (*ui_request)(struct chk *chk,
 				       const struct emv_ui_request *ui_request);
@@ -220,6 +229,7 @@ enum pass_criteria {
 	pc_2ea_013_00_case03,
 	pc_2ea_013_01_case01,
 	pc_2ea_013_01_case02,
+	pc_2ea_014_00_case01,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -263,6 +273,7 @@ enum ltsetting {
 	ltsetting1_2,
 	ltsetting1_3,
 	ltsetting1_4,
+	ltsetting1_20,
 	ltsetting1_60,
 	ltsetting1_61,
 	ltsetting1_62,

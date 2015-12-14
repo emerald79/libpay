@@ -705,6 +705,11 @@ error:
 	return NULL;
 }
 
+struct tlv *tlv_copy(const struct tlv *tlv)
+{
+	return tlv ? tlv_new(tlv->tag, tlv->length, tlv->value) : NULL;
+}
+
 void libtlv_get_dol_field(const void *tag, const void *in, size_t in_sz,
 						       void *out, size_t out_sz)
 {
