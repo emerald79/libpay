@@ -36,6 +36,7 @@ struct aid_fci_flags {
 	bool app_label:1;
 	bool app_prio:1;
 	bool pdol:1;
+	bool lang_pref:1;
 };
 
 struct aid_fci {
@@ -47,6 +48,7 @@ struct aid_fci {
 	uint8_t		     app_prio;
 	uint8_t		     pdol[256];
 	size_t		     pdol_len;
+	char		     lang_pref[2];
 };
 
 struct gpo_resp {
@@ -369,6 +371,210 @@ static const struct lt_setting ltsetting[] = {
 						.msg_id = msg_approved,
 						.status =
 						     sts_card_read_successfully,
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 2
+	},
+	/* LTsetting1.70 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_5,
+				.app_prio = 1,
+				.lang_pref = "en"
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						     sts_card_read_successfully,
+						.lang_pref = "en"
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.71 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				.app_prio = 1,
+				.lang_pref = "en"
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_try_again,
+					.start = start_b,
+					.ui_request_on_outcome = {
+						.msg_id = msg_see_phone,
+						.status =
+						     sts_processing_error,
+						.lang_pref = "en"
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_declined,
+					.ui_request_on_outcome = {
+						.msg_id = msg_not_authorized,
+						.status =
+						     sts_card_read_successfully,
+						.lang_pref = "en"
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 2
+	},
+	/* LTsetting1.72 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_5,
+				.app_prio = 1,
+				.lang_pref = "de"
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						     sts_card_read_successfully,
+						.lang_pref = "de"
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.73 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				.app_prio = 1,
+				.lang_pref = "de"
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_try_again,
+					.start = start_b,
+					.ui_request_on_outcome = {
+						.msg_id = msg_see_phone,
+						.status =
+						     sts_processing_error,
+						.lang_pref = "de"
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_declined,
+					.ui_request_on_outcome = {
+						.msg_id = msg_not_authorized,
+						.status =
+						     sts_card_read_successfully,
+						.lang_pref = "de"
 					}
 				}
 			}

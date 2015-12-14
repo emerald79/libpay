@@ -476,6 +476,7 @@ static void checker_ui_request(struct chk *checker,
 	struct checker *chk = (struct checker *)checker;
 
 	switch (chk->pass_criteria) {
+
 	case pc_2ea_011_00_case01:
 		if (ui_request->msg_id == msg_approved) {
 			chk->pass_criteria_checked = true;
@@ -483,6 +484,7 @@ static void checker_ui_request(struct chk *checker,
 				chk->pass_criteria_met = false;
 		}
 		break;
+
 	case pc_2ea_011_00_case02:
 		if (ui_request->msg_id == msg_not_authorized) {
 			chk->pass_criteria_checked = true;
@@ -490,6 +492,7 @@ static void checker_ui_request(struct chk *checker,
 				chk->pass_criteria_met = false;
 		}
 		break;
+
 	case pc_2ea_011_00_case03:
 		switch (chk->state) {
 		case 0:
@@ -507,6 +510,59 @@ static void checker_ui_request(struct chk *checker,
 			chk->pass_criteria_checked = true;
 		}
 		break;
+
+	case pc_2ea_012_00_case01:
+		if (ui_request->msg_id == msg_approved) {
+			chk->pass_criteria_checked = true;
+			if (memcmp(ui_request->lang_pref, "en", 2))
+				chk->pass_criteria_met = false;
+		}
+		break;
+
+	case pc_2ea_012_00_case02:
+		switch (chk->state) {
+		case 0:
+			if (ui_request->msg_id == msg_see_phone &&
+			    !memcmp(ui_request->lang_pref, "en", 2))
+				chk->state = 1;
+			break;
+		case 1:
+			if (ui_request->msg_id == msg_not_authorized &&
+			    !memcmp(ui_request->lang_pref, "en", 2))
+				chk->pass_criteria_checked = true;
+			break;
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_012_00_case03:
+		if (ui_request->msg_id == msg_approved) {
+			chk->pass_criteria_checked = true;
+			if (memcmp(ui_request->lang_pref, "de", 2))
+				chk->pass_criteria_met = false;
+		}
+		break;
+
+	case pc_2ea_012_00_case04:
+		switch (chk->state) {
+		case 0:
+			if (ui_request->msg_id == msg_see_phone &&
+			    !memcmp(ui_request->lang_pref, "de", 2))
+				chk->state = 1;
+			break;
+		case 1:
+			if (ui_request->msg_id == msg_not_authorized &&
+			    !memcmp(ui_request->lang_pref, "de", 2))
+				chk->pass_criteria_checked = true;
+			break;
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		memcpy(&chk->ui_request, ui_request, sizeof(*ui_request));
 	}

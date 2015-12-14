@@ -211,6 +211,10 @@ enum pass_criteria {
 	pc_2ea_011_00_case01,
 	pc_2ea_011_00_case02,
 	pc_2ea_011_00_case03,
+	pc_2ea_012_00_case01,
+	pc_2ea_012_00_case02,
+	pc_2ea_012_00_case03,
+	pc_2ea_012_00_case04,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -250,18 +254,22 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
 +-----------------------------------------------------------------------------*/
 
 enum ltsetting {
-	ltsetting1_1  =  0,
-	ltsetting1_2  =  1,
-	ltsetting1_3  =  2,
-	ltsetting1_4  =  3,
-	ltsetting1_60 =  4,
-	ltsetting1_61 =  5,
-	ltsetting1_62 =  6,
-	ltsetting1_90 =  7,
-	ltsetting1_91 =  8,
-	ltsetting1_97 =  9,
-	ltsetting1_98 = 10,
-	ltsetting2_40 = 11,
+	ltsetting1_1,
+	ltsetting1_2,
+	ltsetting1_3,
+	ltsetting1_4,
+	ltsetting1_60,
+	ltsetting1_61,
+	ltsetting1_62,
+	ltsetting1_70,
+	ltsetting1_71,
+	ltsetting1_72,
+	ltsetting1_73,
+	ltsetting1_90,
+	ltsetting1_91,
+	ltsetting1_97,
+	ltsetting1_98,
+	ltsetting2_40,
 	num_ltsettings
 };
 

@@ -856,8 +856,8 @@ struct emv_ep_terminal_data terminal_data = {
 
 struct emv_ep_language_settings lang_set = {
 	.default_language = "en",
-	.supported_languages = { "en", "de", "fr", "it" },
-	.num_supported_languages = 4
+	.supported_languages = { "en", "de" },
+	.num_supported_languages = 2
 };
 
 struct termset termsettings[num_termsettings] = {
@@ -1197,7 +1197,7 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 	}
 
 	rc = tlv_encode(tlv, buffer, size);
-#if 1
+#if 0
 	if (rc == TLV_RC_OK) {
 		char hex[2 * *size + 1];
 
