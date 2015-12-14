@@ -1440,7 +1440,7 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 	return EMV_RC_OK;
 }
 
-int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
+int emv_ep_activate(struct emv_ep *ep, bool restart, enum emv_start start,
 				    const struct emv_txn *txn, uint32_t seq_ctr,
 					      struct emv_outcome_parms *outcome)
 {
@@ -1449,9 +1449,6 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
-
-	if (ep->outcome.present.ui_request_on_restart)
-		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
 
 	switch (start) {
 	case start_a:
@@ -1469,9 +1466,10 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start,
 		goto done;
 	}
 
-	ep->txn_seq_ctr		       = seq_ctr;
-	ep->parms.start		       = start;
-	ep->parms.txn		       = txn;
+	ep->txn_seq_ctr   = seq_ctr;
+	ep->parms.restart = restart;
+	ep->parms.start	  = start;
+	ep->parms.txn	  = txn;
 
 	do {
 		switch (ep->state) {
