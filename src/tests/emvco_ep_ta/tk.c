@@ -168,20 +168,19 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 	tlv = tlv_find(tlv_get_child(tlv_find(tlv_get_child(tlv_find(tlv_fci,
 		       EMV_ID_FCI_TEMPLATE)), EMV_ID_FCI_PROPRIETARY_TEMPLATE)),
 								   EMV_ID_PDOL);
-	if (!tlv) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
+	if (tlv) {
+		rc = tlv_encode_value(tlv, pdol, &pdol_sz);
+		if (rc != TLV_RC_OK) {
+			rc = EMV_RC_CARD_PROTOCOL_ERROR;
+			goto done;
+		}
 
-	rc = tlv_encode_value(tlv, pdol, &pdol_sz);
-	if (rc != TLV_RC_OK) {
-		rc = EMV_RC_CARD_PROTOCOL_ERROR;
-		goto done;
-	}
-
-	log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_TRACE,
 						    "%s(): PDOL='%s'", __func__,
 					 libtlv_bin_to_hex(pdol, pdol_sz, hex));
+	} else {
+		pdol_sz = 0;
+	}
 
 	tlv_parms = tlv_kernel_parms(parms);
 	if (!tlv_parms) {

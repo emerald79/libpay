@@ -921,9 +921,12 @@ static int ber_get_aid_fci(const struct aid_fci *aid_fci, void *ber,
 				   aid_fci->app_label_len, aid_fci->app_label));
 	tlv = tlv_insert_after(tlv, tlv_new(
 		 EMV_ID_APPLICATION_PRIORITY_INDICATOR, 1, &aid_fci->app_prio));
-	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_PDOL, aid_fci->pdol_len,
-								aid_fci->pdol));
-
+	if (aid_fci->pdol_len)
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_PDOL,
+					     aid_fci->pdol_len, aid_fci->pdol));
+	if (aid_fci->lang_pref[0])
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_LANGUAGE_PREFERENCE,
+							2, aid_fci->lang_pref));
 	rc = tlv_encode(tlv_aid_fci, ber, ber_size);
 
 	tlv_free(tlv_aid_fci);
