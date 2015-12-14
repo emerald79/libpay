@@ -218,6 +218,8 @@ enum pass_criteria {
 	pc_2ea_013_00_case01,
 	pc_2ea_013_00_case02,
 	pc_2ea_013_00_case03,
+	pc_2ea_013_01_case01,
+	pc_2ea_013_01_case02,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -276,6 +278,8 @@ enum ltsetting {
 	ltsetting1_97,
 	ltsetting1_98,
 	ltsetting2_40,
+	ltsetting8_0,
+	ltsetting8_1,
 	num_ltsettings
 };
 

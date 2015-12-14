@@ -596,6 +596,28 @@ static void checker_ui_request(struct chk *checker,
 		}
 		break;
 
+	case pc_2ea_013_01_case01:
+		if (ui_request->msg_id == msg_approved) {
+			chk->pass_criteria_checked = true;
+			if (memcmp(ui_request->value,
+					       "\x00\x00\x00\x12\x34\x00", 6) ||
+			    (ui_request->value_qualifier != val_balance)      ||
+			    memcmp(ui_request->currency_code, ISO4217_USD, 2))
+				chk->pass_criteria_met = false;
+		}
+		break;
+
+	case pc_2ea_013_01_case02:
+		if (ui_request->msg_id == msg_approved) {
+			chk->pass_criteria_checked = true;
+			if (memcmp(ui_request->value,
+					       "\x00\x00\x00\x12\x34\x00", 6) ||
+			    (ui_request->value_qualifier != val_balance)      ||
+			    memcmp(ui_request->currency_code, ISO4217_EUR, 2))
+				chk->pass_criteria_met = false;
+		}
+		break;
+
 	default:
 		memcpy(&chk->ui_request, ui_request, sizeof(*ui_request));
 	}

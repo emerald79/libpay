@@ -938,6 +938,96 @@ static const struct lt_setting ltsetting[] = {
 				}
 			}
 		}
+	},
+	/* LTsetting8.0 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						     sts_card_read_successfully,
+						.value_qualifier = val_balance,
+						.value =
+						     "\x00\x00\x00\x12\x34\x00",
+						.currency_code = ISO4217_USD
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting8.1 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						     sts_card_read_successfully,
+						.value_qualifier = val_balance,
+						.value =
+						     "\x00\x00\x00\x12\x34\x00",
+						.currency_code = ISO4217_EUR
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
 	}
 };
 

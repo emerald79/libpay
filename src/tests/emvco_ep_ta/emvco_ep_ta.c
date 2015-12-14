@@ -670,6 +670,26 @@ START_TEST(test_2EA_013_00)
 }
 END_TEST
 
+/* 2EA.013.01 User Interface Request Amount or Balance displayed (2) */
+START_TEST(test_2EA_013_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting8_0, pc_2ea_013_01_case01,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting8_1, pc_2ea_013_01_case02,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 
 Suite *emvco_ep_ta_test_suite(void)
 {
@@ -697,6 +717,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_011_00);
 	tcase_add_test(tc_general_reqs, test_2EA_012_00);
 	tcase_add_test(tc_general_reqs, test_2EA_013_00);
+	tcase_add_test(tc_general_reqs, test_2EA_013_01);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;
