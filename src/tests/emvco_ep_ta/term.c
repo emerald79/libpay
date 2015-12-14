@@ -827,16 +827,9 @@ struct emv_ep_terminal_data {
 	const char *merchant_name_and_location;
 };
 
-struct emv_ep_language_settings {
-	const char *default_language;
-	const char *supported_languages[256];
-	size_t	    num_supported_languages;
-};
-
 struct termset {
 	struct emv_ep_terminal_data	*terminal_data;
 	struct emv_ep_autorun		 autorun;
-	struct emv_ep_language_settings *language_settings;
 	struct emv_ep_combination	*combination_sets;
 	size_t				 num_combination_sets;
 };
@@ -854,30 +847,21 @@ struct emv_ep_terminal_data terminal_data = {
 	.merchant_name_and_location	  = MERCHANT_NAME_AND_LOCATION
 };
 
-struct emv_ep_language_settings lang_set = {
-	.default_language = "en",
-	.supported_languages = { "en", "de" },
-	.num_supported_languages = 2
-};
-
 struct termset termsettings[num_termsettings] = {
 	{
 		.combination_sets	= termset1,
 		.num_combination_sets	= ARRAY_SIZE(termset1),
-		.terminal_data		= &terminal_data,
-		.language_settings	= &lang_set
+		.terminal_data		= &terminal_data
 	},
 	{
 		.combination_sets	= termset2,
 		.num_combination_sets	= ARRAY_SIZE(termset2),
-		.terminal_data		= &terminal_data,
-		.language_settings	= &lang_set
+		.terminal_data		= &terminal_data
 	},
 	{
 		.combination_sets	= termset3,
 		.num_combination_sets	= ARRAY_SIZE(termset3),
 		.terminal_data		= &terminal_data,
-		.language_settings	= &lang_set,
 		.autorun = {
 			.enabled	   = true,
 			.txn_type	   = txn_purchase,
@@ -887,8 +871,7 @@ struct termset termsettings[num_termsettings] = {
 	{
 		.combination_sets	= termset4,
 		.num_combination_sets	= ARRAY_SIZE(termset4),
-		.terminal_data		= &terminal_data,
-		.language_settings	= &lang_set
+		.terminal_data		= &terminal_data
 	}
 };
 
@@ -1122,38 +1105,6 @@ static struct tlv *get_terminal_data(struct emv_ep_terminal_data *data)
 	return term_data;
 };
 
-static struct tlv *get_language_settings(struct emv_ep_language_settings *lang)
-{
-	struct tlv *lang_set = NULL, *tail = NULL;
-
-	lang_set = tlv_new(EMV_ID_LIBEMV_LANGUAGE_SETTINGS, 0, NULL);
-
-	tail = tlv_insert_below(lang_set,
-				      tlv_new(EMV_ID_LIBEMV_DEFAULT_LANGUAGE, 2,
-						       lang->default_language));
-	if (lang->num_supported_languages) {
-		size_t i;
-
-		tail = tlv_insert_below(lang_set,
-			   tlv_new(EMV_ID_LIBEMV_SUPPORTED_LANGUAGES, 0, NULL));
-
-		tail = tlv_insert_below(tail, tlv_new(EMV_ID_LIBEMV_LANGUAGE, 2,
-						 lang->supported_languages[0]));
-
-		for (i = 1; i < lang->num_supported_languages; i++)
-			tail = tlv_insert_after(tail,
-					      tlv_new(EMV_ID_LIBEMV_LANGUAGE, 2,
-						 lang->supported_languages[i]));
-	}
-
-	if (!tail) {
-		tlv_free(lang_set);
-		lang_set = NULL;
-	}
-
-	return lang_set;
-}
-
 int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 {
 	struct tlv *tlv = NULL, *tail = NULL;
@@ -1186,11 +1137,6 @@ int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size)
 	if (settings->terminal_data)
 		tail = tlv_insert_after(tail,
 				    get_terminal_data(settings->terminal_data));
-
-	if (settings->language_settings)
-		tail = tlv_insert_after(tail,
-			    get_language_settings(settings->language_settings));
-
 	if (!tail) {
 		rc = TLV_RC_OUT_OF_MEMORY;
 		goto done;

@@ -113,12 +113,6 @@ enum emv_ep_state {
 	eps_done
 };
 
-struct emv_language_settings {
-	char default_language[2];
-	char supported_languages[256][2];
-	size_t num_supported_languages;
-};
-
 struct emv_ep {
 	/* Entry point state */
 	enum emv_ep_state		state;
@@ -134,7 +128,6 @@ struct emv_ep {
 	log4c_category_t	       *log_cat;
 	struct emv_hal		       *hal;
 	struct emv_autorun		autorun;
-	struct emv_language_settings	language_settings;
 	struct emv_ep_combination_set	combination_set[num_txn_types];
 	struct emv_ep_reg_kernel_set	reg_kernel_set;
 };
@@ -1752,61 +1745,12 @@ static int parse_emv_ep_config(struct tlv *tlv_set, struct emv_ep_config *cfg)
 	return EMV_RC_OK;
 }
 
-static int parse_emv_language_settings(const struct tlv *tlv_lang_set,
-					 struct emv_language_settings *lang_set)
-{
-	struct tlv *tlv = NULL;
-	int rc = EMV_RC_OK;
-
-	tlv = tlv_find(tlv_get_child(tlv_lang_set),
-						EMV_ID_LIBEMV_DEFAULT_LANGUAGE);
-	if (tlv) {
-		size_t lang_sz = sizeof(lang_set->default_language);
-
-		rc = tlv_encode_value(tlv, &lang_set->default_language,
-								      &lang_sz);
-		if (rc != EMV_RC_OK)
-			goto done;
-
-		if (lang_sz != sizeof(lang_set->default_language)) {
-			rc = EMV_RC_INVALID_ARG;
-			goto done;
-		}
-	}
-
-	tlv = tlv_get_child(tlv_find(tlv_get_child(tlv_lang_set),
-					    EMV_ID_LIBEMV_SUPPORTED_LANGUAGES));
-
-	for (tlv = tlv_find(tlv, EMV_ID_LIBEMV_LANGUAGE);
-	     tlv;
-	     tlv = tlv_find(tlv_get_next(tlv), EMV_ID_LIBEMV_LANGUAGE)) {
-		size_t lang_sz = sizeof(lang_set->supported_languages[0]);
-
-		rc = tlv_encode_value(tlv, &lang_set->supported_languages
-				 [lang_set->num_supported_languages], &lang_sz);
-
-		if (rc != EMV_RC_OK)
-			goto done;
-
-		if (lang_sz != sizeof(lang_set->supported_languages[0])) {
-			rc = EMV_RC_INVALID_ARG;
-			goto done;
-		}
-
-		lang_set->num_supported_languages++;
-	}
-
-done:
-	return rc;
-}
-
 int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 {
 	struct tlv *tlv_config = NULL;
 	struct tlv *tlv_combination_set = NULL;
 	struct tlv *tlv_autorun_parms = NULL;
 	struct tlv *tlv_terminal_data = NULL;
-	struct tlv *tlv_language_settings = NULL;
 	int rc = EMV_RC_OK;
 
 	rc = tlv_parse(config, len, &tlv_config);
@@ -1873,30 +1817,16 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 		tlv = tlv_find(tlv_autorun_parms,
 				       EMV_ID_LIBEMV_AUTORUN_AMOUNT_AUTHORIZED);
 		rc = tlv_encode_value(tlv, amount, &amount_sz);
-
-		if (rc != EMV_RC_OK)
+		if ((rc != EMV_RC_OK) || (amount_sz != sizeof(amount)))
 			goto error;
-
-		if (amount_sz != sizeof(amount)) {
-			rc = EMV_RC_INVALID_ARG;
-			goto error;
-		}
-
 		rc = libtlv_bcd_to_u64(amount, amount_sz,
 					    &ep->autorun.txn.amount_authorized);
 
 		tlv = tlv_find(tlv_autorun_parms,
 					EMV_ID_LIBEMV_AUTORUN_TRANSACTION_TYPE);
 		rc = tlv_encode_value(tlv, &txn_type, &txn_type_sz);
-
-		if (rc != EMV_RC_OK)
+		if ((rc != EMV_RC_OK) || txn_type_sz != sizeof(txn_type))
 			goto error;
-
-		if (txn_type_sz != sizeof(txn_type)) {
-			rc = EMV_RC_INVALID_ARG;
-			goto error;
-		}
-
 		ep->autorun.txn.type = get_emv_txn_type(txn_type);
 	}
 
@@ -1911,16 +1841,6 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 			goto error;
 	} else {
 		ep->terminal_data_len = 0;
-	}
-
-	tlv_language_settings = tlv_find(tlv_get_child(
-			     tlv_find(tlv_config, EMV_ID_LIBEMV_CONFIGURATION)),
-					      EMV_ID_LIBEMV_LANGUAGE_SETTINGS);
-	if (tlv_language_settings) {
-		rc = parse_emv_language_settings(tlv_language_settings,
-							&ep->language_settings);
-		if (rc != EMV_RC_OK)
-			goto error;
 	}
 
 	tlv_free(tlv_config);
