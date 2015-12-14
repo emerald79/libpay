@@ -252,7 +252,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		chk->ops->txn_start(chk);
 
-		rc = emv_ep_activate(fixture.ep, false, start_b,
+		rc = emv_ep_activate(fixture.ep, start_b,
 					   &emv_ep_get_autorun(fixture.ep)->txn,
 				      ++transaction_sequence_counter, &outcome);
 		if (rc != EMV_RC_OK)
@@ -287,14 +287,14 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		chk->ops->txn_start(chk);
 
-		rc = emv_ep_activate(fixture.ep, false, start_a, txn,
+		rc = emv_ep_activate(fixture.ep, start_a, txn,
 				      ++transaction_sequence_counter, &outcome);
 		if (rc != EMV_RC_OK)
 			goto done;
 
 		if (outcome.start != start_na) {
-			rc = emv_ep_activate(fixture.ep, true, outcome.start,
-				   txn, transaction_sequence_counter, &outcome);
+			rc = emv_ep_activate(fixture.ep, outcome.start, txn,
+					transaction_sequence_counter, &outcome);
 			if (rc != EMV_RC_OK)
 				goto done;
 		}
@@ -568,7 +568,7 @@ START_TEST(test_2EA_007_00)
 						    termsetting2, ltset[i % 3]);
 		ck_assert(rc == EMV_RC_OK);
 
-		rc = emv_ep_activate(fixture.ep, false, start_a, &txn,
+		rc = emv_ep_activate(fixture.ep, start_a, &txn,
 				      ++transaction_sequence_counter, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 
@@ -580,7 +580,7 @@ START_TEST(test_2EA_007_00)
 						    termsetting3, ltset[i % 3]);
 		ck_assert(rc == EMV_RC_OK);
 
-		rc = emv_ep_activate(fixture.ep, false, start_a, &txn,
+		rc = emv_ep_activate(fixture.ep, start_a, &txn,
 				      ++transaction_sequence_counter, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 

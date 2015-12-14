@@ -348,12 +348,11 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len);
 
 const struct emv_autorun *emv_ep_get_autorun(struct emv_ep *ep);
 
-int emv_ep_activate(struct emv_ep	     *ep,
-		    bool		      restart,
-		    enum emv_start	      start,
-		    const struct emv_txn     *txn,
-		    uint32_t		      seq_ctr,
-		    struct emv_outcome_parms *outcome);
+int emv_ep_activate(struct emv_ep		*ep,
+		    enum emv_start		 start_at,
+		    const struct emv_txn	*txn,
+		    uint32_t			 seq_ctr,
+		    struct emv_outcome_parms	*outcome);
 
 #define EMV_CMD_SELECT_CLA		0x00u
 #define EMV_CMD_SELECT_INS		0xA4u

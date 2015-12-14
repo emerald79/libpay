@@ -114,18 +114,22 @@ enum emv_ep_state {
 };
 
 struct emv_ep {
+	/* Entry point state */
 	enum emv_ep_state		state;
-	struct emv_hal		       *hal;
-	log4c_category_t	       *log_cat;
+	bool				restart;
 	uint32_t			txn_seq_ctr;
-	struct emv_autorun		autorun;
-	struct emv_ep_combination_set	combination_set[num_txn_types];
-	struct emv_ep_reg_kernel_set	reg_kernel_set;
 	struct emv_ep_candidate_list	candidate_list;
 	struct emv_kernel_parms		parms;
 	struct emv_outcome_parms	outcome;
 	uint8_t				terminal_data[2048];
 	size_t				terminal_data_len;
+
+	/* Entry point configuration */
+	log4c_category_t	       *log_cat;
+	struct emv_hal		       *hal;
+	struct emv_autorun		autorun;
+	struct emv_ep_combination_set	combination_set[num_txn_types];
+	struct emv_ep_reg_kernel_set	reg_kernel_set;
 };
 
 int emv_ep_register_kernel(struct emv_ep *ep, struct emv_kernel *kernel,
@@ -520,7 +524,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 *       Point Pre-Processing Indicators.
 	 *   - Entry Point shall clear the Candidate List.
 	 */
-	if (!ep->parms.restart) {
+	if (!ep->restart) {
 		if (started_by_reader) {
 			struct emv_ep_combination_set *combination_set = NULL;
 			int i = 0;
@@ -562,7 +566,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 *   - Message Identifier: '15' (“Present Card”)
 	 *   - Status: Ready to Read
 	 */
-	if (ep->parms.restart && ep->outcome.present.ui_request_on_restart) {
+	if (ep->restart && ep->outcome.present.ui_request_on_restart) {
 		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
 	} else {
 		struct emv_ui_request ui_request;
@@ -1429,6 +1433,12 @@ done:
 
 int emv_ep_outcome_processing(struct emv_ep *ep)
 {
+	REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.9");
+	/* If the Outcome parameter Start has a value other than 'N/A', then the
+	 * reader shall set the Restart flag.				      */
+	if (ep->outcome.start != start_na)
+		ep->restart = true;
+
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.5.1.1");
 	/* If the value of Outcome parameter UI Request on Outcome Present is
 	 * 'Yes', then Entry Point shall send the associated User Interface
@@ -1440,17 +1450,17 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 	return EMV_RC_OK;
 }
 
-int emv_ep_activate(struct emv_ep *ep, bool restart, enum emv_start start,
+int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 				    const struct emv_txn *txn, uint32_t seq_ctr,
 					      struct emv_outcome_parms *outcome)
 {
-	bool started_at_b = (start == start_b);
+	bool started_at_b = (start_at == start_b);
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
 
-	switch (start) {
+	switch (start_at) {
 	case start_a:
 		ep->state = eps_preprocessing;
 		break;
@@ -1466,10 +1476,10 @@ int emv_ep_activate(struct emv_ep *ep, bool restart, enum emv_start start,
 		goto done;
 	}
 
-	ep->txn_seq_ctr   = seq_ctr;
-	ep->parms.restart = restart;
-	ep->parms.start	  = start;
-	ep->parms.txn	  = txn;
+	ep->txn_seq_ctr		  = seq_ctr;
+	ep->parms.restart	  = ep->restart;
+	ep->parms.start		  = start_at;
+	ep->parms.txn		  = txn;
 
 	do {
 		switch (ep->state) {
