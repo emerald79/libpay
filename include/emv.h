@@ -132,8 +132,9 @@ enum emv_message_identifier {
 };
 
 enum emv_value_qualifier {
-	val_amount = 0,
-	val_balance
+	val_na	    = 0,
+	val_amount  = 1,
+	val_balance = 2
 };
 
 enum emv_status {
