@@ -129,12 +129,11 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 
 	tlv = tlv_insert_after(tlv, tlv_term_data);
 
-	if (parms->online_response && parms->online_response->len &&
-	    parms->online_response->type == ort_emv_data) {
+	if (parms->online_response && parms->online_response_len) {
 		struct tlv *tlv_online_response = NULL;
 
-		rc = tlv_parse(parms->online_response->data,
-			     parms->online_response->len, &tlv_online_response);
+		rc = tlv_parse(parms->online_response,
+			      parms->online_response_len, &tlv_online_response);
 		if (rc != TLV_RC_OK)
 			goto done;
 

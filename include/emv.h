@@ -193,12 +193,6 @@ enum emv_online_response_type {
 	ort_any	     = 2
 };
 
-struct emv_online_response {
-	enum emv_online_response_type	type;
-	uint8_t				data[EMV_MAX_ONLINE_RESPONSE_LEN];
-	size_t				len;
-};
-
 struct emv_data_record {
 	uint8_t	data[EMV_MAX_DATA_RECORD_LEN];
 	size_t	len;
@@ -227,7 +221,7 @@ struct emv_outcome_parms {
 	struct	emv_outcome_parms_flags		present;
 	enum	emv_outcome			outcome;
 	enum	emv_start			start;
-	struct	emv_online_response		online_response;
+	enum	emv_online_response_type	online_response_type;
 	enum	emv_cvm				cvm;
 	struct	emv_ui_request			ui_request_on_outcome;
 	struct	emv_ui_request			ui_request_on_restart;
@@ -309,7 +303,8 @@ struct emv_kernel_parms {
 	const struct emv_ep_preproc_indicators *preproc_indicators;
 	const uint8_t			       *terminal_data;
 	size_t					terminal_data_len;
-	const struct emv_online_response       *online_response;
+	const uint8_t			       *online_response;
+	size_t					online_response_len;
 };
 
 struct emv_kernel;
@@ -356,7 +351,8 @@ int emv_ep_activate(struct emv_ep		     *ep,
 		    enum emv_start		      start_at,
 		    const struct emv_txn	     *txn,
 		    uint32_t			      seq_ctr,
-		    const struct emv_online_response *online_response,
+		    const void			     *online_response,
+		    size_t			      online_response_len,
 		    struct emv_outcome_parms	     *outcome);
 
 #define EMV_CMD_SELECT_CLA		0x00u

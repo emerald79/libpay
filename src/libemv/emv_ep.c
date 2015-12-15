@@ -1452,7 +1452,7 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 
 int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 				    const struct emv_txn *txn, uint32_t seq_ctr,
-			      const struct emv_online_response *online_response,
+			const void *online_response, size_t online_response_len,
 					      struct emv_outcome_parms *outcome)
 {
 	bool started_at_b = (start_at == start_b);
@@ -1477,11 +1477,12 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 		goto done;
 	}
 
-	ep->txn_seq_ctr		  = seq_ctr;
-	ep->parms.online_response = online_response;
-	ep->parms.restart	  = ep->restart;
-	ep->parms.start		  = start_at;
-	ep->parms.txn		  = txn;
+	ep->txn_seq_ctr		      = seq_ctr;
+	ep->parms.online_response     = (uint8_t *)online_response;
+	ep->parms.online_response_len = online_response_len;
+	ep->parms.restart	      = ep->restart;
+	ep->parms.start		      = start_at;
+	ep->parms.txn		      = txn;
 
 	do {
 		switch (ep->state) {

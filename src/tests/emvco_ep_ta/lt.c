@@ -280,9 +280,6 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 2
 	},
-
-
-
 	/* LTsetting1.60 */
 	{
 		.ppse_entries = {
@@ -400,9 +397,7 @@ static const struct lt_setting ltsetting[] = {
 					},
 					.outcome = out_online_request,
 					.start = start_a,
-					.online_response = {
-						.type = ort_any
-					},
+					.online_response_type = ort_any,
 					.ui_request_on_restart = {
 						.msg_id =
 							 msg_present_card_again,

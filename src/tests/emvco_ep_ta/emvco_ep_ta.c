@@ -46,7 +46,7 @@ void gpo_outcome_to_outcome(const struct outcome_gpo_resp *in,
 	out->cvm		      = (enum emv_cvm)in->cvm;
 	out->present.receipt	      = (bool)in->receipt;
 	out->removal_timeout	      = (int)ntohs(in->removal_timeout);
-	out->online_response.type     = (enum emv_online_response_type)
+	out->online_response_type     = (enum emv_online_response_type)
 								in->online_resp;
 	out->alternate_interface_pref = (enum emv_alternate_interface_pref)
 							     in->alt_iface_pref;
@@ -65,7 +65,7 @@ void outcome_to_gpo_outcome(const struct emv_outcome_parms *in,
 	memset(out, 0, sizeof(*out));
 	out->outcome		= (uint8_t)in->outcome;
 	out->start		= (uint8_t)in->start;
-	out->online_resp	= (uint8_t)in->online_response.type;
+	out->online_resp	= (uint8_t)in->online_response_type;
 	out->cvm		= (uint8_t)in->cvm;
 	out->alt_iface_pref	= (uint8_t)in->alternate_interface_pref;
 	out->receipt		= (uint8_t)in->present.receipt;
@@ -254,7 +254,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		rc = emv_ep_activate(fixture.ep, start_b,
 					   &emv_ep_get_autorun(fixture.ep)->txn,
-				++transaction_sequence_counter, NULL, &outcome);
+			     ++transaction_sequence_counter, NULL, 0, &outcome);
 		if (rc != EMV_RC_OK)
 			goto done;
 	} else {
@@ -288,7 +288,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		chk->ops->txn_start(chk);
 
 		rc = emv_ep_activate(fixture.ep, start_a, txn,
-				++transaction_sequence_counter, NULL, &outcome);
+			     ++transaction_sequence_counter, NULL, 0, &outcome);
 		if (rc != EMV_RC_OK)
 			goto done;
 
@@ -302,16 +302,10 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 #endif
 
 		if (outcome.start != start_na) {
-			struct emv_online_response on_resp;
-
-			on_resp.type = ort_emv_data;
-			on_resp.len  = outcome.data_record.len;
-			memcpy(on_resp.data, outcome.data_record.data,
-								   on_resp.len);
-
 			rc = emv_ep_activate(fixture.ep, outcome.start, txn,
-					 transaction_sequence_counter, &on_resp,
-								      &outcome);
+						   transaction_sequence_counter,
+						       outcome.data_record.data,
+					     outcome.data_record.len, &outcome);
 			if (rc != EMV_RC_OK)
 				goto done;
 		}
@@ -586,7 +580,7 @@ START_TEST(test_2EA_007_00)
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
-				++transaction_sequence_counter, NULL, &outcome);
+			     ++transaction_sequence_counter, NULL, 0, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 
 		emvco_ep_ta_tc_fixture_teardown(&fixture);
@@ -598,7 +592,7 @@ START_TEST(test_2EA_007_00)
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
-				++transaction_sequence_counter, NULL, &outcome);
+			     ++transaction_sequence_counter, NULL, 0, &outcome);
 		ck_assert(rc == EMV_RC_OK);
 
 		emvco_ep_ta_tc_fixture_teardown(&fixture);
