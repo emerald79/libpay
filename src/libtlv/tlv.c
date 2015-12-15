@@ -212,7 +212,7 @@ int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 	return tlv_parse_recursive(&buffer, length, tlv, NULL, NULL);
 }
 
-static size_t tlv_get_encoded_identifier_size(struct tlv *tlv)
+static size_t tlv_get_encoded_identifier_size(const struct tlv *tlv)
 {
 	size_t i;
 
@@ -226,9 +226,9 @@ static size_t tlv_get_encoded_identifier_size(struct tlv *tlv)
 	return -1;
 }
 
-static size_t tlv_get_encoded_length(struct tlv *tlv);
+static size_t tlv_get_encoded_length(const struct tlv *tlv);
 
-static size_t tlv_get_encoded_length_size(struct tlv *tlv)
+static size_t tlv_get_encoded_length_size(const struct tlv *tlv)
 {
 	size_t length;
 
@@ -248,7 +248,7 @@ static size_t tlv_get_encoded_length_size(struct tlv *tlv)
 	return 5;
 }
 
-static size_t tlv_get_encoded_length(struct tlv *tlv)
+static size_t tlv_get_encoded_length(const struct tlv *tlv)
 {
 	size_t size;
 
@@ -266,10 +266,11 @@ static size_t tlv_get_encoded_length(struct tlv *tlv)
 	return size;
 }
 
-static size_t libtlv_copy_tag(void *buffer, size_t size, void *tag)
+static size_t libtlv_copy_tag(void *buffer, size_t size, const void *tag)
 {
 	size_t tag_len;
-	uint8_t *b = (uint8_t *)buffer, *t = (uint8_t *)tag;
+	uint8_t *b = (uint8_t *)buffer;
+	const uint8_t *t = (const uint8_t *)tag;
 
 	if (!buffer || !size || !tag)
 		return -1;
@@ -385,7 +386,7 @@ static void __tlv_encode_length(size_t length, void **buffer)
 	*buffer = (void *)&p[5];
 }
 
-static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
+static void tlv_encode_recursive(const struct tlv *tlv, void **buffer)
 {
 	size_t tag_len = 0;
 
@@ -405,7 +406,7 @@ static void tlv_encode_recursive(struct tlv *tlv, void **buffer)
 		tlv_encode_recursive(tlv->next, buffer);
 }
 
-int tlv_encode(struct tlv *tlv, void *buffer, size_t *size)
+int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size)
 {
 	size_t encoded_size = 0;
 
@@ -458,7 +459,7 @@ int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size)
 	return TLV_RC_OK;
 }
 
-int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size)
+int tlv_encode_length(const struct tlv *tlv, void *buffer, size_t *size)
 {
 	size_t encoded_size = 0, length = 0;
 
@@ -707,7 +708,35 @@ error:
 
 struct tlv *tlv_copy(const struct tlv *tlv)
 {
-	return tlv ? tlv_new(tlv->tag, tlv->length, tlv->value) : NULL;
+	struct tlv *result = NULL;
+	uint8_t *buffer = NULL;
+	size_t size = 0;
+	int rc = TLV_RC_OK;
+
+	if (!tlv)
+		return NULL;
+
+	rc = tlv_encode(tlv, buffer, &size);
+
+	if ((rc != TLV_RC_OK) || (size == 0))
+		return NULL;
+
+	buffer = (uint8_t *)malloc(size);
+	if (!buffer)
+		return NULL;
+
+	rc = tlv_encode(tlv, buffer, &size);
+
+	if (rc != TLV_RC_OK)
+		return NULL;
+
+	rc = tlv_parse(buffer, size, &result);
+	free(buffer);
+
+	if (rc != TLV_RC_OK)
+		return NULL;
+
+	return result;
 }
 
 void libtlv_get_dol_field(const void *tag, const void *in, size_t in_sz,
@@ -788,8 +817,31 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 
 		tlv_de = tlv_find(tlv, tag);
 
-		if (!tlv_de || tlv_is_constructed(tlv_de)) {
+		if (!tlv_de) {
 			memset(&out_data[out_data_sz], 0, tlv_do.length);
+			out_data_sz += tlv_do.length;
+		} else if (tlv_is_constructed(tlv_de)) {
+			uint8_t *value = NULL;
+			size_t length = 0;
+
+			rc = tlv_encode(tlv_get_child(tlv_de), value, &length);
+			if (rc != TLV_RC_OK)
+				goto done;
+
+			value = (uint8_t *)malloc(length);
+			if (!value) {
+				rc = TLV_RC_OUT_OF_MEMORY;
+				goto done;
+			}
+
+			rc = tlv_encode(tlv_get_child(tlv_de), value, &length);
+			if (rc != TLV_RC_OK) {
+				free(value);
+				goto done;
+			}
+
+			libtlv_get_dol_field(tlv_do.tag, value, length,
+					 &out_data[out_data_sz], tlv_do.length);
 			out_data_sz += tlv_do.length;
 		} else {
 			libtlv_get_dol_field(tlv_do.tag, tlv_de->value,

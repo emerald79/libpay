@@ -69,7 +69,7 @@ int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
  *         size will hold the required buffer size in this case. Other TLV_RC_*
  *         codes on failure.
  */
-int tlv_encode(struct tlv *tlv, void *buffer, size_t *size);
+int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
  * Create a new TLV node.
@@ -117,7 +117,7 @@ int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size);
  *
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
-int tlv_encode_length(struct tlv *tlv, void *buffer, size_t *size);
+int tlv_encode_length(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
  * Returns the value octets of the TLV node.

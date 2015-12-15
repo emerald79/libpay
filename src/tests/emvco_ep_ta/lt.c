@@ -233,6 +233,63 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting1.11 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_7,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_restart = true
+					},
+					.outcome = out_online_request,
+					.online_response_type = ort_emv_data,
+					.start = start_b,
+					.removal_timeout = 100,
+					.data_record = {
+						.data = "\x71\x10\x86\x0E\x13"
+							"\x14\x15\x16\x17\x18"
+							"\x19\x1A\x1B\x1C\x1D"
+							"\x1E\x1F\x20",
+						.len = 18
+					},
+					.ui_request_on_restart = {
+						.msg_id =
+							 msg_present_card_again,
+						.status = sts_ready_to_read
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved,
+				}
+			},
+		},
+		.gpo_resp_num = 2
+	},
 	/* LTsetting1.20 */
 	{
 		.ppse_entries = {
@@ -262,6 +319,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				.outcome_parms = {
 					.outcome = out_online_request,
+					.online_response_type = ort_emv_data,
 					.start = start_a,
 					.data_record = {
 						.data = "\x91\x10\x01\x02\x03"
@@ -1324,39 +1382,42 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 	gpo_resp = &lt->setting->gpo_resp[lt->i_gpo_resp++];
 
 	rc = ber_get_gpo_resp(gpo_resp, resp, le);
-	if (rc != EMV_RC_OK)
+	if (rc != EMV_RC_OK) {
+		log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
+			   "%s() ber_get_gpo_resp failed. rc %d", __func__, rc);
 		goto done;
+	}
 
 	if (!lc)
 		goto done;
 
 	if (lt->checker && lt->checker->ops->gpo_data) {
 		struct tlv *tlv = NULL;
+		uint8_t ber_tlv[2048];
+		size_t ber_tlv_len = sizeof(ber_tlv);
+		char ber_tlv_hex[4096];
 
 		rc = dol_and_del_to_tlv(
 				    lt->setting->aid_fci[lt->selected_aid].pdol,
 				lt->setting->aid_fci[lt->selected_aid].pdol_len,
 								data, lc, &tlv);
-		if (rc == EMV_RC_OK) {
-			uint8_t ber_tlv[2048];
-			size_t ber_tlv_len = sizeof(ber_tlv);
-			char ber_tlv_hex[4096];
-
-			rc = tlv_encode(tlv, ber_tlv, &ber_tlv_len);
-			if (rc != TLV_RC_OK) {
-				log4c_category_log(lt->log_cat,
-							   LOG4C_PRIORITY_ERROR,
-					    "%s() failed. rc %d", __func__, rc);
-				goto done;
-			}
-
-			log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
-				"%s(): TLV(PDOL, DEL) = '%s'", __func__,
-					 libtlv_bin_to_hex(ber_tlv, ber_tlv_len,
-								  ber_tlv_hex));
-		} else {
+		if (rc != EMV_RC_OK) {
+			log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
+					"%s() dol_and_del_to_tlv failed. rc %d",
+								  __func__, rc);
 			goto done;
 		}
+
+		rc = tlv_encode(tlv, ber_tlv, &ber_tlv_len);
+		if (rc != TLV_RC_OK) {
+			log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
+				 "%s() tlv_encode failed. rc %d", __func__, rc);
+				goto done;
+		}
+
+		log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
+					"%s(): TLV(PDOL, DEL) = '%s'", __func__,
+			  libtlv_bin_to_hex(ber_tlv, ber_tlv_len, ber_tlv_hex));
 
 		lt->checker->ops->gpo_data(lt->checker, tlv);
 
