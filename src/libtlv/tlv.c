@@ -709,32 +709,44 @@ error:
 struct tlv *tlv_copy(const struct tlv *tlv)
 {
 	struct tlv *result = NULL;
-	uint8_t *buffer = NULL;
-	size_t size = 0;
 	int rc = TLV_RC_OK;
 
 	if (!tlv)
 		return NULL;
 
-	rc = tlv_encode(tlv, buffer, &size);
+	if (tlv_is_constructed(tlv)) {
+		struct tlv *childs = NULL;
+		uint8_t *buffer = NULL;
+		size_t size = 0;
 
-	if ((rc != TLV_RC_OK) || (size == 0))
-		return NULL;
+		rc = tlv_encode(tlv_get_child(tlv), buffer, &size);
+		if ((rc != TLV_RC_OK) || (size == 0))
+			return NULL;
 
-	buffer = (uint8_t *)malloc(size);
-	if (!buffer)
-		return NULL;
+		buffer = (uint8_t *)malloc(size);
+		if (!buffer)
+			return NULL;
 
-	rc = tlv_encode(tlv, buffer, &size);
+		rc = tlv_encode(tlv_get_child(tlv), buffer, &size);
+		if (rc != TLV_RC_OK) {
+			free(buffer);
+			return NULL;
+		}
 
-	if (rc != TLV_RC_OK)
-		return NULL;
+		rc = tlv_parse(buffer, size, &childs);
+		if (rc != TLV_RC_OK) {
+			free(buffer);
+			return NULL;
+		}
 
-	rc = tlv_parse(buffer, size, &result);
-	free(buffer);
+		result = tlv_new(tlv->tag, 0, NULL);
+		if (!result)
+			return NULL;
 
-	if (rc != TLV_RC_OK)
-		return NULL;
+		tlv_insert_below(result, childs);
+	} else {
+		result = tlv_new(tlv->tag, tlv->length, tlv->value);
+	}
 
 	return result;
 }

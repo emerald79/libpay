@@ -379,6 +379,64 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ea_014_00_case03:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+
+		case 2:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 3;
+
+			break;
+
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 4;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_014_00_case04:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
 
 	default:
 		break;
@@ -569,6 +627,42 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
 						   "\x00\x80", "\x00\x80", 2) ||
 		    !check_value(chk, data, EMV_ID_START_POINT, "\x0B", 1)    ||
+		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_1,
+				  "\x86\x0E\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
+						    "\x1C\x1D\x1E\x1F\x20", 16))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_014_00_case03:
+		if (chk->state != 4)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0C", 1)    ||
+		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_2,
+				  "\x86\x0E\x23\x24\x25\x26\x27\x28\x29\x2A\x2B"
+						    "\x2C\x2D\x2E\x2F\x30", 16))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_014_00_case04:
+		if (chk->state == 2) {
+			chk->state = 3;
+			break;
+		}
+
+		if (chk->state != 3)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0D", 1)    ||
+		    !check_value(chk, data, EMV_ID_ISSUER_AUTHENTICATION_DATA,
+				  "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B"
+						  "\x0C\x0D\x0E\x0F\x10", 16) ||
 		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_1,
 				  "\x86\x0E\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
 						    "\x1C\x1D\x1E\x1F\x20", 16))

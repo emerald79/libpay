@@ -21,7 +21,8 @@ static int tk_configure(struct emv_kernel *kernel, const void *config,
 	return EMV_RC_OK;
 }
 
-static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
+static struct tlv *tlv_kernel_parms(struct tk *tk,
+						 struct emv_kernel_parms *parms)
 {
 	const struct emv_ep_preproc_indicators *ind = parms->preproc_indicators;
 	struct tlv *tlv_kernel_parms = NULL, *tlv = NULL, *tlv_term_data = NULL;
@@ -131,6 +132,12 @@ static struct tlv *tlv_kernel_parms(struct emv_kernel_parms *parms)
 
 	if (parms->online_response && parms->online_response_len) {
 		struct tlv *tlv_online_response = NULL;
+		char hex[parms->online_response_len * 2 + 1];
+
+		log4c_category_log(tk->log_cat,
+			       LOG4C_PRIORITY_TRACE, "%s() online resp '%s'",
+			  __func__, libtlv_bin_to_hex(parms->online_response,
+					   parms->online_response_len, hex));
 
 		rc = tlv_parse(parms->online_response,
 			      parms->online_response_len, &tlv_online_response);
@@ -191,7 +198,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		pdol_sz = 0;
 	}
 
-	tlv_parms = tlv_kernel_parms(parms);
+	tlv_parms = tlv_kernel_parms(tk, parms);
 	if (!tlv_parms) {
 		rc = EMV_RC_SYNTAX_ERROR;
 		goto done;
@@ -274,12 +281,20 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		outcome->present.ui_request_on_restart = true;
 	}
 
-	tlv_data_record = tlv_insert_after(tlv_data_record, tlv_copy(tlv_find(
-		  tlv_get_child(tlv_resp), EMV_ID_ISSUER_AUTHENTICATION_DATA)));
-	tlv_data_record = tlv_insert_after(tlv_data_record, tlv_copy(tlv_find(
-		  tlv_get_child(tlv_resp), EMV_ID_ISSUER_SCRIPT_TEMPLATE_1)));
-	tlv_data_record = tlv_insert_after(tlv_data_record, tlv_copy(tlv_find(
-		  tlv_get_child(tlv_resp), EMV_ID_ISSUER_SCRIPT_TEMPLATE_2)));
+	tlv = tlv_copy(tlv_find(tlv_get_child(tlv_resp),
+					    EMV_ID_ISSUER_AUTHENTICATION_DATA));
+	if (!tlv_data_record)
+		tlv_data_record = tlv;
+
+	tlv = tlv_insert_after(tlv, tlv_copy(tlv_find(tlv_get_child(tlv_resp),
+					     EMV_ID_ISSUER_SCRIPT_TEMPLATE_1)));
+	if (!tlv_data_record)
+		tlv_data_record = tlv;
+
+	tlv = tlv_insert_after(tlv, tlv_copy(tlv_find(tlv_get_child(tlv_resp),
+					     EMV_ID_ISSUER_SCRIPT_TEMPLATE_2)));
+	if (!tlv_data_record)
+		tlv_data_record = tlv;
 
 	if (tlv_data_record) {
 		outcome->data_record.len = sizeof(outcome->data_record.data);

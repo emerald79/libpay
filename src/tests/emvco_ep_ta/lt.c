@@ -85,7 +85,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				PDOL_1,
+				PDOL_D1029F66049F02069F03069C019F37049F2A08,
 				.app_prio = 1
 			}
 		},
@@ -127,7 +127,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				PDOL_1,
+				PDOL_D1029F66049F02069F03069C019F37049F2A08,
 				.app_prio = 1
 			}
 		},
@@ -169,7 +169,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				PDOL_1,
+				PDOL_D1029F66049F02069F03069C019F37049F2A08,
 				.app_prio = 1
 			}
 		},
@@ -211,7 +211,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				PDOL_1,
+				PDOL_D1029F66049F02069F03069C019F37049F2A08,
 				.app_prio = 1
 			}
 		},
@@ -253,7 +253,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				PDOL_7,
+				PDOL_D102D2017110,
 				.app_prio = 1
 			}
 		},
@@ -290,6 +290,72 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 2
 	},
+	/* LTsetting1.13 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_D102D20191107110,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_restart = true
+					},
+					.outcome = out_online_request,
+					.online_response_type = ort_emv_data,
+					.start = start_d,
+					.removal_timeout = 100,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10\x71\x10"
+							"\x86\x0E\x13\x14\x15"
+							"\x16\x17\x18\x19\x1A"
+							"\x1B\x1C\x1D\x1E\x1F"
+							"\x20",
+						.len = 36
+					},
+					.ui_request_on_restart = {
+						.msg_id = msg_processing,
+						.status = sts_processing
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.present = {
+						.receipt = true
+					},
+					.outcome = out_approved,
+					.cvm = cvm_obtain_signature,
+				}
+			},
+
+
+		},
+		.gpo_resp_num = 2
+	},
 	/* LTsetting1.20 */
 	{
 		.ppse_entries = {
@@ -310,7 +376,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				PDOL_6,
+				PDOL_D102D2019F66049110,
 				.app_prio = 1
 			}
 		},
@@ -333,6 +399,114 @@ static const struct lt_setting ltsetting[] = {
 			{
 				.outcome_parms = {
 					.outcome = out_approved,
+				}
+			},
+		},
+		.gpo_resp_num = 2
+	},
+	/* LTsetting1.22 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_D102D2017210,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.online_response_type = ort_emv_data,
+					.start = start_c,
+					.data_record = {
+						.data = "\x72\x10\x86\x0E\x23"
+							"\x24\x25\x26\x27\x28"
+							"\x29\x2A\x2B\x2C\x2D"
+							"\x2E\x2F\x30",
+						.len = 18
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.present = {
+						.receipt = true
+					},
+					.outcome = out_approved,
+					.cvm = cvm_obtain_signature
+				}
+			},
+		},
+		.gpo_resp_num = 2
+	},
+	/* LTsetting1.27 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_D102D20191107210,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.online_response_type = ort_emv_data,
+					.start = start_c,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10\x72\x10"
+							"\x86\x0E\x23\x24\x25"
+							"\x26\x27\x28\x29\x2A"
+							"\x2B\x2C\x2D\x2E\x2F"
+							"\x30",
+						.len = 36
+					},
+				}
+			},
+			{
+				.outcome_parms = {
+					.present = {
+						.receipt = true
+					},
+					.outcome = out_approved,
+					.cvm = cvm_obtain_signature
 				}
 			},
 		},
@@ -442,7 +616,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				PDOL_5,
+				PDOL_9F6604,
 				.app_prio = 1
 			}
 		},
@@ -500,7 +674,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				PDOL_5,
+				PDOL_9F6604,
 				.app_prio = 1,
 				.lang_pref = "en"
 			}
@@ -602,7 +776,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				PDOL_5,
+				PDOL_9F6604,
 				.app_prio = 1,
 				.lang_pref = "de"
 			}
@@ -839,7 +1013,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				PDOL_2,
+				PDOL_9F01069F40059F06079F0902___9F21039C01,
 				.app_prio = 1
 			}
 		},
@@ -873,7 +1047,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				PDOL_2,
+				PDOL_9F01069F40059F06079F0902___9F21039C01,
 				.app_prio = 1
 			}
 		},
@@ -907,7 +1081,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				PDOL_1,
+				PDOL_D1029F66049F02069F03069C019F37049F2A08,
 				.app_prio = 1
 			}
 		},
@@ -949,7 +1123,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				PDOL_2,
+				PDOL_9F01069F40059F06079F0902___9F21039C01,
 				.app_prio = 1
 			}
 		},
@@ -962,6 +1136,70 @@ static const struct lt_setting ltsetting[] = {
 			}
 		},
 		.gpo_resp_num = 1
+	},
+	/* LTsetting1.99 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_25,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_D102D20191107210,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_restart = true
+					},
+					.outcome = out_online_request,
+					.online_response_type = ort_emv_data,
+					.start = start_d,
+					.removal_timeout = 100,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10\x72\x10"
+							"\x86\x0E\x13\x14\x15"
+							"\x16\x17\x18\x19\x1A"
+							"\x1B\x1C\x1D\x1E\x1F"
+							"\x20",
+						.len = 36
+					},
+					.ui_request_on_restart = {
+						.msg_id = msg_processing,
+						.status = sts_processing
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.present = {
+						.receipt = true
+					},
+					.outcome = out_approved,
+					.cvm = cvm_obtain_signature,
+				}
+			},
+		},
+		.gpo_resp_num = 2
 	},
 	/* LTsetting2.40 */
 	{
@@ -1005,19 +1243,19 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				PDOL_4,
+				PDOL_9F66049F2A089F3704,
 				.app_prio = 1
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				PDOL_4,
+				PDOL_9F66049F2A089F3704,
 				.app_prio = 2
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				PDOL_4,
+				PDOL_9F66049F2A089F3704,
 				.app_prio = 3
 			}
 		},

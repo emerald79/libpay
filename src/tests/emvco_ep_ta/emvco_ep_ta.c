@@ -718,9 +718,26 @@ START_TEST(test_2EA_014_00)
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_11, pc_2ea_014_00_case02,
 									  &txn);
 	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_22, pc_2ea_014_00_case03,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_13, pc_2ea_014_00_case04,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+#if 0
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_27, pc_2ea_014_00_case05,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_99, pc_2ea_014_00_case06,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+#endif
 }
 END_TEST
-
 
 Suite *emvco_ep_ta_test_suite(void)
 {

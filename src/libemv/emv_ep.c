@@ -1468,10 +1468,12 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 	case start_b:
 		ep->state = eps_protocol_activation;
 		break;
+	case start_c:
+		ep->state = eps_combination_selection;
+		break;
 	case start_d:
 		ep->state = eps_kernel_activation;
 		break;
-	case start_c:
 	default:
 		rc = EMV_RC_INVALID_ARG;
 		goto done;
