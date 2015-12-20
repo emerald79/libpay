@@ -218,7 +218,8 @@ extern uint32_t transaction_sequence_counter;
 struct chk;
 
 struct chk_ops {
-	void (*txn_start)(struct chk *chk);
+	void (*ep_start)(struct chk *chk);
+	void (*ep_restart)(struct chk *chk);
 	void (*field_on)(struct chk *chk);
 	void (*field_off)(struct chk *chk);
 	void (*select)(struct chk *chk, const uint8_t *data, size_t len);
@@ -281,6 +282,14 @@ enum pass_criteria {
 	pc_2ea_015_00_case02 = 41,
 	pc_2ea_015_00_case03 = 42,
 	pc_2ea_015_00_case04 = 43,
+	pc_2ea_016_00_case01 = 44,
+	pc_2ea_016_00_case02 = 45,
+	pc_2ea_016_00_case03 = 46,
+	pc_2ea_016_00_case04 = 47,
+	pc_2ea_016_00_case05 = 48,
+	pc_2ea_016_00_case06 = 49,
+	pc_2ea_016_00_case07 = 50,
+	pc_2ea_016_00_case08 = 51,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -324,15 +333,23 @@ enum ltsetting {
 	ltsetting1_2,
 	ltsetting1_3,
 	ltsetting1_4,
+	ltsetting1_7,
+	ltsetting1_8,
+	ltsetting1_10,
 	ltsetting1_11,
 	ltsetting1_13,
 	ltsetting1_15,
+	ltsetting1_16,
 	ltsetting1_18,
 	ltsetting1_20,
+	ltsetting1_21,
 	ltsetting1_22,
+	ltsetting1_23,
 	ltsetting1_24,
+	ltsetting1_25,
 	ltsetting1_27,
 	ltsetting1_28,
+	ltsetting1_29,
 	ltsetting1_34,
 	ltsetting1_35,
 	ltsetting1_60,

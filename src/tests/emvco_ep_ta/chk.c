@@ -548,6 +548,246 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ea_016_00_case01:
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 2;
+			break;
+
+		case 2:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 3;
+
+			break;
+
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 4;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_016_00_case02:
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 2;
+			break;
+
+		case 2:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 3;
+
+			break;
+
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 4;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_016_00_case03:
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+
+		case 2:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->pass_criteria_met = false;
+
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 3;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_016_00_case04:
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_016_00_case05:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 2;
+			break;
+
+		case 3:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 4;
+
+			break;
+
+		case 4:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 5;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_016_00_case06:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 2;
+			break;
+
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 4;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_016_00_case07:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 4;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_016_00_case08:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
 
 	default:
 		break;
@@ -837,12 +1077,100 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2ea_016_00_case01:
+		if (chk->state != 4)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0A", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_016_00_case02:
+		if (chk->state != 4)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0B", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_016_00_case03:
+		if (chk->state != 3)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0C", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_016_00_case04:
+		if (chk->state != 3)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0D", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_016_00_case05:
+		if (chk->state != 5)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0A", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_016_00_case06:
+		if (chk->state != 4)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0B", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_016_00_case07:
+		if (chk->state != 4)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0C", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_016_00_case08:
+		if (chk->state != 3)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0D", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}
 }
 
-static void checker_txn_start(struct chk *chk)
+static void checker_ep_start(struct chk *chk)
 {
 	struct checker *checker = (struct checker *)chk;
 
@@ -874,6 +1202,26 @@ static void checker_txn_start(struct chk *chk)
 		    (checker->ui_request.status != sts_ready_to_read))
 			checker->pass_criteria_met = false;
 		checker->pass_criteria_checked = true;
+		break;
+
+	default:
+		break;
+	}
+}
+
+static void checker_ep_restart(struct chk *chk)
+{
+	struct checker *checker = (struct checker *)chk;
+
+	switch (checker->pass_criteria) {
+
+	case pc_2ea_016_00_case04:
+	case pc_2ea_016_00_case05:
+	case pc_2ea_016_00_case06:
+	case pc_2ea_016_00_case07:
+	case pc_2ea_016_00_case08:
+		if (checker->state == 2)
+			checker->state = 3;
 		break;
 
 	default:
@@ -1113,7 +1461,8 @@ void checker_free(struct chk *chk)
 }
 
 static const struct chk_ops checker_ops = {
-	.txn_start	   = checker_txn_start,
+	.ep_start	   = checker_ep_start,
+	.ep_restart	   = checker_ep_restart,
 	.field_on	   = checker_field_on,
 	.field_off	   = checker_field_off,
 	.select		   = checker_select,

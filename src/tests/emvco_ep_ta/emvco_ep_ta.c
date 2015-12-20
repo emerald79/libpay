@@ -250,7 +250,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		chk->ops->txn_start(chk);
+		chk->ops->ep_start(chk);
 
 		rc = emv_ep_activate(fixture.ep, start_b,
 					   &emv_ep_get_autorun(fixture.ep)->txn,
@@ -285,7 +285,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		chk->ops->txn_start(chk);
+		chk->ops->ep_start(chk);
 
 		rc = emv_ep_activate(fixture.ep, start_a, txn,
 			     ++transaction_sequence_counter, NULL, 0, &outcome);
@@ -318,6 +318,8 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 			if ((outcome.online_response_type != ort_emv_data) ||
 			    (outcome.data_record.len)) {
+				chk->ops->ep_restart(chk);
+
 				rc = emv_ep_activate(fixture.ep, outcome.start,
 					      txn, transaction_sequence_counter,
 						       outcome.data_record.data,
@@ -802,6 +804,51 @@ START_TEST(test_2EA_015_00)
 }
 END_TEST
 
+/* 2EA.016.00 Restart after an Outcome (Online Response Data parameter set to
+ * ANY)									      */
+START_TEST(test_2EA_016_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_10, pc_2ea_016_00_case01,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_21, pc_2ea_016_00_case02,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_7, pc_2ea_016_00_case03,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_23, pc_2ea_016_00_case04,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_16, pc_2ea_016_00_case05,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_25, pc_2ea_016_00_case06,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_8, pc_2ea_016_00_case07,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_29, pc_2ea_016_00_case08,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -832,6 +879,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_014_00);
 	tcase_add_test(tc_general_reqs, test_2EA_014_01);
 	tcase_add_test(tc_general_reqs, test_2EA_015_00);
+	tcase_add_test(tc_general_reqs, test_2EA_016_00);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;
