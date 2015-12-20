@@ -302,12 +302,29 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 #endif
 
 		if (outcome.start != start_na) {
-			rc = emv_ep_activate(fixture.ep, outcome.start, txn,
-						   transaction_sequence_counter,
+			if ((outcome.online_response_type != ort_na) &&
+			    (outcome.data_record.len == 0)) {
+				/* No online response data -> timeout */
+				/* should sleep for outcome.removal_timeout */
+				struct emv_ui_request rm_card = {
+					.msg_id = msg_card_read_ok,
+					.status = sts_card_read_successfully
+				};
+
+				rc = emv_ep_ui_request(fixture.ep, &rm_card);
+				if (rc != EMV_RC_OK)
+					goto done;
+			}
+
+			if ((outcome.online_response_type != ort_emv_data) ||
+			    (outcome.data_record.len)) {
+				rc = emv_ep_activate(fixture.ep, outcome.start,
+					      txn, transaction_sequence_counter,
 						       outcome.data_record.data,
 					     outcome.data_record.len, &outcome);
-			if (rc != EMV_RC_OK)
-				goto done;
+				if (rc != EMV_RC_OK)
+					goto done;
+			}
 		}
 	}
 
@@ -757,6 +774,34 @@ START_TEST(test_2EA_014_01)
 }
 END_TEST
 
+/* 2EA.015.00 Removal Timeout set and timeout occurs */
+START_TEST(test_2EA_015_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_15, pc_2ea_015_00_case01,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_18, pc_2ea_015_00_case02,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_28, pc_2ea_015_00_case03,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_24, pc_2ea_015_00_case04,
+									  &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -786,6 +831,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_013_01);
 	tcase_add_test(tc_general_reqs, test_2EA_014_00);
 	tcase_add_test(tc_general_reqs, test_2EA_014_01);
+	tcase_add_test(tc_general_reqs, test_2EA_015_00);
 	suite_add_tcase(suite, tc_general_reqs);
 
 	return suite;

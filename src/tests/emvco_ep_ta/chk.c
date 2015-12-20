@@ -1071,6 +1071,14 @@ static void checker_ui_request(struct chk *checker,
 			chk->state = 1;
 		break;
 
+	case pc_2ea_015_00_case01:
+	case pc_2ea_015_00_case02:
+	case pc_2ea_015_00_case03:
+	case pc_2ea_015_00_case04:
+		if (ui_request->msg_id == msg_card_read_ok)
+			chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		memcpy(&chk->ui_request, ui_request, sizeof(*ui_request));
 	}
