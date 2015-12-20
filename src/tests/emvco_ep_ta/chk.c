@@ -500,6 +500,54 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ea_014_01_case01:
+		switch (chk->state) {
+		case 0:
+			break;
+
+		case 2:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 3;
+
+			break;
+
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 4;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_014_01_case02:
+		switch (chk->state) {
+		case 0:
+			break;
+
+		case 1:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 2;
+
+			break;
+
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 3;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 
 	default:
 		break;
@@ -767,6 +815,28 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2ea_014_01_case01:
+		if (chk->state != 4)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0A", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_014_01_case02:
+		if (chk->state != 3)
+			break;
+
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x80", "\x00\x80", 2) ||
+		    !check_value(chk, data, EMV_ID_START_POINT, "\x0B", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}
@@ -983,6 +1053,22 @@ static void checker_ui_request(struct chk *checker,
 		if ((chk->state == 2) &&
 		    (ui_request->msg_id == msg_processing))
 			chk->state = 3;
+		break;
+
+	case pc_2ea_014_01_case01:
+		if ((chk->state == 0) &&
+		    (ui_request->msg_id == msg_remove_card))
+			chk->state = 1;
+
+		if ((chk->state == 1) &&
+		    (ui_request->msg_id == msg_present_card_again))
+			chk->state = 2;
+		break;
+
+	case pc_2ea_014_01_case02:
+		if ((chk->state == 0) &&
+		    (ui_request->msg_id == msg_present_card_again))
+			chk->state = 1;
 		break;
 
 	default:

@@ -513,6 +513,119 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 2
 	},
+	/* LTsetting1.34 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 1
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_D102D2019F6604,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+						.ui_request_on_restart = true,
+						.field_off_request = true
+					},
+					.outcome = out_end_application,
+					.start = start_a,
+					.field_off_hold_time = 13,
+					.removal_timeout = 600,
+					.ui_request_on_outcome = {
+						.msg_id = msg_remove_card,
+						.status = sts_not_ready,
+						.hold_time = 13
+					},
+					.ui_request_on_restart = {
+						.msg_id =
+							 msg_present_card_again,
+						.status = sts_ready_to_read
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved,
+					.removal_timeout = 600
+				}
+			},
+		},
+		.gpo_resp_num = 2
+	},
+	/* LTsetting1.35 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_D102D201,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+						.ui_request_on_restart = true,
+					},
+					.outcome = out_end_application,
+					.start = start_b,
+					.ui_request_on_outcome = {
+						.msg_id =
+							 msg_present_card_again,
+						.status = sts_not_ready,
+						.hold_time = 13
+					},
+					.ui_request_on_restart = {
+						.msg_id =
+							 msg_present_card_again,
+						.status = sts_ready_to_read
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			},
+		},
+		.gpo_resp_num = 2
+	},
 	/* LTsetting1.60 */
 	{
 		.ppse_entries = {

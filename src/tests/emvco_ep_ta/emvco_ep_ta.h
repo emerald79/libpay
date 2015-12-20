@@ -171,6 +171,16 @@ extern uint32_t transaction_sequence_counter;
 	},								       \
 	.pdol_len = 8
 
+/* PDOL with Pre-Processing indicator, start Point			      */
+#define PDOL_D102D201 .pdol = { 0xD1, 0x02, 0xD2, 0x01 }, .pdol_len = 4
+
+/* PDOL with Pre-Processing indicator, Start Point, TTQ			      */
+#define PDOL_D102D2019F6604						       \
+	.pdol = {							       \
+		0xD1, 0x02, 0xD2, 0x01, 0x9F, 0x66, 0x04		       \
+	},								       \
+	.pdol_len = 7
+
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
 +-----------------------------------------------------------------------------*/
@@ -265,6 +275,8 @@ enum pass_criteria {
 	pc_2ea_014_00_case04,
 	pc_2ea_014_00_case05,
 	pc_2ea_014_00_case06,
+	pc_2ea_014_01_case01,
+	pc_2ea_014_01_case02,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -313,6 +325,8 @@ enum ltsetting {
 	ltsetting1_20,
 	ltsetting1_22,
 	ltsetting1_27,
+	ltsetting1_34,
+	ltsetting1_35,
 	ltsetting1_60,
 	ltsetting1_61,
 	ltsetting1_62,

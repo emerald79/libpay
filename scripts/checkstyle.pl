@@ -30,7 +30,7 @@ my $show_types = 0;
 my $root;
 my %debug;
 my %ignore_type = ();
-my @ignore = ();
+my @ignore = ( "CAMELCASE,PREFER_PACKED" );
 my $help = 0;
 my $configuration_file = ".checkpatch.conf";
 my $max_line_length = 80;
