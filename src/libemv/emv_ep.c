@@ -505,7 +505,7 @@ done:
 	return rc;
 }
 
-int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
+int emv_ep_protocol_activation(struct emv_ep *ep)
 {
 	bool collision = false;
 	int rc = EMV_RC_OK;
@@ -515,7 +515,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.1");
 	/* If the Restart flag is 0, then:
-	 *   - If Entry Point is activated by the reader 4 at Start B, then:
+	 *   - If Entry Point is activated by the reader at Start B, then:
 	 *     - For each Combination, Entry Point shall reset the Entry Point
 	 *       Pre-Processing Indicators to 0.
 	 *     - For each Combination, if Terminal Transaction Qualifiers (TTQ)
@@ -525,7 +525,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep, bool started_by_reader)
 	 *   - Entry Point shall clear the Candidate List.
 	 */
 	if (!ep->restart) {
-		if (started_by_reader) {
+		if (ep->parms.start == start_b) {
 			struct emv_ep_combination_set *combination_set = NULL;
 			int i = 0;
 
@@ -1020,7 +1020,30 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	combination_set = &ep->combination_set[ep->parms.txn->type];
 
 
-	/* Step 1 */
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.1");
+	/* If Entry Point is activated by the reader at Start B, then:
+	 *   - If Issuer Authentication Data and/or Issuer Script is present,
+	 *     then processing shall continue at requirement 3.3.3.3 of Final
+	 *     Combination Selection with the Combination that was selected
+	 *     during the previous Final Combination Selection.
+	 *   - Otherwise, Entry Point shall perform steps 1 to 3.
+	 * Else
+	 *   - If Entry Point is activated by the reader at Start C, then
+	 *      processing shall continue at Step 3.			      */
+	if (ep->parms.start == start_b) {
+		if (ep->parms.online_response_len) {
+			ep->state = eps_final_combination_selection;
+			goto done;
+		}
+	} else if (ep->parms.start == start_c) {
+		goto step3;
+	}
+
+
+	/*---------------------------------------------------------------------+
+	| Step 1 of Combination Selection				       |
+	+---------------------------------------------------------------------*/
+
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.2");
 	/* Entry Point shall send a SELECT (PPSE) command (as described in
@@ -1052,26 +1075,39 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
 				 "%s(): Select 2PAY.SYS sw: %02x%02x", __func__,
 								  sw[0], sw[1]);
-		ep->state = eps_final_combination_selection;
-		goto done;
+		goto step3;
 	}
 
 
-	rc = emv_ep_parse_ppse(ep, fci, fci_len, dir_entry, &num_dir_entries);
-	assert(rc == EMV_RC_OK);
+	/*---------------------------------------------------------------------+
+	| Step 2 of Combination Selection				       |
+	+---------------------------------------------------------------------*/
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.4");
 	/* If there is no Directory Entry (Tag '61') in the FCI, then
 	 * Entry Point shall add no Combinations to the Candidate List
 	 * and shall proceed to Step 3. */
+	rc = emv_ep_parse_ppse(ep, fci, fci_len, dir_entry, &num_dir_entries);
+	assert(rc == EMV_RC_OK);
+
 	if (!num_dir_entries) {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
 				"%s(): No entries in 2PAY.SYS found", __func__);
-		ep->state = eps_final_combination_selection;
-		goto done;
+		goto step3;
 	}
 
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
+	/* For each reader Combination {AID - Kernel ID} supported by the reader
+	 * for which the 'Contactless Application Not Allowed' indicator is 0,
+	 * Entry Point shall process each Directory Entry (Tag '61') from th
+	 * FCI. When the Directory Entries have been processed for all supported
+	 * reader Combinations, Entry Point shall proceed to Step 3.
+	 *
+	 * To process the Directory Entries, Entry Point shall begin with the
+	 * first Directory Entry of the FCI and process sequentially for each
+	 * Directory Entry in the FCI as described in bullet A thru E below.  */
 	ep->candidate_list.size = 0;
 	ep->candidate_list.candidates = (struct emv_ep_candidate *)
 				 calloc(combination_set->size * num_dir_entries,
@@ -1085,16 +1121,6 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 		       "%s(): Combinations: %d, 2PAY.SYS entries: %d", __func__,
 			      (int)combination_set->size, (int)num_dir_entries);
 
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.5");
-	/* For each reader Combination {AID - Kernel ID} supported by the reader
-	 * for which the 'Contactless Application Not Allowed' indicator is 0,
-	 * Entry Point shall process each Directory Entry (Tag '61') from th
-	 * FCI. When the Directory Entries have been processed for all supported
-	 * reader Combinations, Entry Point shall proceed to Step 3.
-	 *
-	 * To process the Directory Entries, Entry Point shall begin with the
-	 * first Directory Entry of the FCI and process sequentially for each
-	 * Directory Entry in the FCI as described in bullet A thru E below.  */
 	for (i_comb = 0; i_comb < combination_set->size; i_comb++) {
 		struct emv_ep_combination *comb =
 					 &combination_set->combinations[i_comb];
@@ -1139,28 +1165,18 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	qsort(ep->candidate_list.candidates, ep->candidate_list.size,
 			   sizeof(struct emv_ep_candidate), compare_candidates);
 
-	ep->state = eps_final_combination_selection;
 
-done:
-	if (rc == EMV_RC_OK)
-		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
-				       "%s(): success. Number of candiates: %d",
-					__func__, (int)ep->candidate_list.size);
-	else
-		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
-					  "%s(): failed. rc %d.", __func__, rc);
-	return rc;
-}
+	/*---------------------------------------------------------------------+
+	| Step 3 of Combination Selection				       |
+	+---------------------------------------------------------------------*/
 
-int emv_ep_final_combination_selection(struct emv_ep *ep)
-{
-	struct emv_ep_candidate *candidate = NULL;
-	struct emv_ep_config *config = NULL;
-	uint8_t adf[32];
-	size_t adf_len = 0;
-	int rc = EMV_RC_OK;
 
-	/* Step 3 */
+step3:
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.6");
+	/* If the Candidate List contains at least one entry, then Entry Point
+	 * shall retain the Candidate List and shall continue with Final
+	 * Combination Selection, section 3.3.3.			      */
+
 
 	if (!ep->candidate_list.size) {
 
@@ -1200,17 +1216,31 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 		return EMV_RC_OK;
 	}
 
+	ep->state = eps_final_combination_selection;
 
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.6");
-	/* If the Candidate List contains at least one entry, then Entry Point
-	 * shall retain the Candidate List and shall continue with Final
-	 * Combination Selection, section 3.3.3.			      */
+done:
+	if (rc == EMV_RC_OK)
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+				       "%s(): success. Number of candiates: %d",
+					__func__, (int)ep->candidate_list.size);
+	else
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+					  "%s(): failed. rc %d.", __func__, rc);
+	return rc;
+}
+
+int emv_ep_final_combination_selection(struct emv_ep *ep)
+{
+	struct emv_ep_candidate *candidate = NULL;
+	struct emv_ep_config *config = NULL;
+	uint8_t adf[32];
+	size_t adf_len = 0;
+	int rc = EMV_RC_OK;
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.1");
 	/* If there is only one Combination in the Candidate List, then Entry
 	 * Point shall select the Combination.				      */
-
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.2");
@@ -1253,7 +1283,6 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	}
 
 
-
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.4");
 	/* Entry Point shall send the SELECT (AID) command with the ADF Name of
 	 * the selected Combination (with Extended Selection if appended).    */
@@ -1275,7 +1304,6 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	}
 
 
-
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.5");
 	/* If the response to the SELECT (AID) command includes an SW1 SW2 other
 	 * than '9000', then:
@@ -1292,7 +1320,6 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 		ep->state = eps_final_combination_selection;
 		return EMV_RC_OK;
 	}
-
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.6");
@@ -1455,7 +1482,6 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 			const void *online_response, size_t online_response_len,
 					      struct emv_outcome_parms *outcome)
 {
-	bool started_at_b = (start_at == start_b);
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
@@ -1494,8 +1520,7 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 			break;
 
 		case eps_protocol_activation:
-			rc = emv_ep_protocol_activation(ep, started_at_b);
-			started_at_b = false;
+			rc = emv_ep_protocol_activation(ep);
 			break;
 
 		case eps_combination_selection:

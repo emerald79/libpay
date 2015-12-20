@@ -269,6 +269,7 @@ static const struct lt_setting ltsetting[] = {
 					.start = start_b,
 					.removal_timeout = 100,
 					.data_record = {
+						/* FIXME */
 						.data = "\x71\x10\x86\x0E\x13"
 							"\x14\x15\x16\x17\x18"
 							"\x19\x1A\x1B\x1C\x1D"
