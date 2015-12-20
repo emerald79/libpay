@@ -1918,6 +1918,90 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting6.10 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24FFFF,
+				.app_prio = 0xF2,
+			},
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_240000,
+				.app_prio = 4,
+			},
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23FF00FF00FF00FF,
+				.app_prio = 0xFF,
+			},
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_2102030405060708,
+				.app_prio = 0x41,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_9F66049F2A08,
+				.app_prio = 0xF2
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_9F66049F2A08,
+				.app_prio = 4
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_9F66049F2A08,
+				.app_prio = 0xFF
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_9F66049F2A08,
+				.app_prio = 0x41
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting8.0 */
 	{
 		.ppse_entries = {

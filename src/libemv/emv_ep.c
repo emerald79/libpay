@@ -827,6 +827,7 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 			rc = tlv_encode_value(prio,
 				     &dir_entry->application_priority_indicator,
 									  &len);
+
 			assert(rc == TLV_RC_OK);
 		}
 
@@ -982,8 +983,8 @@ static int compare_candidates(const void *candidate_a, const void *candidate_b)
 	a = (const struct emv_ep_candidate *)candidate_a;
 	b = (const struct emv_ep_candidate *)candidate_b;
 
-	if (a->application_priority_indicator ==
-					    b->application_priority_indicator) {
+	if ((a->application_priority_indicator & 0x0f) ==
+				   (b->application_priority_indicator & 0x0f)) {
 		if (a->order == b->order)
 			return 0;
 		if (a->order < b->order)
@@ -998,11 +999,11 @@ static int compare_candidates(const void *candidate_a, const void *candidate_b)
 	if (!b->application_priority_indicator)
 		return 1;
 
-	if (a->application_priority_indicator <
-					      b->application_priority_indicator)
-		return -1;
+	if ((a->application_priority_indicator & 0x0f) <
+				     (b->application_priority_indicator & 0x0f))
+		return 1;
 
-	return 1;
+	return -1;
 }
 
 int emv_ep_combination_selection_step3(struct emv_ep *ep)

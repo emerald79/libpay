@@ -130,6 +130,14 @@ extern uint32_t transaction_sequence_counter;
 	},								       \
 	.pdol_len = 9
 
+/* PDOL with TTQ, kernel ID */
+#define PDOL_9F66049F2A08						       \
+	.pdol = {							       \
+		0x9F, 0x66, 0x04, 0x9F, 0x2A, 0x08			       \
+	},								       \
+	.pdol_len = 6
+
+
 /* PDOL with TTQ */
 #define PDOL_9F6604 .pdol = { 0x9F, 0x66, 0x04 }, .pdol_len = 3
 
@@ -211,6 +219,12 @@ extern uint32_t transaction_sequence_counter;
  * supported, Issuer Update Processing supported.			      */
 #define TTQ_B6208000 .ttq = { 0xB6, 0x20, 0x80, 0x00 }
 
+/* TTQ: Mag-stripe mode supported, EMV mode supported, EMV contact chip
+ * supported, Online capable reader, Online PIN supported, Signature supported,
+ * Online cryptogram not required, CVM not required, (Contact Chip) Offline PIN
+ * supported, Issuer Update Processing supported. (Several RFU bits set).     */
+#define TTQ_F72A8A55 .ttq = { 0xF7, 0x2A, 0x8A, 0x55 }
+
 /*-----------------------------------------------------------------------------+
 | Test Checker (chk)							       |
 +-----------------------------------------------------------------------------*/
@@ -290,6 +304,9 @@ enum pass_criteria {
 	pc_2ea_016_00_case06 = 49,
 	pc_2ea_016_00_case07 = 50,
 	pc_2ea_016_00_case08 = 51,
+	pc_2ea_017_00_case01 = 52,
+	pc_2ea_017_00_case02 = 53,
+	pc_2ea_017_00_case03 = 54,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -318,6 +335,7 @@ enum termsetting {
 	termsetting2 = 1,
 	termsetting3 = 2,
 	termsetting4 = 3,
+	termsetting8 = 4,
 	num_termsettings
 };
 
@@ -368,6 +386,7 @@ enum ltsetting {
 	ltsetting1_98,
 	ltsetting1_99,
 	ltsetting2_40,
+	ltsetting6_10,
 	ltsetting8_0,
 	ltsetting8_1,
 	num_ltsettings
@@ -390,14 +409,24 @@ void lt_free(struct emv_hal *lt);
 #define KERNEL_ID_TK6	 .kernel_id = { 0x06 },		    .kernel_id_len = 1
 #define KERNEL_ID_TK7	 .kernel_id = { 0x07 },		    .kernel_id_len = 1
 #define KERNEL_ID_21	 .kernel_id = { 0x21 },		    .kernel_id_len = 1
+#define KERNEL_ID_2102030405060708					       \
+	      .kernel_id = { 0x21, 0x02, 0x02, 0x04, 0x05, 0x06, 0x07, 0x08 }, \
+	      .kernel_id_len = 8
 #define KERNEL_ID_22	 .kernel_id = { 0x22 },		    .kernel_id_len = 1
 #define KERNEL_ID_23	 .kernel_id = { 0x23 },		    .kernel_id_len = 1
+#define KERNEL_ID_23FF00FF00FF00FF					       \
+	      .kernel_id = { 0x23, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF }, \
+	      .kernel_id_len = 8
 #define KERNEL_ID_24	 .kernel_id = { 0x24 },		    .kernel_id_len = 1
+#define KERNEL_ID_240000 .kernel_id = { 0x24, 0x00, 0x00 }, .kernel_id_len = 3
+#define KERNEL_ID_24FFFF .kernel_id = { 0x24, 0xFF, 0xFF }, .kernel_id_len = 3
 #define KERNEL_ID_25	 .kernel_id = { 0x25 },		    .kernel_id_len = 1
 #define KERNEL_ID_2B	 .kernel_id = { 0x26 },		    .kernel_id_len = 1
 #define KERNEL_ID_32	 .kernel_id = { 0x32 },		    .kernel_id_len = 1
 #define KERNEL_ID_810978 .kernel_id = { 0x81, 0x09, 0x78 }, .kernel_id_len = 3
+#define KERNEL_ID_811111 .kernel_id = { 0x81, 0x11, 0x11 }, .kernel_id_len = 3
 #define KERNEL_ID_BF0840 .kernel_id = { 0xBF, 0x08, 0x40 }, .kernel_id_len = 3
+#define KERNEL_ID_BF2222 .kernel_id = { 0xBF, 0x22, 0x22 }, .kernel_id_len = 3
 #define KERNEL_ID_C11111 .kernel_id = { 0xC1, 0x11, 0x11 }, .kernel_id_len = 3
 #define KERNEL_ID_FF2222 .kernel_id = { 0xFF, 0x22, 0x22 }, .kernel_id_len = 3
 

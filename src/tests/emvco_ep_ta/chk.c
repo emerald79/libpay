@@ -789,6 +789,75 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ea_017_00_case01:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_017_00_case02:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_017_00_case03:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -1161,6 +1230,39 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
 						   "\x00\x80", "\x00\x80", 2) ||
 		    !check_value(chk, data, EMV_ID_START_POINT, "\x0D", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_017_00_case01:
+		if (chk->state != 2)
+			break;
+
+		if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER, "\x21",
+									     1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_017_00_case02:
+		if (chk->state != 2)
+			break;
+
+		if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER, "\x24",
+									     1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_017_00_case03:
+		if (chk->state != 2)
+			break;
+
+		if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER, "\x21",
+									   1) ||
+		    !check_value(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+							 "\xF7\x2A\x8A\x55", 4))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
 		break;

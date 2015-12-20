@@ -808,6 +808,84 @@ struct emv_ep_combination termset4[] = {
 	}
 };
 
+struct emv_ep_combination termset8[] = {
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000010001, KERNEL_ID_21	},
+			{ AID_A0000000020002, KERNEL_ID_21	},
+			{ AID_A0000000030003, KERNEL_ID_21	},
+			{ AID_A0000000040004, KERNEL_ID_21	},
+			{ AID_B0000000010101, KERNEL_ID_21	},
+			{ AID_A0000000020002, KERNEL_ID_22	},
+			{ AID_A0000000030003, KERNEL_ID_22	},
+			{ AID_A0000000010001, KERNEL_ID_23	},
+			{ AID_A0000000020002, KERNEL_ID_23	},
+			{ AID_A0000000030003, KERNEL_ID_23	},
+			{ AID_A0000000040004, KERNEL_ID_23	},
+			{ AID_B0000000010101, KERNEL_ID_23	},
+			{ AID_A0000000020002, KERNEL_ID_24	},
+			{ AID_A0000000030003, KERNEL_ID_24	},
+			{ AID_A0000000040004, KERNEL_ID_24	},
+			{ AID_B0000000010101, KERNEL_ID_24	},
+			{ AID_A0000000030003, KERNEL_ID_25	},
+			{ AID_A0000000040004, KERNEL_ID_25	},
+			{ AID_B0000000010101, KERNEL_ID_25	},
+			{ AID_A0000000010001, KERNEL_ID_32	},
+			{ AID_A0000000020002, KERNEL_ID_32	},
+			{ AID_A0000000030003, KERNEL_ID_32	},
+			{ AID_A0000000040004, KERNEL_ID_32	},
+			{ AID_B0000000010101, KERNEL_ID_32	},
+			{ AID_A0000000010001, KERNEL_ID_810978	},
+			{ AID_A0000000020002, KERNEL_ID_810978	},
+			{ AID_A0000000030003, KERNEL_ID_810978	},
+			{ AID_A0000000040004, KERNEL_ID_810978	},
+			{ AID_B0000000010101, KERNEL_ID_810978	},
+			{ AID_A0000000010001, KERNEL_ID_BF0840	},
+			{ AID_A0000000020002, KERNEL_ID_BF0840	},
+			{ AID_A0000000030003, KERNEL_ID_BF0840	},
+			{ AID_A0000000040004, KERNEL_ID_BF0840	},
+			{ AID_B0000000010101, KERNEL_ID_BF0840	},
+			{ AID_A0000000010001, KERNEL_ID_811111	},
+			{ AID_A0000000020002, KERNEL_ID_811111	},
+			{ AID_A0000000030003, KERNEL_ID_811111	},
+			{ AID_A0000000040004, KERNEL_ID_811111	},
+			{ AID_B0000000010101, KERNEL_ID_811111	},
+			{ AID_A0000000010001, KERNEL_ID_BF2222	},
+			{ AID_A0000000020002, KERNEL_ID_BF2222	},
+			{ AID_A0000000030003, KERNEL_ID_BF2222	},
+			{ AID_A0000000040004, KERNEL_ID_BF2222	},
+			{ AID_B0000000010101, KERNEL_ID_BF2222	},
+		},
+		.config = {
+			.present = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.reader_ctls_txn_limit = true,
+				.reader_ctls_floor_limit = true,
+				.reader_cvm_reqd_limit = true,
+				.ttq = true,
+				.ext_selection_support = true,
+			},
+			.enabled = {
+				.status_check_support = true,
+				.zero_amount_allowed = true,
+				.ext_selection_support = true,
+			},
+			.reader_ctls_txn_limit = 120,
+			.reader_ctls_floor_limit = 12,
+			.reader_cvm_reqd_limit = 15,
+			TTQ_F72A8A55
+		}
+	}
+};
+
+
 struct emv_ep_autorun {
 	bool		  enabled;
 	enum emv_txn_type txn_type;
@@ -871,6 +949,11 @@ struct termset termsettings[num_termsettings] = {
 	{
 		.combination_sets	= termset4,
 		.num_combination_sets	= ARRAY_SIZE(termset4),
+		.terminal_data		= &terminal_data
+	},
+	{
+		.combination_sets	= termset8,
+		.num_combination_sets	= ARRAY_SIZE(termset8),
 		.terminal_data		= &terminal_data
 	}
 };
