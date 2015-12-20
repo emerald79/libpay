@@ -189,6 +189,13 @@ extern uint32_t transaction_sequence_counter;
 	},								       \
 	.pdol_len = 7
 
+/* PDOL with Pre-Processing indicator, TTQ, kernel ID, FCI */
+#define PDOL_D1029F66049F2A086F23					       \
+	.pdol = {							       \
+		0xD1, 0x02, 0x9F, 0x66, 0x04, 0x9F, 0x2A, 0x08, 0x6F, 0x23     \
+	},								       \
+	.pdol_len = 10
+
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
 +-----------------------------------------------------------------------------*/
@@ -307,6 +314,7 @@ enum pass_criteria {
 	pc_2ea_017_00_case01 = 52,
 	pc_2ea_017_00_case02 = 53,
 	pc_2ea_017_00_case03 = 54,
+	pc_2ea_017_01	     = 55,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -385,6 +393,7 @@ enum ltsetting {
 	ltsetting1_97,
 	ltsetting1_98,
 	ltsetting1_99,
+	ltsetting2_10,
 	ltsetting2_40,
 	ltsetting6_10,
 	ltsetting8_0,
