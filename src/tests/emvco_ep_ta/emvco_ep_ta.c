@@ -727,7 +727,6 @@ START_TEST(test_2EA_014_00)
 									  &txn);
 	ck_assert(rc == EMV_RC_OK);
 
-#if 0
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_27, pc_2ea_014_00_case05,
 									  &txn);
 	ck_assert(rc == EMV_RC_OK);
@@ -735,7 +734,6 @@ START_TEST(test_2EA_014_00)
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_99, pc_2ea_014_00_case06,
 									  &txn);
 	ck_assert(rc == EMV_RC_OK);
-#endif
 }
 END_TEST
 

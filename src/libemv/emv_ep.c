@@ -1319,8 +1319,8 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	 * than '9000', then:
 	 *   - If Issuer Authentication Data and/or Issuer Script data is
 	 *     present, then Entry Point shall send an End Application Outcome
-	 *     with the following Outcome parameter values and shall continue with
-	 *     Outcome Processing, section 3.5.
+	 *     with the following Outcome parameter values and shall continue
+	 *     with Outcome Processing, section 3.5.
 	 *
 	 *     End Application:
 	 *	 * Start: N/A
@@ -1401,6 +1401,16 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
+
+
+	/* FIXME: There is no requirement in EMVCo Book B for this. However,
+	 * Entry Point Typo Approval Test 2EA.014.00 Case 06 requires something
+	 * like this to happen. Should be clarified with EMVCo.
+	 */
+	if (ep->parms.start == start_d &&
+	    ep->restart && ep->outcome.present.ui_request_on_restart)
+		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
+
 
 	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
 	ep->parms.kernel_id_len = candidate->combination->kernel_id_len;
