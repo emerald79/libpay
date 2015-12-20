@@ -107,6 +107,7 @@ enum emv_ep_state {
 	eps_preprocessing = 0,
 	eps_protocol_activation,
 	eps_combination_selection,
+	eps_combination_selection_step3,
 	eps_final_combination_selection,
 	eps_kernel_activation,
 	eps_outcome_processing,
@@ -1004,6 +1005,62 @@ static int compare_candidates(const void *candidate_a, const void *candidate_b)
 	return 1;
 }
 
+int emv_ep_combination_selection_step3(struct emv_ep *ep)
+{
+	/*---------------------------------------------------------------------+
+	| Step 3 of Combination Selection				       |
+	+---------------------------------------------------------------------*/
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.6");
+	/* If the Candidate List contains at least one entry, then Entry Point
+	 * shall retain the Candidate List and shall continue with Final
+	 * Combination Selection, section 3.3.3.			      */
+
+
+	if (!ep->candidate_list.size) {
+
+
+		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.7");
+		/* If the Candidate List is empty, then Entry Point shall send
+		 * an End Application Outcome with the following Outcome
+		 * parameter values and shall continue with Outcome Processing,
+		 * section 3.5.
+		 *
+		 * End Application:
+		 *   - Start: N/A
+		 *   - Online Response Data: N/A
+		 *   - CVM: N/A
+		 *   - UI Request on Outcome Present: Yes
+		 *     - Message Identifier: '1C' ("Insert, Swipe or Try Another
+		 *       Card")
+		 *   - Status: Ready To Read
+		 *   - UI Request on Restart Present: No
+		 *   - Data Record Present: No
+		 *   - Discretionary Data Present: No
+		 *   - Alternate Interface Preference: N/A
+		 *   - Receipt: N/A
+		 *   - Field Off Request: N/A
+		 *   - Removal Timeout: Zero				      */
+		struct emv_ui_request *ui_req = NULL;
+
+		memset(&ep->outcome, 0, sizeof(ep->outcome));
+		ep->outcome.outcome = out_end_application;
+		ep->outcome.present.ui_request_on_outcome = true;
+		ui_req = &ep->outcome.ui_request_on_outcome;
+		ui_req->msg_id = msg_try_another_card;
+		ui_req->status = sts_ready_to_read;
+
+		ep->state = eps_outcome_processing;
+
+		return EMV_RC_OK;
+	}
+
+	ep->state = eps_final_combination_selection;
+
+	return EMV_RC_OK;
+}
+
 int emv_ep_combination_selection(struct emv_ep *ep)
 {
 	struct emv_ep_combination_set *combination_set = NULL;
@@ -1036,7 +1093,8 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 			goto done;
 		}
 	} else if (ep->parms.start == start_c) {
-		goto step3;
+		ep->state = eps_combination_selection_step3;
+		goto done;
 	}
 
 
@@ -1075,7 +1133,8 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
 				 "%s(): Select 2PAY.SYS sw: %02x%02x", __func__,
 								  sw[0], sw[1]);
-		goto step3;
+		ep->state = eps_combination_selection_step3;
+		goto done;
 	}
 
 
@@ -1094,7 +1153,8 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	if (!num_dir_entries) {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
 				"%s(): No entries in 2PAY.SYS found", __func__);
-		goto step3;
+		ep->state = eps_combination_selection_step3;
+		goto done;
 	}
 
 
@@ -1166,57 +1226,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 			   sizeof(struct emv_ep_candidate), compare_candidates);
 
 
-	/*---------------------------------------------------------------------+
-	| Step 3 of Combination Selection				       |
-	+---------------------------------------------------------------------*/
-
-
-step3:
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.6");
-	/* If the Candidate List contains at least one entry, then Entry Point
-	 * shall retain the Candidate List and shall continue with Final
-	 * Combination Selection, section 3.3.3.			      */
-
-
-	if (!ep->candidate_list.size) {
-
-
-		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.2.7");
-		/* If the Candidate List is empty, then Entry Point shall send
-		 * an End Application Outcome with the following Outcome
-		 * parameter values and shall continue with Outcome Processing,
-		 * section 3.5.
-		 *
-		 * End Application:
-		 *   - Start: N/A
-		 *   - Online Response Data: N/A
-		 *   - CVM: N/A
-		 *   - UI Request on Outcome Present: Yes
-		 *     - Message Identifier: '1C' ("Insert, Swipe or Try Another
-		 *       Card")
-		 *   - Status: Ready To Read
-		 *   - UI Request on Restart Present: No
-		 *   - Data Record Present: No
-		 *   - Discretionary Data Present: No
-		 *   - Alternate Interface Preference: N/A
-		 *   - Receipt: N/A
-		 *   - Field Off Request: N/A
-		 *   - Removal Timeout: Zero				      */
-		struct emv_ui_request *ui_req = NULL;
-
-		memset(&ep->outcome, 0, sizeof(ep->outcome));
-		ep->outcome.outcome = out_end_application;
-		ep->outcome.present.ui_request_on_outcome = true;
-		ui_req = &ep->outcome.ui_request_on_outcome;
-		ui_req->msg_id = msg_try_another_card;
-		ui_req->status = sts_ready_to_read;
-
-		ep->state = eps_outcome_processing;
-
-		return EMV_RC_OK;
-	}
-
-	ep->state = eps_final_combination_selection;
+	ep->state = eps_combination_selection_step3;
 
 done:
 	if (rc == EMV_RC_OK)
@@ -1307,17 +1317,40 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.5");
 	/* If the response to the SELECT (AID) command includes an SW1 SW2 other
 	 * than '9000', then:
-	 *   - FIXME: If issuer [...] data is present [...]
+	 *   - If Issuer Authentication Data and/or Issuer Script data is
+	 *     present, then Entry Point shall send an End Application Outcome
+	 *     with the following Outcome parameter values and shall continue with
+	 *     Outcome Processing, section 3.5.
+	 *
+	 *     End Application:
+	 *	 * Start: N/A
+	 *	 * Online Response Data: N/A
+	 *	 * CVM: N/A
+	 *	 * UI Request on Outcome Present: Yes
+	 *	     o Message Identifier: '1C' ("Insert, Swipe or Try Another
+	 *	       Card")
+	 *	     o Status: Ready To Read
+	 *	 * UI Request on Restart Present: No
+	 *	 * Data Record Present: No
+	 *	 * Discretionary Data Present: No
+	 *	 * Alternate Interface Preference: N/A
+	 *	 * Receipt: N/A
+	 *	 * Field Off Request: N/A
+	 *	 *Removal Timeout: Zero
 	 *   - Otherwise Entry Point shall remove the selected Combination from
 	 *     the Candidate List and shall return to Start C (Step 3 of
 	 *     Combination Selection (requirement 3.3.2.6)).		      */
 	if ((ep->parms.sw[0] != 0x90) || (ep->parms.sw[1] != 0x00)) {
-		ep->candidate_list.size--;
-		if (!ep->candidate_list.size) {
-			free(ep->candidate_list.candidates);
-			ep->candidate_list.candidates = NULL;
+		if (ep->parms.online_response_len) {
+			assert(false); /* FIXME */
+		} else {
+			ep->candidate_list.size--;
+			if (!ep->candidate_list.size) {
+				free(ep->candidate_list.candidates);
+				ep->candidate_list.candidates = NULL;
+			}
+			ep->state = eps_combination_selection_step3;
 		}
-		ep->state = eps_final_combination_selection;
 		return EMV_RC_OK;
 	}
 
@@ -1495,7 +1528,7 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 		ep->state = eps_protocol_activation;
 		break;
 	case start_c:
-		ep->state = eps_combination_selection;
+		ep->state = eps_combination_selection_step3;
 		break;
 	case start_d:
 		ep->state = eps_kernel_activation;
@@ -1525,6 +1558,10 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 
 		case eps_combination_selection:
 			rc = emv_ep_combination_selection(ep);
+			break;
+
+		case eps_combination_selection_step3:
+			rc = emv_ep_combination_selection_step3(ep);
 			break;
 
 		case eps_final_combination_selection:
