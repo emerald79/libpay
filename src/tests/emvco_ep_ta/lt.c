@@ -235,6 +235,92 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting1.5 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.receipt = true,
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.cvm = cvm_no_cvm,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						      sts_card_read_successfully
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.6 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.receipt = true,
+						.ui_request_on_outcome = true
+					},
+					.outcome = out_approved,
+					.cvm = cvm_obtain_signature,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						      sts_card_read_successfully
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting1.7 */
 	{
 		.ppse_entries = {
@@ -494,6 +580,66 @@ static const struct lt_setting ltsetting[] = {
 					},
 					.outcome = out_approved,
 					.cvm = cvm_obtain_signature,
+				}
+			},
+		},
+		.gpo_resp_num = 2
+	},
+	/* LTsetting1.14 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_D102D201,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_restart = true
+					},
+					.outcome = out_online_request,
+					.online_response_type = ort_emv_data,
+					.start = start_d,
+					.removal_timeout = 100,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10",
+						.len = 18
+					},
+					.ui_request_on_restart = {
+						.msg_id = msg_processing,
+						.status = sts_processing
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.present = {
+						.receipt = true
+					},
+					.outcome = out_approved,
+					.cvm = cvm_no_cvm,
 				}
 			},
 		},

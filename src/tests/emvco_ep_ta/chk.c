@@ -1621,6 +1621,35 @@ static void checker_ui_request(struct chk *checker,
 	}
 }
 
+static void checker_outcome(struct chk *checker,
+					const struct emv_outcome_parms *outcome)
+{
+	struct checker *chk = (struct checker *)checker;
+
+	switch (chk->pass_criteria) {
+	case pc_2ea_019_00_case01:
+	case pc_2ea_019_00_case03:
+		if (outcome->present.receipt) {
+			if (outcome->cvm != cvm_no_cvm)
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ea_019_00_case02:
+	case pc_2ea_019_00_case04:
+		if (outcome->present.receipt) {
+			if (outcome->cvm != cvm_obtain_signature)
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
 static bool checker_pass_criteria_met(struct chk *chk)
 {
 	struct checker *checker = (struct checker *)chk;
@@ -1657,6 +1686,7 @@ static const struct chk_ops checker_ops = {
 	.select		   = checker_select,
 	.gpo_data	   = checker_gpo_data,
 	.ui_request	   = checker_ui_request,
+	.outcome	   = checker_outcome,
 	.pass_criteria_met = checker_pass_criteria_met,
 	.free		   = checker_free
 };
