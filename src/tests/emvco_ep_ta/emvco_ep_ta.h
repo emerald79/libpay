@@ -142,7 +142,7 @@ extern uint32_t transaction_sequence_counter;
 #define PDOL_9F6604 .pdol = { 0x9F, 0x66, 0x04 }, .pdol_len = 3
 
 /* PDOL with Pre-Processing indicator, Start Point ,TTQ, Issuer Authentication
- * Data */
+ * Data									      */
 #define PDOL_D102D2019F66049110						       \
 	.pdol = {							       \
 		0xD1, 0x02, 0xD2, 0x01, 0x9F, 0x66, 0x04, 0x91, 0x10	       \
@@ -189,12 +189,22 @@ extern uint32_t transaction_sequence_counter;
 	},								       \
 	.pdol_len = 7
 
-/* PDOL with Pre-Processing indicator, TTQ, kernel ID, FCI */
+/* PDOL with Pre-Processing indicator, TTQ, kernel ID, FCI		      */
 #define PDOL_D1029F66049F2A086F23					       \
 	.pdol = {							       \
 		0xD1, 0x02, 0x9F, 0x66, 0x04, 0x9F, 0x2A, 0x08, 0x6F, 0x23     \
 	},								       \
 	.pdol_len = 10
+
+/* PDOL with Amount Authorized, Amount Other, Unpredictable Number, DF01, C1,
+ * 85, 9F25								      */
+#define PDOL_9F66049F02069F03069F3704DF0101C102__9F2502			       \
+	.pdol = {							       \
+		0x9F, 0x66, 0x04, 0x9F, 0x02, 0x06, 0x9F, 0x03, 0x06, 0x9F,    \
+		0x37, 0x04, 0xDF, 0x01, 0x01, 0xC1, 0x02, 0x85, 0x01, 0x9F,    \
+		0x25, 0x02						       \
+	},								       \
+	.pdol_len = 22
 
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
@@ -315,6 +325,7 @@ enum pass_criteria {
 	pc_2ea_017_00_case02 = 53,
 	pc_2ea_017_00_case03 = 54,
 	pc_2ea_017_01	     = 55,
+	pc_2ea_018_00	     = 56,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -396,6 +407,7 @@ enum ltsetting {
 	ltsetting2_10,
 	ltsetting2_40,
 	ltsetting6_10,
+	ltsetting6_11,
 	ltsetting8_0,
 	ltsetting8_1,
 	num_ltsettings

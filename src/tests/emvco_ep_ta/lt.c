@@ -49,6 +49,8 @@ struct aid_fci {
 	uint8_t		     pdol[256];
 	size_t		     pdol_len;
 	char		     lang_pref[2];
+	uint8_t		     other[64];
+	size_t		     other_len;
 };
 
 struct gpo_resp {
@@ -2098,7 +2100,50 @@ static const struct lt_setting ltsetting[] = {
 					.outcome = out_approved
 				}
 			}
-		}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting6.11 */
+	{
+		.ppse_entries = {
+			{
+				.present = {
+					.app_label = true,
+					.app_prio  = true,
+					.kernel_id = true,
+				},
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 1
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_9F66049F02069F03069F3704DF0101C102__9F2502,
+				.app_prio = 1,
+				.other = "\x9F\x02\x06\x10\x20\x30\x40\x50\x60"
+					 "\x9F\x03\x06\x01\x02\x03\x04\x05\x06"
+					 "\x9F\x37\x04\x11\x22\x33\x44"
+					 "\xDF\x01\x01\xFF"
+					 "\xC1\x02\xEE\xEE"
+					 "\x85\x01\xDD"
+					 "\x9F\x25\x02\xCC\xCC",
+				.other_len = 41
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting8.0 */
 	{
@@ -2326,8 +2371,19 @@ static int ber_get_aid_fci(const struct aid_fci *aid_fci, void *ber,
 	if (aid_fci->lang_pref[0])
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_LANGUAGE_PREFERENCE,
 							2, aid_fci->lang_pref));
+	if (aid_fci->other) {
+		struct tlv *tlv_other = NULL;
+
+		rc = tlv_parse(aid_fci->other, aid_fci->other_len, &tlv_other);
+		if (rc != TLV_RC_OK)
+			goto done;
+
+		tlv = tlv_insert_after(tlv, tlv_other);
+	}
+
 	rc = tlv_encode(tlv_aid_fci, ber, ber_size);
 
+done:
 	tlv_free(tlv_aid_fci);
 
 	return rc;
