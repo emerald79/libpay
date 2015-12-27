@@ -11,15 +11,7 @@
 
 #include "emvco_ep_ta.h"
 
-struct ppse_entry_flags {
-	bool app_label:1;
-	bool app_prio:1;
-	bool kernel_id:1;
-	bool ext_select:1;
-};
-
 struct ppse_entry {
-	struct ppse_entry_flags	present;
 	uint8_t			aid[16];
 	size_t			aid_len;
 	uint8_t			app_label[17];
@@ -31,18 +23,9 @@ struct ppse_entry {
 	size_t			ext_select_len;
 };
 
-struct aid_fci_flags {
-	bool aid:1;
-	bool app_label:1;
-	bool app_prio:1;
-	bool pdol:1;
-	bool lang_pref:1;
-};
-
 struct aid_fci {
 	const char	    *bin;
 	size_t		     bin_len;
-	struct aid_fci_flags present;
 	uint8_t		     aid[16];
 	size_t		     aid_len;
 	uint8_t		     app_label[17];
@@ -75,11 +58,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -117,11 +95,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -159,11 +132,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -201,11 +169,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -243,11 +206,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -286,11 +244,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -329,11 +282,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -374,11 +322,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -430,11 +373,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -471,11 +409,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -529,11 +462,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -593,11 +521,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -653,11 +576,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -690,11 +608,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -738,11 +651,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -774,11 +682,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -822,11 +725,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -863,11 +761,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -915,11 +808,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -956,11 +844,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -992,11 +875,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -1049,11 +927,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -1105,11 +978,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -1141,11 +1009,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -1193,11 +1056,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -1251,11 +1109,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -1306,11 +1159,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -1348,11 +1196,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -1390,11 +1233,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -1448,11 +1286,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -1492,11 +1325,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -1550,11 +1378,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -1594,11 +1417,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -1652,11 +1470,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -1697,11 +1510,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -1742,11 +1550,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -1787,11 +1590,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -1821,11 +1619,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
@@ -1855,11 +1648,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_25,
@@ -1897,11 +1685,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_25,
@@ -1931,11 +1714,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_25,
@@ -1995,44 +1773,24 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
 				.app_prio = 1,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
 				.app_prio = 2,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
 				.app_prio = 3,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
@@ -2093,33 +1851,18 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
 				.app_prio = 1,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
 				.app_prio = 2,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP3,
 				KERNEL_ID_22,
@@ -2172,44 +1915,24 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24FFFF,
 				.app_prio = 0xF2,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_240000,
 				.app_prio = 4,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23FF00FF00FF00FF,
 				.app_prio = 0xFF,
 			},
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_2102030405060708,
@@ -2257,11 +1980,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
@@ -2434,11 +2152,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -2479,11 +2192,6 @@ static const struct lt_setting ltsetting[] = {
 	{
 		.ppse_entries = {
 			{
-				.present = {
-					.app_label = true,
-					.app_prio  = true,
-					.kernel_id = true,
-				},
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
@@ -2531,20 +2239,17 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 	tlv = tlv_insert_below(tlv_ppse_entry,
 			      tlv_new(EMV_ID_ADF_NAME, ent->aid_len, ent->aid));
 
-	if (ent->present.app_label)
-		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
+	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
 					   ent->app_label_len, ent->app_label));
 
-	if (ent->present.app_prio)
-		tlv = tlv_insert_after(tlv,
+	tlv = tlv_insert_after(tlv,
 				  tlv_new(EMV_ID_APPLICATION_PRIORITY_INDICATOR,
 							    1, &ent->app_prio));
 
-	if (ent->present.kernel_id)
-		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_KERNEL_IDENTIFIER,
+	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_KERNEL_IDENTIFIER,
 					   ent->kernel_id_len, ent->kernel_id));
 
-	if (ent->present.ext_select)
+	if (ent->ext_select_len)
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_EXTENDED_SELECTION,
 					 ent->ext_select_len, ent->ext_select));
 
