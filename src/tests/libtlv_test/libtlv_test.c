@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include <log4c.h>
 
 #include <tlv.h>
 
@@ -399,11 +400,20 @@ int main(int argc, char **argv)
 	SRunner *srunner;
 	int failed;
 
+	if (log4c_init()) {
+		fprintf(stderr, "log4c_init() failed!\n");
+		return EXIT_FAILURE;
+	}
+
+	libtlv_init("libtlv_test");
+
 	suite = tlv_test_suite();
 	srunner = srunner_create(suite);
 	srunner_run_all(srunner, CK_VERBOSE);
 	failed = srunner_ntests_failed(srunner);
 	srunner_free(srunner);
+
+	log4c_fini();
 
 	return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }

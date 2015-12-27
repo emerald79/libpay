@@ -1028,6 +1028,7 @@ int main(int argc, char **argv)
 
 	log_cat = log4c_category_get(log4c_category);
 
+	libtlv_init(log4c_category);
 	libtlv_register_fmts(id_fmts);
 	libtlv_register_fmts(libemv_get_id_fmts());
 

@@ -26,3 +26,4 @@ libtlv_bin_to_hex
 libtlv_register_fmts
 libtlv_free_fmts
 libtlv_id_to_fmt
+libtlv_init

@@ -21,9 +21,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
+#include <log4c.h>
 
 #include <libemv_core.h>
 #include <tlv.h>
+
+static log4c_category_t *log_cat;
 
 struct tlv {
 	struct tlv	*next;
@@ -38,7 +41,7 @@ struct tlv {
 
 bool tlv_is_constructed(const struct tlv *tlv)
 {
-	return !!(tlv->tag[0] & TLV_TAG_P_C_MASK);
+	return !!tlv->child;
 }
 
 struct tlv *tlv_get_next(const struct tlv *tlv)
@@ -139,10 +142,18 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 	struct tlv temp_tlv;
 	const void *start = *buffer;
 	size_t remaining = 0;
-	int rc = 0;
+	int rc = TLV_RC_OK;
 
-	if (!buffer || !(*buffer) || !length || !tlv)
-		return TLV_RC_INVALID_ARG;
+	if (!buffer || !(*buffer) || !length || !tlv) {
+		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+			    "%s(buffer: %p, *buffer: %p, length: %d, tlv: %p): "
+					  "Invalid arguments", __func__, buffer,
+				     buffer ? *buffer : NULL, (int)length, tlv);
+		rc = TLV_RC_INVALID_ARG;
+		goto done;
+	}
+
+	*tlv = NULL;
 
 	/* EMV v4.3 Book 3: 'Before, between, or after TLV-coded data
 	 * objects, '00' bytes without any meaning may occur (for example, due
@@ -153,7 +164,8 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 		remaining--;
 	}
 
-	*tlv = NULL;
+	if (!remaining)
+		goto done;
 
 	memset(&temp_tlv, 0, sizeof(temp_tlv));
 	temp_tlv.parent = parent;
@@ -161,16 +173,18 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 
 	rc = tlv_parse_identifier(buffer, remaining, &temp_tlv);
 	if (rc)
-		return rc;
+		goto done;
 
 	remaining = length - (*buffer - start);
 	rc = tlv_parse_length(buffer, remaining, &temp_tlv);
 	if (rc)
-		return rc;
+		goto done;
 
 	*tlv = (struct tlv *)malloc(sizeof(struct tlv) + temp_tlv.length);
-	if (!*tlv)
-		return TLV_RC_OUT_OF_MEMORY;
+	if (!*tlv) {
+		rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
 
 	memcpy(*tlv, &temp_tlv, sizeof(struct tlv));
 
@@ -180,7 +194,7 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 		if (rc != TLV_RC_OK) {
 			free(*tlv);
 			*tlv = NULL;
-			return rc;
+			goto done;
 		}
 	} else {
 		memcpy((*tlv)->value, *buffer, (*tlv)->length);
@@ -203,11 +217,23 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 		if (rc != TLV_RC_OK) {
 			free(*tlv);
 			*tlv = NULL;
-			return rc;
+			goto done;
 		}
 	}
 
-	return TLV_RC_OK;
+done:
+	if (rc != TLV_RC_OK) {
+		if (start) {
+			char hex[length * 2 + 1];
+
+			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+				"%s() failed! rc %d, length: %d, ber-tlv: '%s'",
+						      __func__, rc, (int)length,
+					 libtlv_bin_to_hex(start, length, hex));
+		}
+	}
+
+	return rc;
 }
 
 void tlv_free(struct tlv *tlv)
@@ -225,17 +251,27 @@ void tlv_free(struct tlv *tlv)
 
 int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 {
+	int rc = TLV_RC_OK;
+
 	if (!length) {
 		*tlv = NULL;
-		return TLV_RC_OK;
+		goto done;
 	}
 
-	return tlv_parse_recursive(&buffer, length, tlv, NULL, NULL);
+	rc = tlv_parse_recursive(&buffer, length, tlv, NULL, NULL);
+done:
+	return rc;
 }
 
 static size_t tlv_get_encoded_identifier_size(const struct tlv *tlv)
 {
 	size_t i;
+
+	if (!tlv) {
+		log4c_category_log(log_cat, LOG4C_PRIORITY_ERROR,
+				"%s(tlv: %p): Invalid argument", __func__, tlv);
+		return -1;
+	}
 
 	if ((tlv->tag[0] & TLV_TAG_NUMBER_MASK) != 0x1Fu)
 		return 1;
@@ -272,6 +308,12 @@ static size_t tlv_get_encoded_length_size(const struct tlv *tlv)
 static size_t tlv_get_encoded_length(const struct tlv *tlv)
 {
 	size_t size;
+
+	if (!tlv) {
+		log4c_category_log(log_cat, LOG4C_PRIORITY_ERROR,
+				"%s(tlv: %p): Invalid argument", __func__, tlv);
+		return -1;
+	}
 
 	size = tlv_get_encoded_identifier_size(tlv);
 	size += tlv_get_encoded_length_size(tlv);
@@ -571,7 +613,7 @@ struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child)
 	if (!parent || !child || child->parent)
 		return NULL;
 
-	if (!(parent->tag[0] & TLV_TAG_P_C_MASK))
+	if (tlv_is_constructed(parent))
 		return NULL;
 
 	if (parent->child) {
@@ -826,20 +868,25 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 		dol_sz_left = dol_sz - (i_dol - dol);
 		rc = tlv_parse_identifier(&i_dol, dol_sz_left, &tlv_do);
 		if (rc != TLV_RC_OK) {
-			printf("%s(): tlv_parse_identifier_fail!\n", __func__);
+			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+					 "%s(): tlv_parse_identifier failed!\n",
+								      __func__);
 			goto done;
 		}
 
 		dol_sz_left = dol_sz - (i_dol - dol);
 		rc = tlv_parse_length(&i_dol, dol_sz_left, &tlv_do);
 		if (rc != TLV_RC_OK) {
-			printf("%s(): tlv_parse_length_fail!\n", __func__);
+			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+				  "%s(): tlv_parse_length failed!\n", __func__);
 			goto done;
 		}
 
 		rc = tlv_encode_identifier(&tlv_do, tag, &tag_sz);
 		if (rc != TLV_RC_OK) {
-			printf("%s(): tlv_encode_identifier_fail!\n", __func__);
+			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+					"%s(): tlv_encode_identifier failed!\n",
+								      __func__);
 			goto done;
 		}
 
@@ -916,20 +963,26 @@ int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 		dol_sz_left = dol_sz - (i_dol - dol);
 		rc = tlv_parse_identifier(&i_dol, dol_sz_left, &tlv_do);
 		if (rc != TLV_RC_OK) {
-			printf("%s(): tlv_parse_identifier_fail!\n", __func__);
+			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+					 "%s(): tlv_parse_identifier failed!\n",
+								      __func__);
 			goto done;
 		}
 
 		dol_sz_left = dol_sz - (i_dol - dol);
 		rc = tlv_parse_length(&i_dol, dol_sz_left, &tlv_do);
 		if (rc != TLV_RC_OK) {
-			printf("%s(): tlv_parse_length_fail!\n", __func__);
+			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+					     "%s(): tlv_parse_length failed!\n",
+								      __func__);
 			goto done;
 		}
 
 		rc = tlv_encode_identifier(&tlv_do, tag, &tag_sz);
 		if (rc != TLV_RC_OK) {
-			printf("%s(): tlv_encode_identifier_fail!\n", __func__);
+			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+					"%s(): tlv_encode_identifier failed!\n",
+								      __func__);
 			goto done;
 		}
 
@@ -1129,4 +1182,12 @@ enum tlv_fmt libtlv_id_to_fmt(const void *id)
 		       num_known_formats, sizeof(*fmt), compare_id_with_format);
 
 	return fmt ? fmt->fmt : fmt_unknown;
+}
+
+void libtlv_init(const char *log4c_category)
+{
+	char cat[64];
+
+	snprintf(cat, sizeof(cat), "%s.libtlv", log4c_category);
+	log_cat = log4c_category_get(cat);
 }

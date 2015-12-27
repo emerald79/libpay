@@ -8,4 +8,5 @@ TESTS = libtlv_test
 check_PROGRAMS = libtlv_test
 
 libtlv_test_SOURCES = libtlv_test.c
-libtlv_test_LDADD = @CHECK_LIBS@ -ldl $(top_builddir)/src/libtlv/libtlv.la
+libtlv_test_CFLAGS = $(AM_CFLAGS) @CHECK_CFLAGS@ @LOG4C_CFLAGS@
+libtlv_test_LDADD = $(AM_LDADD) @CHECK_LIBS@ @LOG4C_LIBS@ -ldl $(top_builddir)/src/libtlv/libtlv.la

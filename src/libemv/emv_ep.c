@@ -1833,6 +1833,8 @@ int emv_ep_configure(struct emv_ep *ep, const void *config, size_t len)
 
 	rc = tlv_parse(config, len, &tlv_config);
 	if (rc != TLV_RC_OK) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
+				      "%s(): failed to parse config", __func__);
 		rc = EMV_RC_SYNTAX_ERROR;
 		goto error;
 	}

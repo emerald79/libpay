@@ -324,4 +324,6 @@ void libtlv_free_fmts(void);
 
 enum tlv_fmt libtlv_id_to_fmt(const void *id);
 
+void libtlv_init(const char *log4c_category);
+
 #endif /* ndef __TLV_H__ */
