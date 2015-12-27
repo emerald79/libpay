@@ -345,7 +345,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2ea_014_00_case02:
 		/* Case02: At restart, the LT shall receive the Select AID
 		 * 'A0000000020002' (corresponding to the the APP2 AID) without
-		 * a previous SELECT command with PPSE FIXME		      */
+		 * a previous SELECT command with PPSE			      */
 		switch (chk->state) {
 
 		case 0:
@@ -383,7 +383,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2ea_014_00_case03:
 		/* Case03: At restart, the LT shall receive the Select AID
 		 * 'A0000000030003' (corresponding to the the APP3 AID) without
-		 * a previous SELECT command with PPSE FIXME		      */
+		 * a previous SELECT command with PPSE			      */
 		switch (chk->state) {
 
 		case 0:
@@ -400,15 +400,16 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 			break;
 
 		case 2:
+			break;
+
+		case 3:
 			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
-			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len))) {
-				printf("SECOND SELECT PPSE!\n");
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
 				chk->pass_criteria_met = false;
-			}
 
 			if ((len == 7) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
-				chk->state = 3;
+				chk->state = 4;
 			break;
 
 		default:
@@ -1174,7 +1175,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		break;
 
 	case pc_2ea_014_00_case03:
-		if (chk->state != 3)
+		if (chk->state != 4)
 			break;
 
 		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
@@ -1536,6 +1537,7 @@ static void checker_ep_restart(struct chk *chk)
 
 	switch (checker->pass_criteria) {
 
+	case pc_2ea_014_00_case03:
 	case pc_2ea_016_00_case04:
 	case pc_2ea_016_00_case05:
 	case pc_2ea_016_00_case06:
