@@ -214,7 +214,6 @@ struct emv_outcome_parms_flags {
 	bool	ui_request_on_outcome;
 	bool	ui_request_on_restart;
 	bool	field_off_request;
-	bool	receipt;
 };
 
 struct emv_outcome_parms {
@@ -222,6 +221,7 @@ struct emv_outcome_parms {
 	enum	emv_outcome			outcome;
 	enum	emv_start			start;
 	enum	emv_online_response_type	online_response_type;
+	bool					receipt;
 	enum	emv_cvm				cvm;
 	struct	emv_ui_request			ui_request_on_outcome;
 	struct	emv_ui_request			ui_request_on_restart;

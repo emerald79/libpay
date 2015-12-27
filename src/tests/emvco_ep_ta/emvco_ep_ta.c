@@ -44,7 +44,7 @@ void gpo_outcome_to_outcome(const struct outcome_gpo_resp *in,
 	out->outcome		      = (enum emv_outcome)in->outcome;
 	out->start		      = (enum emv_start)in->start;
 	out->cvm		      = (enum emv_cvm)in->cvm;
-	out->present.receipt	      = (bool)in->receipt;
+	out->receipt		      = (bool)in->receipt;
 	out->removal_timeout	      = (int)ntohs(in->removal_timeout);
 	out->online_response_type     = (enum emv_online_response_type)
 								in->online_resp;
@@ -68,7 +68,7 @@ void outcome_to_gpo_outcome(const struct emv_outcome_parms *in,
 	out->online_resp	= (uint8_t)in->online_response_type;
 	out->cvm		= (uint8_t)in->cvm;
 	out->alt_iface_pref	= (uint8_t)in->alternate_interface_pref;
-	out->receipt		= (uint8_t)in->present.receipt;
+	out->receipt		= (uint8_t)in->receipt;
 	out->field_off_request	= in->present.field_off_request ?
 			     htons((uint16_t)in->field_off_hold_time) : 0xffffu;
 	out->removal_timeout	= htons((uint16_t)in->removal_timeout);

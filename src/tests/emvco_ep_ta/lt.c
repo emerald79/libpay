@@ -225,10 +225,10 @@ static const struct lt_setting ltsetting[] = {
 			{
 				.outcome_parms = {
 					.present = {
-						.receipt = true,
 						.ui_request_on_outcome = true
 					},
 					.outcome = out_approved,
+					.receipt = true,
 					.cvm = cvm_no_cvm,
 					.ui_request_on_outcome = {
 						.msg_id = msg_approved,
@@ -263,10 +263,10 @@ static const struct lt_setting ltsetting[] = {
 			{
 				.outcome_parms = {
 					.present = {
-						.receipt = true,
 						.ui_request_on_outcome = true
 					},
 					.outcome = out_approved,
+					.receipt = true,
 					.cvm = cvm_obtain_signature,
 					.ui_request_on_outcome = {
 						.msg_id = msg_approved,
@@ -308,10 +308,8 @@ static const struct lt_setting ltsetting[] = {
 			},
 			{
 				.outcome_parms = {
-					.present = {
-						.receipt = true
-					},
 					.outcome = out_approved,
+					.receipt = true,
 					.cvm = cvm_obtain_signature
 				}
 			}
@@ -359,10 +357,8 @@ static const struct lt_setting ltsetting[] = {
 			},
 			{
 				.outcome_parms = {
-					.present = {
-						.receipt = true
-					},
 					.outcome = out_approved,
+					.receipt = true,
 					.cvm = cvm_obtain_signature
 				}
 			}
@@ -507,11 +503,9 @@ static const struct lt_setting ltsetting[] = {
 			},
 			{
 				.outcome_parms = {
-					.present = {
-						.receipt = true
-					},
 					.outcome = out_approved,
-					.cvm = cvm_obtain_signature,
+					.receipt = true,
+					.cvm = cvm_obtain_signature
 				}
 			},
 		},
@@ -562,11 +556,9 @@ static const struct lt_setting ltsetting[] = {
 			},
 			{
 				.outcome_parms = {
-					.present = {
-						.receipt = true
-					},
 					.outcome = out_approved,
-					.cvm = cvm_no_cvm,
+					.receipt = true,
+					.cvm = cvm_no_cvm
 				}
 			},
 		},
@@ -794,10 +786,8 @@ static const struct lt_setting ltsetting[] = {
 			},
 			{
 				.outcome_parms = {
-					.present = {
-						.receipt = true
-					},
 					.outcome = out_approved,
+					.receipt = true,
 					.cvm = cvm_obtain_signature
 				}
 			},
@@ -964,10 +954,8 @@ static const struct lt_setting ltsetting[] = {
 			},
 			{
 				.outcome_parms = {
-					.present = {
-						.receipt = true
-					},
 					.outcome = out_approved,
+					.receipt = true,
 					.cvm = cvm_obtain_signature
 				}
 			},
@@ -1759,11 +1747,9 @@ static const struct lt_setting ltsetting[] = {
 			},
 			{
 				.outcome_parms = {
-					.present = {
-						.receipt = true
-					},
 					.outcome = out_approved,
-					.cvm = cvm_obtain_signature,
+					.receipt = true,
+					.cvm = cvm_obtain_signature
 				}
 			},
 		},

@@ -1761,7 +1761,7 @@ static void checker_outcome(struct chk *checker,
 	switch (chk->pass_criteria) {
 	case pc_2ea_019_00_case01:
 	case pc_2ea_019_00_case03:
-		if (outcome->present.receipt) {
+		if (outcome->receipt) {
 			if (outcome->cvm != cvm_no_cvm)
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
@@ -1770,7 +1770,7 @@ static void checker_outcome(struct chk *checker,
 
 	case pc_2ea_019_00_case02:
 	case pc_2ea_019_00_case04:
-		if (outcome->present.receipt) {
+		if (outcome->receipt) {
 			if (outcome->cvm != cvm_obtain_signature)
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
