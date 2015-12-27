@@ -218,6 +218,9 @@ static bool is_currency_code_supported(const uint8_t *currency_code)
 
 static uint64_t unit_of_currency(const uint8_t currency_code[2])
 {
+	if (!currency_code[0] && !(currency_code[1]))
+		return 1;
+
 	return 100;
 }
 
@@ -297,8 +300,7 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.1");
 		/* For each Combination, Entry Point shall reset the Entry Point
 		 * Pre-Processing Indicators to 0.			      */
-		memset(&combination->indicators, 0,
-					       sizeof(combination->indicators));
+		memset(indicators, 0, sizeof(*indicators));
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.2");

@@ -207,7 +207,7 @@ done:
 
 static int emvco_ep_ta_tc(enum termsetting termsetting,
 				enum ltsetting ltsetting, enum pass_criteria pc,
-						      const struct emv_txn *txn)
+				      const struct emv_txn *txn, size_t num_txn)
 {
 	struct emv_outcome_parms outcome;
 	struct emvco_ep_ta_tc_fixture fixture;
@@ -260,77 +260,88 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 
 		chk->ops->outcome(chk, &outcome);
 	} else {
-		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.5"); */
-		/* If the value of the POS System configuration parameter
-		 * Autorun is 'No',then the reader shall do all of the
-		 * following:
-		 *  o Ensure the field is off.
-		 *  o Request message '14' (Welcome), status Idle.
-		 *  o Wait for instruction from the terminal and then activate
-		 *    Entry Point at Start A and make the following available to
-		 *    Entry Point:
-		 *     o Transaction Type
-		 *     o the corresponding set of supported Combinations and
-		 *	 Entry Point Configuration Data
-		 *     o Amount, Authorised
-		 *     o Amount, Other					      */
-		struct emv_ui_request welcome = {
-			.msg_id = msg_welcome,
-			.status = sts_idle
-		};
+		int i_txn;
 
-		rc = emv_ep_field_off(fixture.ep);
-		if (rc != EMV_RC_OK)
-			goto done;
+		for (i_txn = 0; i_txn < num_txn; i_txn++) {
+			/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.5"); */
+			/* If the value of the POS System configuration
+			 * parameter Autorun is 'No',then the reader shall do
+			 * all of the following:
+			 *  o Ensure the field is off.
+			 *  o Request message '14' (Welcome), status Idle.
+			 *  o Wait for instruction from the terminal and then
+			 *    activate Entry Point at Start A and make the
+			 *    following available to Entry Point:
+			 *     o Transaction Type
+			 *     o the corresponding set of supported Combinations
+			 *       and Entry Point Configuration Data
+			 *     o Amount, Authorised
+			 *     o Amount, Other				      */
+			struct emv_ui_request welcome = {
+				.msg_id = msg_welcome,
+				.status = sts_idle
+			};
 
-		rc = emv_ep_ui_request(fixture.ep, &welcome);
-		if (rc != EMV_RC_OK)
-			goto done;
+			rc = emv_ep_field_off(fixture.ep);
+			if (rc != EMV_RC_OK)
+				goto done;
 
-		chk->ops->ep_start(chk);
+			rc = emv_ep_ui_request(fixture.ep, &welcome);
+			if (rc != EMV_RC_OK)
+				goto done;
 
-		rc = emv_ep_activate(fixture.ep, start_a, txn,
-			     ++transaction_sequence_counter, NULL, 0, &outcome);
-		if (rc != EMV_RC_OK)
-			goto done;
+			chk->ops->ep_start(chk);
 
-		chk->ops->outcome(chk, &outcome);
+			rc = emv_ep_activate(fixture.ep, start_a, &txn[i_txn],
+					++transaction_sequence_counter, NULL, 0,
+								      &outcome);
+			if (rc != EMV_RC_OK)
+				goto done;
+
+			chk->ops->outcome(chk, &outcome);
 #if 0
-		if (outcome.data_record.len) {
-			char hex[outcome.data_record.len * 2 + 1];
-			printf("DATA RECORD: '%s'\n", libtlv_bin_to_hex(
+			if (outcome.data_record.len) {
+				char hex[outcome.data_record.len * 2 + 1];
+				printf("DATA RECORD: '%s'\n", libtlv_bin_to_hex(
 						       outcome.data_record.data,
 						 outcome.data_record.len, hex));
-		}
+			}
 #endif
 
-		if (outcome.start != start_na) {
-			if ((outcome.online_response_type != ort_na) &&
-			    (outcome.data_record.len == 0)) {
-				/* No online response data -> timeout */
-				/* should sleep for outcome.removal_timeout */
-				struct emv_ui_request rm_card = {
-					.msg_id = msg_card_read_ok,
-					.status = sts_card_read_successfully
-				};
+			if (outcome.start != start_na) {
+				if ((outcome.online_response_type != ort_na) &&
+				    (outcome.data_record.len == 0)) {
+					/* No online response data -> timeout */
+					/* should sleep for		      */
+					/* outcome.removal_timeout	      */
+					struct emv_ui_request rm_card = {
+						.msg_id = msg_card_read_ok,
+						.status =
+						      sts_card_read_successfully
+					};
 
-				rc = emv_ep_ui_request(fixture.ep, &rm_card);
-				if (rc != EMV_RC_OK)
-					goto done;
-			}
+					rc = emv_ep_ui_request(fixture.ep,
+								      &rm_card);
+					if (rc != EMV_RC_OK)
+						goto done;
+				}
 
-			if ((outcome.online_response_type != ort_emv_data) ||
-			    (outcome.data_record.len)) {
-				chk->ops->ep_restart(chk);
+				if ((outcome.online_response_type !=
+								ort_emv_data) ||
+				    (outcome.data_record.len)) {
+					chk->ops->ep_restart(chk);
 
-				rc = emv_ep_activate(fixture.ep, outcome.start,
-					      txn, transaction_sequence_counter,
+					rc = emv_ep_activate(fixture.ep,
+						     outcome.start, &txn[i_txn],
+						   transaction_sequence_counter,
 						       outcome.data_record.data,
-					     outcome.data_record.len, &outcome);
-				if (rc != EMV_RC_OK)
-					goto done;
+							outcome.data_record.len,
+								      &outcome);
+					if (rc != EMV_RC_OK)
+						goto done;
 
-				chk->ops->outcome(chk, &outcome);
+					chk->ops->outcome(chk, &outcome);
+				}
 			}
 		}
 	}
@@ -358,17 +369,17 @@ START_TEST(test_2EA_001_00)
 
 	txn.amount_authorized = 10;
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_1, pc_2ea_001_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	txn.amount_authorized = 75;
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2ea_001_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	txn.amount_authorized = 45;
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_97, pc_2ea_001_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -383,7 +394,7 @@ START_TEST(test_2EA_002_00)
 	txn.type = txn_purchase;
 	txn.amount_authorized = 10;
 
-	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2ea_002_00, &txn);
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2ea_002_00, &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -398,7 +409,7 @@ START_TEST(test_2EA_002_01)
 	txn.type = txn_cash_advance;
 	txn.amount_authorized = 20;
 
-	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2ea_002_01, &txn);
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2ea_002_01, &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -413,7 +424,7 @@ START_TEST(test_2EA_002_02)
 	txn.type = txn_refund;
 	txn.amount_authorized = 30;
 
-	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_4, pc_2ea_002_02, &txn);
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_4, pc_2ea_002_02, &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -430,13 +441,13 @@ START_TEST(test_2EA_003_00)
 	txn.amount_authorized = 30;
 	txn.amount_other      = 10;
 	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2ea_003_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	txn.amount_authorized = 70;
 	txn.amount_other      = 20;
 	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2ea_003_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -452,11 +463,11 @@ START_TEST(test_2EA_004_00)
 	txn.amount_authorized = 10;
 
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_1, pc_2ea_004_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_1, pc_2ea_004_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -471,7 +482,7 @@ START_TEST(test_2EA_005_00)
 	txn.type = txn_purchase;
 	txn.amount_authorized = 10;
 
-	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2ea_005_00, &txn);
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2ea_005_00, &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -486,7 +497,7 @@ START_TEST(test_2EA_005_01)
 	txn.type = txn_purchase;
 	txn.amount_authorized = 10;
 
-	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2ea_005_01, &txn);
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2ea_005_01, &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -496,7 +507,7 @@ START_TEST(test_2EA_006_00)
 {
 	int rc;
 
-	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ea_006_00, NULL);
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ea_006_00, NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -506,7 +517,7 @@ START_TEST(test_2EA_006_01)
 {
 	int rc;
 
-	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ea_006_01, NULL);
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ea_006_01, NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -523,12 +534,12 @@ START_TEST(test_2EA_006_02)
 
 	txn.amount_authorized = 2;
 	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_90, pc_2ea_006_02_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	txn.amount_authorized = 5;
 	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_98, pc_2ea_006_02_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -545,7 +556,8 @@ START_TEST(test_2EA_006_03)
 	txn.amount_authorized = 2;
 	txn.amount_other = 1;
 
-	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_91, pc_2ea_006_03, &txn);
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_91, pc_2ea_006_03,
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -561,7 +573,8 @@ START_TEST(test_2EA_006_04)
 	txn.type = txn_cash_advance;
 	txn.amount_authorized = 2;
 
-	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_90, pc_2ea_006_04, &txn);
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_90, pc_2ea_006_04,
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -576,7 +589,8 @@ START_TEST(test_2EA_006_05)
 	txn.type = txn_refund;
 	txn.amount_authorized = 2;
 
-	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_91, pc_2ea_006_05, &txn);
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_91, pc_2ea_006_05,
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -640,15 +654,15 @@ START_TEST(test_2EA_011_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_60, pc_2ea_011_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_61, pc_2ea_011_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_62, pc_2ea_011_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -664,19 +678,19 @@ START_TEST(test_2EA_012_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_70, pc_2ea_012_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_71, pc_2ea_012_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_72, pc_2ea_012_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_73, pc_2ea_012_00_case04,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -692,15 +706,15 @@ START_TEST(test_2EA_013_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_80, pc_2ea_013_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_81, pc_2ea_013_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_82, pc_2ea_013_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -716,11 +730,11 @@ START_TEST(test_2EA_013_01)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting8_0, pc_2ea_013_01_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting8_1, pc_2ea_013_01_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -736,27 +750,27 @@ START_TEST(test_2EA_014_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_20, pc_2ea_014_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_11, pc_2ea_014_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_22, pc_2ea_014_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_13, pc_2ea_014_00_case04,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_27, pc_2ea_014_00_case05,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_99, pc_2ea_014_00_case06,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -772,11 +786,11 @@ START_TEST(test_2EA_014_01)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_34, pc_2ea_014_01_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_35, pc_2ea_014_01_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -792,19 +806,19 @@ START_TEST(test_2EA_015_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_15, pc_2ea_015_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_18, pc_2ea_015_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_28, pc_2ea_015_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_24, pc_2ea_015_00_case04,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -821,35 +835,35 @@ START_TEST(test_2EA_016_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_10, pc_2ea_016_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_21, pc_2ea_016_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_7, pc_2ea_016_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_23, pc_2ea_016_00_case04,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_16, pc_2ea_016_00_case05,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_25, pc_2ea_016_00_case06,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_8, pc_2ea_016_00_case07,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_29, pc_2ea_016_00_case08,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -865,17 +879,17 @@ START_TEST(test_2EA_017_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting6_10, pc_2ea_017_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	txn.amount_authorized = 121;
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting6_10, pc_2ea_017_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	txn.amount_authorized = 2;
 	rc = emvco_ep_ta_tc(termsetting8, ltsetting6_10, pc_2ea_017_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -890,7 +904,8 @@ START_TEST(test_2EA_017_01)
 	txn.type = txn_purchase;
 	txn.amount_authorized = 2;
 
-	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_10, pc_2ea_017_01, &txn);
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_10, pc_2ea_017_01,
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -905,7 +920,8 @@ START_TEST(test_2EA_018_00)
 	txn.type = txn_purchase;
 	txn.amount_authorized = 2;
 
-	rc = emvco_ep_ta_tc(termsetting1, ltsetting6_11, pc_2ea_018_00, &txn);
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting6_11, pc_2ea_018_00,
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -921,19 +937,19 @@ START_TEST(test_2EA_019_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_5, pc_2ea_019_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_6, pc_2ea_019_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_14, pc_2ea_019_00_case03,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_13, pc_2ea_019_00_case04,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -949,11 +965,11 @@ START_TEST(test_2EA_020_00)
 	txn.amount_authorized = 2;
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting6_12, pc_2ea_020_00_case01,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting6_13, pc_2ea_020_00_case02,
-									  &txn);
+								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -968,7 +984,53 @@ START_TEST(test_2EA_021_00)
 	txn.type = txn_purchase;
 	txn.amount_authorized = 2;
 
-	rc = emvco_ep_ta_tc(termsetting1, ltsetting6_14, pc_2ea_021_00, &txn);
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting6_14, pc_2ea_021_00,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.001.00 Order of Data Elements					      */
+START_TEST(test_2EB_001_00)
+{
+	struct emv_txn txn[][2] = {
+		{
+			{ .type = txn_purchase, .amount_authorized =   1 },
+			{ .type = txn_purchase, .amount_authorized =   2 }
+		}, {
+			{ .type = txn_purchase, .amount_authorized = 121 },
+			{ .type = txn_purchase, .amount_authorized =   2 }
+		}, {
+			{ .type = txn_purchase, .amount_authorized =   0 },
+			{ .type = txn_purchase, .amount_authorized =   2 }
+		}, {
+			{ .type = txn_purchase, .amount_authorized =  16 },
+			{ .type = txn_purchase, .amount_authorized =   2 }
+		}, {
+			{ .type = txn_purchase, .amount_authorized =  13 },
+			{ .type = txn_purchase, .amount_authorized =   2 }
+		}
+	};
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_1, pc_2eb_001_00_case01,
+								     txn[0], 2);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_2, pc_2eb_001_00_case02,
+								     txn[1], 2);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_3, pc_2eb_001_00_case03,
+								     txn[2], 2);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_4, pc_2eb_001_00_case04,
+								     txn[3], 2);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_97, pc_2eb_001_00_case05,
+								     txn[4], 2);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -976,11 +1038,12 @@ END_TEST
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
-	TCase *tc_general_reqs = NULL;
+	TCase *tc_general_reqs = NULL, *tc_pre_processing = NULL;
 
-	suite = suite_create("emvco_ep_ta");
+	suite = suite_create("EMVCo Type Approval - Book A & Book B - Test "
+							"Cases - Version 2.4a");
 
-	tc_general_reqs = tcase_create("emvco-ep-ta-general-requirements");
+	tc_general_reqs = tcase_create("General Requirements");
 	tcase_add_test(tc_general_reqs, test_2EA_001_00);
 	tcase_add_test(tc_general_reqs, test_2EA_002_00);
 	tcase_add_test(tc_general_reqs, test_2EA_002_01);
@@ -1011,6 +1074,10 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_020_00);
 	tcase_add_test(tc_general_reqs, test_2EA_021_00);
 	suite_add_tcase(suite, tc_general_reqs);
+
+	tc_pre_processing = tcase_create("Pre-processing");
+	tcase_add_test(tc_pre_processing, test_2EB_001_00);
+	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;
 }

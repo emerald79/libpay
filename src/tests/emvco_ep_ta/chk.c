@@ -1487,6 +1487,97 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2eb_001_00_case01:
+		if (chk->state == 0) {
+			if (!check_value_under_mask(chk, data,
+				  EMV_ID_TEST_FLAGS, "\x10\x00", "\x10\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->state = 1;
+			break;
+		}
+
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\x00\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+			break;
+		}
+
+		break;
+
+	case pc_2eb_001_00_case02:
+		if (chk->state == 0) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\x00\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+			chk->state = 1;
+			break;
+		}
+
+		if (chk->state == 1)
+			chk->pass_criteria_met = false;
+
+		break;
+
+	case pc_2eb_001_00_case03:
+		if (chk->state == 0) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\x08\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->state = 1;
+			break;
+		}
+
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\x00\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+			break;
+		}
+
+		break;
+
+	case pc_2eb_001_00_case04:
+		if (chk->state == 0) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\xA0\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->state = 1;
+			break;
+		}
+
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\x00\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+			break;
+		}
+
+		break;
+
+	case pc_2eb_001_00_case05:
+		if (chk->state == 0) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\x80\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->state = 1;
+			break;
+		}
+
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_TEST_FLAGS,
+								 "\x00\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+			break;
+		}
+
+		break;
+
 	default:
 		break;
 	}
