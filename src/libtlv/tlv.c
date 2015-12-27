@@ -138,10 +138,20 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 {
 	struct tlv temp_tlv;
 	const void *start = *buffer;
-	int rc;
+	size_t remaining = 0;
+	int rc = 0;
 
-	if (!buffer || !length || !tlv)
+	if (!buffer || !(*buffer) || !length || !tlv)
 		return TLV_RC_INVALID_ARG;
+
+	/* EMV v4.3 Book 3: 'Before, between, or after TLV-coded data
+	 * objects, '00' bytes without any meaning may occur (for example, due
+	 * to erased or modified TLV-coded data objects).'		      */
+	remaining = length;
+	while ((remaining > 0) && (*((uint8_t *)*buffer) == '\x00')) {
+		(*buffer)++;
+		remaining--;
+	}
 
 	*tlv = NULL;
 
@@ -149,11 +159,12 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 	temp_tlv.parent = parent;
 	temp_tlv.prev   = prev;
 
-	rc = tlv_parse_identifier(buffer, length, &temp_tlv);
+	rc = tlv_parse_identifier(buffer, remaining, &temp_tlv);
 	if (rc)
 		return rc;
 
-	rc = tlv_parse_length(buffer, length - (*buffer - start), &temp_tlv);
+	remaining = length - (*buffer - start);
+	rc = tlv_parse_length(buffer, remaining, &temp_tlv);
 	if (rc)
 		return rc;
 
@@ -176,8 +187,18 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 		*buffer += (*tlv)->length;
 	}
 
-	if (length - (*buffer - start) > 0) {
-		rc = tlv_parse_recursive(buffer, length - (*buffer - start),
+
+	/* EMV v4.3 Book 3: 'Before, between, or after TLV-coded data
+	 * objects, '00' bytes without any meaning may occur (for example, due
+	 * to erased or modified TLV-coded data objects).'		      */
+	remaining = length - (*buffer - start);
+	while ((remaining > 0) && (*((uint8_t *)*buffer) == '\x00')) {
+		*buffer += 1;
+		remaining--;
+	}
+
+	if (remaining > 0) {
+		rc = tlv_parse_recursive(buffer, remaining,
 						   &(*tlv)->next, *tlv, parent);
 		if (rc != TLV_RC_OK) {
 			free(*tlv);
@@ -1020,9 +1041,9 @@ static size_t id_sz(const uint8_t *id)
 	size_t sz = 1;
 
 	if ((id[0] & TLV_TAG_NUMBER_MASK) != 0x1Fu)
-		return 1;
+		return sz;
 
-	for (sz = 1; id[sz] & 0x80u; sz++)
+	while (id[sz++] & 0x80u)
 		;
 
 	return sz;

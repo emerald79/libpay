@@ -40,6 +40,8 @@ struct aid_fci_flags {
 };
 
 struct aid_fci {
+	const char	    *bin;
+	size_t		     bin_len;
 	struct aid_fci_flags present;
 	uint8_t		     aid[16];
 	size_t		     aid_len;
@@ -58,6 +60,8 @@ struct gpo_resp {
 };
 
 struct lt_setting {
+	const char	 *ppse;
+	size_t		  ppse_len;
 	struct ppse_entry ppse_entries[8];
 	size_t		  ppse_entries_num;
 	struct aid_fci	  aid_fci[8];
@@ -2291,6 +2295,100 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting6.12 */
+	{
+		.ppse =
+		  "\x6F""\x30"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\x00"
+		    "\xA5""\x1D"
+		      "\x00"
+		      "\xBF\x0C""\x18"
+			"\x61""\x16"
+			  "\x4F""\x07""\xA0\x00\x00\x00\x02\x00\x02"
+			  "\x50""\x04\x41\x50\x50\x32"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x01""\x22"
+		      "\x00",
+		.ppse_len = 50,
+		.aid_fci = {
+			{
+				.bin =
+				  "\x6F""\x26"
+				    "\x84""\x07""\xA0\x00\x00\x00\x02\x00\x02"
+				    "\x00"
+				    "\xA5""\x1A"
+				      "\x50""\x04""\x41\x50\x50\x32"
+				      "\x00"
+				      "\x87""\x01""\x01"
+				      "\x00"
+				      "\x9F\x38""\x0C""\x9F\x02\x07\x9F\x37\x05"
+						     "\x9F\x16\x10\x9F\x1C\x09",
+				.bin_len = 40,
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_9F02079F37059F16109F1C09,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting6.13 */
+	{
+		.ppse =
+		  "\x6F""\x4B"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+		    "\xA5""\x25"
+		      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+		      "\xBF\x0C""\x18"
+			"\x61""\x16"
+			  "\x4F""\x07""\xA0\x00\x00\x00\x04\x00\x04"
+			  "\x50""\x04""\x41\x50\x50\x34"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x01""\x24"
+		      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+		.ppse_len = 77,
+		.aid_fci = {
+			{
+				.bin =
+				  "\x6F""\x41"
+				    "\x84""\x07""\xA0\x00\x00\x00\x04\x00\x04"
+				    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				    "\xA5""\x2C"
+				      "\x50""\x04""\x41\x50\x50\x34"
+				      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				      "\x87""\x01""\x01"
+				      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+				      "\x9F\x38""\x0C""\x9F\x02\x10\x9F\x37\x0E"
+						     "\x9F\x16\x19\x9F\x1C\x12",
+				.bin_len = 67,
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_9F02109F370E9F16199F1C12,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting8.0 */
 	{
 		.ppse_entries = {
@@ -2594,8 +2692,14 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 
 	if ((lc == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
 	    !memcmp(data, DF_NAME_2PAY_SYS_DDF01, lc)) {
-		rc = ber_get_ppse(lt->setting->ppse_entries,
+		if (lt->setting->ppse_len) {
+			*le = lt->setting->ppse_len;
+			memcpy(resp, lt->setting->ppse, lt->setting->ppse_len);
+		} else {
+			rc = ber_get_ppse(lt->setting->ppse_entries,
 				       lt->setting->ppse_entries_num, resp, le);
+		}
+
 		if (rc != EMV_RC_OK)
 			goto done;
 
@@ -2606,8 +2710,15 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 	for (i_aid = 0; i_aid < lt->setting->aid_fci_num; i_aid++) {
 		if ((lc == lt->setting->aid_fci[i_aid].aid_len) &&
 		    !memcmp(data, lt->setting->aid_fci[i_aid].aid, lc)) {
-			rc = ber_get_aid_fci(&lt->setting->aid_fci[i_aid], resp,
-									    le);
+			if (lt->setting->aid_fci[i_aid].bin_len) {
+				*le = lt->setting->aid_fci[i_aid].bin_len;
+				memcpy(resp, lt->setting->aid_fci[i_aid].bin,
+									   *le);
+			} else {
+				rc = ber_get_aid_fci(
+					&lt->setting->aid_fci[i_aid], resp, le);
+			}
+
 			if (rc != EMV_RC_OK)
 				goto done;
 

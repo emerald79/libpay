@@ -206,6 +206,26 @@ extern uint32_t transaction_sequence_counter;
 	},								       \
 	.pdol_len = 22
 
+/* PDOL with: Amount Authorized (tag 9F02) with length = 7, Unpredictable Number
+ * (tag 9F37) with length = 5, Merchant Identifier (tag 9F16) with length = 16,
+ * Terminal Identification (tag 9F1C) with length = 9			      */
+#define PDOL_9F02079F37059F16109F1C09					       \
+	.pdol = {							       \
+		0x9F, 0x02, 0x07, 0x9F, 0x37, 0x05, 0x9F, 0x16, 0x10, 0x9F,    \
+		0x1C, 0x09						       \
+	},								       \
+	.pdol_len = 12
+
+/* PDOL with: Amount Authorized (tag 9F02) with length = 16, Unpredictable
+ * Number (tag 9F37) with length = 14, Merchant Identifier (tag 9F16) with
+ * length = 25, Terminal Identification (tag 9F1C) with length = 18	      */
+#define PDOL_9F02109F370E9F16199F1C12					       \
+	.pdol = {							       \
+		0x9F, 0x02, 0x10, 0x9F, 0x37, 0x0E, 0x9F, 0x16, 0x19, 0x9F,    \
+		0x1C, 0x12						       \
+	},								       \
+	.pdol_len = 12
+
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
 +-----------------------------------------------------------------------------*/
@@ -330,6 +350,8 @@ enum pass_criteria {
 	pc_2ea_019_00_case02 = 58,
 	pc_2ea_019_00_case03 = 59,
 	pc_2ea_019_00_case04 = 60,
+	pc_2ea_020_00_case01 = 61,
+	pc_2ea_020_00_case02 = 62,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -415,6 +437,8 @@ enum ltsetting {
 	ltsetting2_40,
 	ltsetting6_10,
 	ltsetting6_11,
+	ltsetting6_12,
+	ltsetting6_13,
 	ltsetting8_0,
 	ltsetting8_1,
 	num_ltsettings

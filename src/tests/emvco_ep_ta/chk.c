@@ -907,6 +907,52 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ea_020_00_case01:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+
+	case pc_2ea_020_00_case02:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
 
 	default:
 		break;
@@ -1349,7 +1395,60 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		    !check_value(chk, data, "\xDF\x01", "\x00", 1)	      ||
 		    !check_value(chk, data, "\xC1", "\x00\x00", 2)	      ||
 		    !check_value(chk, data, "\x85", "\x00", 1)		      ||
-		    !check_value(chk, data, "\x9F\x25", "\x00\0x00", 2))
+		    !check_value(chk, data, "\x9F\x25", "\x00\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_020_00_case01:
+		if (chk->state != 2)
+			break;
+
+		if (!check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
+					   "\x00\x00\x00\x00\x00\x00\x02", 7) ||
+		    !check_value_under_mask(chk, data,
+			    EMV_ID_UNPREDICTABLE_NUMBER, "\x00\x00\x00\x00\xFF",
+						   "\x00\x00\x00\x00\x00", 5) ||
+		    !check_value_under_mask(chk, data,
+						 EMV_ID_TERMINAL_IDENTIFICATION,
+					 "\x00\x00\x00\x00\x00\x00\x00\x00\xFF",
+				   "\x00\x00\x00\x00\x00\x00\x00\x00\x00", 9) ||
+		    !check_value_under_mask(chk, data,
+						     EMV_ID_MERCHANT_IDENTIFIER,
+			  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+								 "\x00\x00\xFF",
+			  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+							    "\x00\x00\x00", 16))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_020_00_case02:
+		if (chk->state != 2)
+			break;
+
+		if (!check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
+			  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+							  "\x00\x00\x02", 16) ||
+		    !check_value_under_mask(chk, data,
+			    EMV_ID_UNPREDICTABLE_NUMBER,
+				  "\x00\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
+								 "\xFF\xFF\xFF",
+				  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+							  "\x00\x00\x00", 14) ||
+		    !check_value_under_mask(chk, data,
+						 EMV_ID_TERMINAL_IDENTIFICATION,
+				  "\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\xFF"
+						 "\xFF\xFF\xFF\xFF\xFF\xFF\xFF",
+				  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+					  "\x00\x00\x00\x00\x00\x00\x00", 18) ||
+		    !check_value_under_mask(chk, data,
+						     EMV_ID_MERCHANT_IDENTIFIER,
+			  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+			     "\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF",
+			  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+			     "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+									    25))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
 		break;

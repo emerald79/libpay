@@ -146,16 +146,18 @@ const struct tlv_id_to_fmt *libemv_get_id_fmts(void)
 {
 	static const struct tlv_id_to_fmt formats[] = {
 		{ .id = EMV_ID_ADF_NAME,		       .fmt = fmt_b   },
+		{ .id = EMV_ID_AMOUNT_AUTHORIZED,	       .fmt = fmt_n   },
 		{ .id = EMV_ID_APPLICATION_LABEL,	       .fmt = fmt_ans },
-		{ .id = EMV_ID_DIRECTORY_ENTRY,		       .fmt = fmt_var },
-		{ .id = EMV_ID_FCI_TEMPLATE,		       .fmt = fmt_b   },
-		{ .id = EMV_ID_DF_NAME,			       .fmt = fmt_b   },
 		{ .id = EMV_ID_APPLICATION_PRIORITY_INDICATOR, .fmt = fmt_b   },
-		{ .id = EMV_ID_KERNEL_IDENTIFIER,	       .fmt = fmt_b   },
+		{ .id = EMV_ID_DF_NAME,			       .fmt = fmt_b   },
+		{ .id = EMV_ID_DIRECTORY_ENTRY,		       .fmt = fmt_var },
 		{ .id = EMV_ID_EXTENDED_SELECTION,	       .fmt = fmt_b   },
-		{ .id = EMV_ID_PDOL,			       .fmt = fmt_b   },
-		{ .id = EMV_ID_FCI_PROPRIETARY_TEMPLATE,       .fmt = fmt_var },
 		{ .id = EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA,  .fmt = fmt_var },
+		{ .id = EMV_ID_FCI_PROPRIETARY_TEMPLATE,       .fmt = fmt_var },
+		{ .id = EMV_ID_FCI_TEMPLATE,		       .fmt = fmt_b   },
+		{ .id = EMV_ID_KERNEL_IDENTIFIER,	       .fmt = fmt_b   },
+		{ .id = EMV_ID_MERCHANT_IDENTIFIER,	       .fmt = fmt_ans },
+		{ .id = EMV_ID_PDOL,			       .fmt = fmt_b   },
 		{ .id = NULL						      }
 	};
 
