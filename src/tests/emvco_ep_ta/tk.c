@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <log4c.h>
+#include <assert.h>
 
 #include <emv.h>
 #include <tlv.h>
@@ -139,7 +140,7 @@ static struct tlv *tlv_kernel_parms(struct tk *tk,
 			  __func__, libtlv_bin_to_hex(parms->online_response,
 					   parms->online_response_len, hex));
 
-		rc = tlv_parse(parms->online_response,
+		rc = tlv_shallow_parse(parms->online_response,
 			      parms->online_response_len, &tlv_online_response);
 		if (rc != TLV_RC_OK)
 			goto done;
@@ -169,10 +170,13 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 	struct tk *tk = (struct tk *)kernel;
 	struct tlv *tlv_fci = NULL, *tlv = NULL, *tlv_parms = NULL;
 	struct tlv *tlv_resp = NULL, *tlv_data_record = NULL;
+	struct tlv *tlv_resp_msg = NULL;
 	uint8_t pdol[256], gpo_data[256], gpo_resp[256], sw[2];
+	uint8_t resp_msg[256];
 	char hex[513];
 	size_t pdol_sz = sizeof(pdol), gpo_data_sz = sizeof(gpo_data);
 	size_t gpo_resp_sz = sizeof(gpo_resp);
+	size_t resp_msg_sz = sizeof(resp_msg);
 	int rc = EMV_RC_OK;
 
 	rc = tlv_parse(parms->fci, parms->fci_len, &tlv_fci);
@@ -227,15 +231,34 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 			    "%s(): GPO RESP = '%s' SW: %02hhX%02hhX", __func__,
 		  libtlv_bin_to_hex(gpo_resp, gpo_resp_sz, hex), sw[0], sw[1]);
 
-	rc = tlv_parse(gpo_resp, gpo_resp_sz, &tlv_resp);
+	rc = tlv_shallow_parse(gpo_resp, gpo_resp_sz, &tlv_resp);
 	if (rc != TLV_RC_OK) {
-		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_NOTICE,
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_ERROR,
 				"%s(): Failed to parse GPO response", __func__);
 		rc = EMV_RC_CARD_PROTOCOL_ERROR;
 		goto done;
 	}
 
-	tlv = tlv_find(tlv_get_child(tlv_resp), EMV_ID_OUTCOME_DATA);
+	rc = tlv_encode_value(tlv_find(tlv_resp,
+		       EMV_ID_RESP_MSG_TEMPLATE_FMT_2), resp_msg, &resp_msg_sz);
+	if (rc != TLV_RC_OK) {
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_ERROR,
+				       "%s() no response message found. rc: %d",
+							     __func__, (int)rc);
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	rc = tlv_shallow_parse(resp_msg, resp_msg_sz, &tlv_resp_msg);
+	if (rc != TLV_RC_OK) {
+		log4c_category_log(tk->log_cat, LOG4C_PRIORITY_ERROR,
+				"%s() failed to parse response message. rc: %d",
+							     __func__, (int)rc);
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	tlv = tlv_find(tlv_resp_msg, EMV_ID_OUTCOME_DATA);
 	if (tlv) {
 		struct outcome_gpo_resp gpo_outcome;
 		size_t gpo_outcome_sz = sizeof(gpo_outcome);
@@ -247,7 +270,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		gpo_outcome_to_outcome(&gpo_outcome, outcome);
 	}
 
-	tlv = tlv_find(tlv_get_child(tlv_resp), EMV_ID_UI_REQ_ON_OUTCOME);
+	tlv = tlv_find(tlv_resp_msg, EMV_ID_UI_REQ_ON_OUTCOME);
 	if (tlv) {
 		struct ui_req_gpo_resp gpo_ui_req;
 		size_t gpo_ui_req_sz = sizeof(gpo_ui_req);
@@ -264,7 +287,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		outcome->present.ui_request_on_outcome = true;
 	}
 
-	tlv = tlv_find(tlv_get_child(tlv_resp), EMV_ID_UI_REQ_ON_RESTART);
+	tlv = tlv_find(tlv_resp_msg, EMV_ID_UI_REQ_ON_RESTART);
 	if (tlv) {
 		struct ui_req_gpo_resp gpo_ui_req;
 		size_t gpo_ui_req_sz = sizeof(gpo_ui_req);
@@ -281,17 +304,17 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 		outcome->present.ui_request_on_restart = true;
 	}
 
-	tlv = tlv_copy(tlv_find(tlv_get_child(tlv_resp),
+	tlv = tlv_copy(tlv_find(tlv_resp_msg,
 					    EMV_ID_ISSUER_AUTHENTICATION_DATA));
 	if (!tlv_data_record)
 		tlv_data_record = tlv;
 
-	tlv = tlv_insert_after(tlv, tlv_copy(tlv_find(tlv_get_child(tlv_resp),
+	tlv = tlv_insert_after(tlv, tlv_copy(tlv_find(tlv_resp_msg,
 					     EMV_ID_ISSUER_SCRIPT_TEMPLATE_1)));
 	if (!tlv_data_record)
 		tlv_data_record = tlv;
 
-	tlv = tlv_insert_after(tlv, tlv_copy(tlv_find(tlv_get_child(tlv_resp),
+	tlv = tlv_insert_after(tlv, tlv_copy(tlv_find(tlv_resp_msg,
 					     EMV_ID_ISSUER_SCRIPT_TEMPLATE_2)));
 	if (!tlv_data_record)
 		tlv_data_record = tlv;
@@ -306,6 +329,7 @@ static int tk_activate(struct emv_kernel *kernel, struct emv_hal *hal,
 
 done:
 	tlv_free(tlv_resp);
+	tlv_free(tlv_resp_msg);
 	tlv_free(tlv_parms);
 	tlv_free(tlv_fci);
 	tlv_free(tlv_data_record);

@@ -347,7 +347,7 @@ static const struct lt_setting ltsetting[] = {
 							"\x04\x05\x06\x07\x08"
 							"\x09\x0A\x0B\x0C\x0D"
 							"\x0E\x0F\x10\x71\x10"
-							"\x86\x0E\x13\x14\x15"
+							"\x11\x12\x13\x14\x15"
 							"\x16\x17\x18\x19\x1A"
 							"\x1B\x1C\x1D\x1E\x1F"
 							"\x20",
@@ -432,8 +432,7 @@ static const struct lt_setting ltsetting[] = {
 					.start = start_b,
 					.removal_timeout = 100,
 					.data_record = {
-						/* FIXME */
-						.data = "\x71\x10\x86\x0E\x13"
+						.data = "\x71\x10\x11\x12\x13"
 							"\x14\x15\x16\x17\x18"
 							"\x19\x1A\x1B\x1C\x1D"
 							"\x1E\x1F\x20",
@@ -489,7 +488,7 @@ static const struct lt_setting ltsetting[] = {
 							"\x04\x05\x06\x07\x08"
 							"\x09\x0A\x0B\x0C\x0D"
 							"\x0E\x0F\x10\x71\x10"
-							"\x86\x0E\x13\x14\x15"
+							"\x11\x12\x13\x14\x15"
 							"\x16\x17\x18\x19\x1A"
 							"\x1B\x1C\x1D\x1E\x1F"
 							"\x20",
@@ -776,7 +775,7 @@ static const struct lt_setting ltsetting[] = {
 					.online_response_type = ort_emv_data,
 					.start = start_c,
 					.data_record = {
-						.data = "\x72\x10\x86\x0E\x23"
+						.data = "\x72\x10\x21\x22\x23"
 							"\x24\x25\x26\x27\x28"
 							"\x29\x2A\x2B\x2C\x2D"
 							"\x2E\x2F\x30",
@@ -891,8 +890,7 @@ static const struct lt_setting ltsetting[] = {
 					.online_response_type = ort_any,
 					.start = start_b,
 					.data_record = {
-						/* FIXME */
-						.data = "\x71\x10\x86\x0E\x13"
+						.data = "\x71\x10\x11\x12\x13"
 							"\x14\x15\x16\x17\x18"
 							"\x19\x1A\x1B\x1C\x1D"
 							"\x1E\x1F\x20",
@@ -944,7 +942,7 @@ static const struct lt_setting ltsetting[] = {
 							"\x04\x05\x06\x07\x08"
 							"\x09\x0A\x0B\x0C\x0D"
 							"\x0E\x0F\x10\x72\x10"
-							"\x86\x0E\x23\x24\x25"
+							"\x21\x22\x23\x24\x25"
 							"\x26\x27\x28\x29\x2A"
 							"\x2B\x2C\x2D\x2E\x2F"
 							"\x30",
@@ -1024,7 +1022,7 @@ static const struct lt_setting ltsetting[] = {
 							"\x04\x05\x06\x07\x08"
 							"\x09\x0A\x0B\x0C\x0D"
 							"\x0E\x0F\x10\x72\x10"
-							"\x86\x0E\x23\x24\x25"
+							"\x21\x22\x23\x24\x25"
 							"\x26\x27\x28\x29\x2A"
 							"\x2B\x2C\x2D\x2E\x2F"
 							"\x30",
@@ -1733,7 +1731,7 @@ static const struct lt_setting ltsetting[] = {
 							"\x04\x05\x06\x07\x08"
 							"\x09\x0A\x0B\x0C\x0D"
 							"\x0E\x0F\x10\x72\x10"
-							"\x86\x0E\x13\x14\x15"
+							"\x11\x12\x13\x14\x15"
 							"\x16\x17\x18\x19\x1A"
 							"\x1B\x1C\x1D\x1E\x1F"
 							"\x20",
@@ -2281,7 +2279,7 @@ static int ber_get_gpo_resp(const struct gpo_resp *resp, void *ber,
 	if (resp->outcome_parms.data_record.len) {
 		struct tlv *tlv_data_record = NULL;
 
-		rc = tlv_parse(resp->outcome_parms.data_record.data,
+		rc = tlv_shallow_parse(resp->outcome_parms.data_record.data,
 					    resp->outcome_parms.data_record.len,
 							      &tlv_data_record);
 		if (rc != TLV_RC_OK)

@@ -137,11 +137,12 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 }
 
 static int tlv_parse_recursive(const void **buffer, size_t length,
-			 struct tlv **tlv, struct tlv *prev, struct tlv *parent)
+			 struct tlv **tlv, struct tlv *prev, struct tlv *parent,
+							     bool parse_shallow)
 {
 	struct tlv temp_tlv;
 	const void *start = *buffer;
-	size_t remaining = 0;
+	ssize_t remaining = 0;
 	int rc = TLV_RC_OK;
 
 	if (!buffer || !(*buffer) || !length || !tlv) {
@@ -188,15 +189,21 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 
 	memcpy(*tlv, &temp_tlv, sizeof(struct tlv));
 
-	if ((*tlv)->tag[0] & TLV_TAG_P_C_MASK) {
+	if (!parse_shallow && ((*tlv)->tag[0] & TLV_TAG_P_C_MASK)) {
 		rc = tlv_parse_recursive(buffer, (*tlv)->length, &(*tlv)->child,
-								    NULL, *tlv);
+						     NULL, *tlv, parse_shallow);
 		if (rc != TLV_RC_OK) {
 			free(*tlv);
 			*tlv = NULL;
 			goto done;
 		}
 	} else {
+		remaining = length - (*buffer - start);
+		if (remaining < (*tlv)->length) {
+			rc = TLV_RC_UNEXPECTED_END_OF_STREAM;
+			goto done;
+		}
+
 		memcpy((*tlv)->value, *buffer, (*tlv)->length);
 		*buffer += (*tlv)->length;
 	}
@@ -213,7 +220,7 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 
 	if (remaining > 0) {
 		rc = tlv_parse_recursive(buffer, remaining,
-						   &(*tlv)->next, *tlv, parent);
+				    &(*tlv)->next, *tlv, parent, parse_shallow);
 		if (rc != TLV_RC_OK) {
 			free(*tlv);
 			*tlv = NULL;
@@ -258,7 +265,21 @@ int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 		goto done;
 	}
 
-	rc = tlv_parse_recursive(&buffer, length, tlv, NULL, NULL);
+	rc = tlv_parse_recursive(&buffer, length, tlv, NULL, NULL, false);
+done:
+	return rc;
+}
+
+int tlv_shallow_parse(const void *buffer, size_t length, struct tlv **tlv)
+{
+	int rc = TLV_RC_OK;
+
+	if (!length) {
+		*tlv = NULL;
+		goto done;
+	}
+
+	rc = tlv_parse_recursive(&buffer, length, tlv, NULL, NULL, true);
 done:
 	return rc;
 }
@@ -728,17 +749,13 @@ struct tlv *tlv_deep_find(struct tlv *tlv, const void *tag)
 
 struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 {
-	const uint8_t *t = (const uint8_t *)tag;
 	struct tlv *tlv = NULL;
 	int rc = TLV_RC_OK;
 
 	if (!tag || (length && !value))
 		goto error;
 
-	if (t[0] & TLV_TAG_P_C_MASK)
-		tlv = (struct tlv *)calloc(1, sizeof(struct tlv));
-	else
-		tlv = (struct tlv *)calloc(1, sizeof(struct tlv) + length);
+	tlv = (struct tlv *)calloc(1, sizeof(struct tlv) + length);
 
 	if (!tlv)
 		goto error;
@@ -748,18 +765,8 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value)
 		goto error;
 
 	if (length) {
-		if (tlv->tag[0] & TLV_TAG_P_C_MASK) {
-			struct tlv *childs = NULL;
-
-			rc = tlv_parse(value, length, &childs);
-			if (rc != TLV_RC_OK)
-				goto error;
-
-			tlv_insert_below(tlv, childs);
-		} else {
-			tlv->length = length;
-			memcpy(tlv->value, value, length);
-		}
+		tlv->length = length;
+		memcpy(tlv->value, value, length);
 	}
 
 	return tlv;

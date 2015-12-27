@@ -57,6 +57,7 @@ struct tlv;
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
 int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
+int tlv_shallow_parse(const void *buffer, size_t size, struct tlv **tlv);
 
 /**
  * Encode a TLV data structure into a DER-TLV byte stream

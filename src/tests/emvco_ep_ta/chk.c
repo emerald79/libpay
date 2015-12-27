@@ -1167,7 +1167,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 						   "\x00\x80", "\x00\x80", 2) ||
 		    !check_value(chk, data, EMV_ID_START_POINT, "\x0B", 1)    ||
 		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_1,
-				  "\x86\x0E\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
+				  "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
 						    "\x1C\x1D\x1E\x1F\x20", 16))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
@@ -1181,7 +1181,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 						   "\x00\x80", "\x00\x80", 2) ||
 		    !check_value(chk, data, EMV_ID_START_POINT, "\x0C", 1)    ||
 		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_2,
-				  "\x86\x0E\x23\x24\x25\x26\x27\x28\x29\x2A\x2B"
+				  "\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2A\x2B"
 						    "\x2C\x2D\x2E\x2F\x30", 16))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
@@ -1203,7 +1203,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 				  "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B"
 						  "\x0C\x0D\x0E\x0F\x10", 16) ||
 		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_1,
-				  "\x86\x0E\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
+				  "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
 						    "\x1C\x1D\x1E\x1F\x20", 16))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
@@ -1220,7 +1220,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 				  "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B"
 						  "\x0C\x0D\x0E\x0F\x10", 16) ||
 		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_2,
-				  "\x86\x0E\x23\x24\x25\x26\x27\x28\x29\x2A\x2B"
+				  "\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2A\x2B"
 						    "\x2C\x2D\x2E\x2F\x30", 16))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
@@ -1237,7 +1237,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 				  "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B"
 						  "\x0C\x0D\x0E\x0F\x10", 16) ||
 		    !check_value(chk, data, EMV_ID_ISSUER_SCRIPT_TEMPLATE_2,
-				  "\x86\x0E\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
+				  "\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B"
 						    "\x1C\x1D\x1E\x1F\x20", 16))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;

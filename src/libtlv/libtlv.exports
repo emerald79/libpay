@@ -1,6 +1,7 @@
 tlv_new
 tlv_copy
 tlv_parse
+tlv_shallow_parse
 tlv_free
 tlv_encode
 tlv_encode_identifier
