@@ -2389,6 +2389,47 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting6.14 */
+	{
+		.ppse =
+		  "\x6F""\x2D"
+		    "\xA5""\x1B"
+		      "\xBF\x0C""\x18"
+			"\x61""\x16"
+			  "\x4F""\x07""\xA0\x00\x00\x00\x03\x00\x03"
+			  "\x50""\x04""\x41\x50\x50\x33"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x01""\x21"
+		      "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								 "\x46\x30\x31",
+		.ppse_len = 47,
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				.bin =
+				  "\x6F""\x1A"
+				    "\xA5""\x0F"
+				      "\x9F\x38""\x03""\x9F\x02\x06"
+				      "\x87""\x01""\x01"
+				      "\x50""\x04""\x41\x50\x50\x33"
+				    "\x84""\x07""\xA0\x00\x00\x00\x03\x00\x03",
+				.bin_len = 28,
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_9F0206,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting8.0 */
 	{
 		.ppse_entries = {

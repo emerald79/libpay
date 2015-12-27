@@ -954,6 +954,29 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ea_021_00:
+
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -1449,6 +1472,16 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 			  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 			     "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
 									    25))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ea_021_00:
+		if (chk->state != 2)
+			break;
+
+		if (!check_value(chk, data, EMV_ID_AMOUNT_AUTHORIZED,
+						 "\x00\x00\x00\x00\x00\x02", 6))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
 		break;
