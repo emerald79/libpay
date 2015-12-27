@@ -26,6 +26,7 @@
 #include <argp.h>
 #include <assert.h>
 #include <json-c/json.h>
+#include <log4c.h>
 
 #include <tlv.h>
 #include <emv.h>
@@ -412,6 +413,13 @@ int main(int argc, char **argv)
 	struct arguments arguments;
 	uint8_t *der = NULL;
 	size_t der_len = 0;
+
+	if (log4c_init()) {
+		fprintf(stderr, "log4c_init() failed!\n");
+		return EXIT_FAILURE;
+	}
+
+	libtlv_init("tlvdump");
 
 	memset(&arguments, 0, sizeof(arguments));
 	arguments.input_format = hex;

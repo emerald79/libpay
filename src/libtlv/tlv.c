@@ -39,6 +39,13 @@ struct tlv {
 	uint8_t		value[0];
 };
 
+struct tlv_parse_error_info {
+	int	    rc;
+	const void *pos;
+};
+
+static struct tlv_parse_error_info tlv_parse_error_info;
+
 bool tlv_is_constructed(const struct tlv *tlv)
 {
 	return !!tlv->child;
@@ -88,13 +95,19 @@ static int tlv_parse_identifier(const void **buf, size_t len, struct tlv *tlv)
 			break;
 	}
 
-	*buf = (const void *)p;
-
-	if (i == sizeof(tlv->tag))
+	if (i == sizeof(tlv->tag)) {
+		tlv_parse_error_info.rc = TLV_RC_TAG_NUMBER_TOO_LARGE;
+		tlv_parse_error_info.pos = *buf;
 		return TLV_RC_TAG_NUMBER_TOO_LARGE;
+	}
 
-	if (i == len)
+	if (i == len) {
+		tlv_parse_error_info.rc = TLV_RC_UNEXPECTED_END_OF_STREAM;
+		tlv_parse_error_info.pos = *buf;
 		return TLV_RC_UNEXPECTED_END_OF_STREAM;
+	}
+
+	*buf = (const void *)p;
 
 	return TLV_RC_OK;
 }
@@ -104,13 +117,21 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 	const uint8_t *p = NULL;
 	int i, value_length;
 
-	if (!buffer || !(*buffer) || !tlv || !length)
+	if (!buffer || !(*buffer) || !tlv)
 		return TLV_RC_INVALID_ARG;
+
+	if (!length) {
+		tlv_parse_error_info.rc = TLV_RC_UNEXPECTED_END_OF_STREAM;
+		tlv_parse_error_info.pos = *buffer;
+		return TLV_RC_UNEXPECTED_END_OF_STREAM;
+	}
 
 	p = (uint8_t *)*buffer;
 
 	if (p[0] == 0x80u) {
-		*buffer = (const void *)&p[1];
+		tlv_parse_error_info.rc =
+					 TLV_RC_INDEFINITE_LENGTH_NOT_SUPPORTED;
+		tlv_parse_error_info.pos = *buffer;
 		return TLV_RC_INDEFINITE_LENGTH_NOT_SUPPORTED;
 	}
 
@@ -123,7 +144,8 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 	value_length = (int)(p[0] & 0x7fu);
 
 	if (value_length > (int)sizeof(size_t)) {
-		*buffer = (const void *)&p[1];
+		tlv_parse_error_info.rc = TLV_RC_VALUE_LENGTH_TOO_LARGE;
+		tlv_parse_error_info.pos = *buffer;
 		return TLV_RC_VALUE_LENGTH_TOO_LARGE;
 	}
 
@@ -181,8 +203,18 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 	if (rc)
 		goto done;
 
+	remaining = length - (*buffer - start);
+	if (remaining < temp_tlv.length) {
+		tlv_parse_error_info.rc = TLV_RC_UNEXPECTED_END_OF_STREAM;
+		tlv_parse_error_info.pos = *buffer;
+		rc = TLV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
 	*tlv = (struct tlv *)malloc(sizeof(struct tlv) + temp_tlv.length);
 	if (!*tlv) {
+		tlv_parse_error_info.rc = TLV_RC_OUT_OF_MEMORY;
+		tlv_parse_error_info.pos = start;
 		rc = TLV_RC_OUT_OF_MEMORY;
 		goto done;
 	}
@@ -200,6 +232,9 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 	} else {
 		remaining = length - (*buffer - start);
 		if (remaining < (*tlv)->length) {
+			tlv_parse_error_info.rc =
+						TLV_RC_UNEXPECTED_END_OF_STREAM;
+			tlv_parse_error_info.pos = start;
 			rc = TLV_RC_UNEXPECTED_END_OF_STREAM;
 			goto done;
 		}
@@ -258,6 +293,7 @@ void tlv_free(struct tlv *tlv)
 
 int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 {
+	const void *start = buffer;
 	int rc = TLV_RC_OK;
 
 	if (!length) {
@@ -265,13 +301,26 @@ int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 		goto done;
 	}
 
+	tlv_parse_error_info.rc = TLV_RC_OK;
+
 	rc = tlv_parse_recursive(&buffer, length, tlv, NULL, NULL, false);
 done:
+	if (tlv_parse_error_info.rc != TLV_RC_OK) {
+		char hex[length * 2 + 1];
+
+		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+			    "%s('%s') failed at offset %d with rc %d", __func__,
+					  libtlv_bin_to_hex(start, length, hex),
+					(int)(tlv_parse_error_info.pos - start),
+						       tlv_parse_error_info.rc);
+	}
+
 	return rc;
 }
 
 int tlv_shallow_parse(const void *buffer, size_t length, struct tlv **tlv)
 {
+	const void *start = buffer;
 	int rc = TLV_RC_OK;
 
 	if (!length) {
@@ -279,8 +328,20 @@ int tlv_shallow_parse(const void *buffer, size_t length, struct tlv **tlv)
 		goto done;
 	}
 
+	tlv_parse_error_info.rc = TLV_RC_OK;
+
 	rc = tlv_parse_recursive(&buffer, length, tlv, NULL, NULL, true);
 done:
+	if (tlv_parse_error_info.rc != TLV_RC_OK) {
+		char hex[length * 2 + 1];
+
+		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+			    "%s('%s') failed at offset %d with rc %d", __func__,
+					  libtlv_bin_to_hex(start, length, hex),
+					(int)(tlv_parse_error_info.pos - start),
+						       tlv_parse_error_info.rc);
+	}
+
 	return rc;
 }
 
