@@ -2470,6 +2470,8 @@ Suite *emvco_ep_ta_test_suite(void)
 	Suite *suite = NULL;
 	TCase *tc_general_reqs = NULL, *tc_pre_processing = NULL;
 	TCase *tc_protocol_activation = NULL;
+	TCase *tc_aid_and_kernel_selection = NULL;
+	TCase *tc_kernel_activation = NULL, *tc_outcome_processing = NULL;
 
 	suite = suite_create("EMVCo Type Approval - Book A & Book B - Test "
 							"Cases - Version 2.4a");
@@ -2574,6 +2576,15 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_protocol_activation, test_2EC_006_00);
 	tcase_add_test(tc_protocol_activation, test_2EC_007_00);
 	suite_add_tcase(suite, tc_protocol_activation);
+
+	tc_aid_and_kernel_selection = tcase_create("AID and Kernel Selection");
+	suite_add_tcase(suite, tc_aid_and_kernel_selection);
+
+	tc_kernel_activation = tcase_create("Kernel Activation");
+	suite_add_tcase(suite, tc_kernel_activation);
+
+	tc_outcome_processing = tcase_create("Outcome Processing");
+	suite_add_tcase(suite, tc_outcome_processing);
 
 	return suite;
 }
