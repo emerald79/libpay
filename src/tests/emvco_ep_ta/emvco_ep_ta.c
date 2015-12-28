@@ -2324,6 +2324,54 @@ START_TEST(test_2EC_003_00)
 }
 END_TEST
 
+/* 2EC.004.00 Restart flag not set, Message 'PRESENT CARD'		      */
+START_TEST(test_2EC_004_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_1, pc_2ec_004_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ec_004_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.005.00 Field powered and polling					      */
+START_TEST(test_2EC_005_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_1, pc_2ec_005_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_2, pc_2ec_005_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_1, pc_2ec_005_00_case03,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ec_005_00_case04,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -2428,6 +2476,8 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_protocol_activation, test_2EC_001_04);
 	tcase_add_test(tc_protocol_activation, test_2EC_002_00);
 	tcase_add_test(tc_protocol_activation, test_2EC_003_00);
+	tcase_add_test(tc_protocol_activation, test_2EC_004_00);
+	tcase_add_test(tc_protocol_activation, test_2EC_005_00);
 	suite_add_tcase(suite, tc_protocol_activation);
 
 	return suite;

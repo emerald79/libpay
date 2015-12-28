@@ -1099,6 +1099,19 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		chk->pass_criteria_met = false;
 		break;
 
+	case pc_2ec_005_00_case01:
+	case pc_2ec_005_00_case02:
+	case pc_2ec_005_00_case03:
+	case pc_2ec_005_00_case04:
+		if (chk->state == 0) {
+			if ((len != strlen(DF_NAME_2PAY_SYS_DDF01)) ||
+			    (memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+			chk->state = 1;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -1981,6 +1994,16 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		}
 		break;
 
+	case pc_2ec_004_00_case01:
+	case pc_2ec_004_00_case02:
+		if (chk->state == 1) {
+			if (!check_value_under_mask(chk, data,
+				 EMV_ID_TEST_FLAGS, "\x00\x00", "\x00\x80", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -2282,6 +2305,13 @@ static void checker_ui_request(struct chk *checker,
 		if ((chk->state == 1) &&
 		    (ui_request->msg_id == msg_present_card))
 			chk->state = 2;
+		break;
+
+	case pc_2ec_004_00_case01:
+	case pc_2ec_004_00_case02:
+		if ((chk->state == 0) &&
+		    (ui_request->msg_id == msg_present_card))
+			chk->state = 1;
 		break;
 
 	default:

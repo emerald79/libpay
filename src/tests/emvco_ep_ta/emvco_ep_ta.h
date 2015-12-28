@@ -500,6 +500,12 @@ enum pass_criteria {
 	pc_2ec_003_00_case02 = 202,
 	pc_2ec_003_00_case03 = 203,
 	pc_2ec_003_00_case04 = 204,
+	pc_2ec_004_00_case01 = 205,
+	pc_2ec_004_00_case02 = 206,
+	pc_2ec_005_00_case01 = 207,
+	pc_2ec_005_00_case02 = 208,
+	pc_2ec_005_00_case03 = 209,
+	pc_2ec_005_00_case04 = 210,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
