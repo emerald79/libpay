@@ -1149,6 +1149,82 @@ START_TEST(test_2EB_004_00)
 }
 END_TEST
 
+/* 2EB.004.01 Status Check present and not set with Transaction Type
+ * 'Purchase'								      */
+START_TEST(test_2EB_004_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_2, pc_2eb_004_01_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_97, pc_2eb_004_01_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.004.02 Status Check present and not set with Transaction Type
+ * 'Cash Advance'							      */
+START_TEST(test_2EB_004_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_cash_advance;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_004_02, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.005.00 Status Check not present					      */
+START_TEST(test_2EB_005_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_3, pc_2eb_005_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_4, pc_2eb_005_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_97, pc_2eb_005_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.005.01 Status Check not present and Transaction Type 'Purchase'	      */
+START_TEST(test_2EB_005_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_005_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -1196,6 +1272,10 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_003_01);
 	tcase_add_test(tc_pre_processing, test_2EB_003_02);
 	tcase_add_test(tc_pre_processing, test_2EB_004_00);
+	tcase_add_test(tc_pre_processing, test_2EB_004_01);
+	tcase_add_test(tc_pre_processing, test_2EB_004_02);
+	tcase_add_test(tc_pre_processing, test_2EB_005_00);
+	tcase_add_test(tc_pre_processing, test_2EB_005_01);
 	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;
