@@ -12,6 +12,7 @@ AC_CONFIG_FILES([
 	Makefile
 	include/Makefile
 	src/Makefile
+	src/include/Makefile
 	src/libtlv/Makefile
 	src/libtlv/libtlv.pc
 	src/libemv/Makefile
