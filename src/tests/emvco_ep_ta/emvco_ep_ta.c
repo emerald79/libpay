@@ -1699,6 +1699,190 @@ START_TEST(test_2EB_013_02)
 }
 END_TEST
 
+/* 2EB.014.00 Reader Contactless Floor Limit present, Amount Authorized less
+ * than limit								      */
+START_TEST(test_2EB_014_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 12;
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_4, pc_2eb_014_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 20;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_92, pc_2eb_014_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 50;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_4, pc_2eb_014_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 15;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_92, pc_2eb_014_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 45;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_97, pc_2eb_014_00_case05,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.014.01 Reader Contactless Floor Limit present, Amount Authorized less
+ * than limit with Transaction Type 'Purchase'				      */
+START_TEST(test_2EB_014_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 20;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_014_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.014.02 Reader Contactless Floor Limit present, Amount Authorized less
+ * than limit with Transaction Type 'Refund'				      */
+START_TEST(test_2EB_014_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_refund;
+
+	txn.amount_authorized = 20;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_2, pc_2eb_014_02_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 40;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_014_02_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.015.00 Reader Contactless Floor Limit not present, Terminal Floor Limit
+ * present								      */
+START_TEST(test_2EB_015_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 26;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_1, pc_2eb_015_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 50;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_1, pc_2eb_015_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 25;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_1, pc_2eb_015_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 20;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_1, pc_2eb_015_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 26;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_100, pc_2eb_015_00_case05,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 25;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_100, pc_2eb_015_00_case06,
+								       &txn, 1);
+}
+END_TEST
+
+/* 2EB.015.01 Reader Contactless Floor Limit not present, Terminal Floor Limit
+ * present with Transaction type 'Purchase'				      */
+START_TEST(test_2EB_015_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 26;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_015_01_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 50;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_015_01_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 25;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_015_01_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 20;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_015_01_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.015.02 Reader Contactless Floor Limit not present, Terminal Floor Limit
+ * present with Transaction type 'Purchase with Cashback'		      */
+START_TEST(test_2EB_015_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase_with_cashback;
+
+	txn.amount_authorized = 26;
+	txn.amount_other = 10;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_015_02_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 50;
+	txn.amount_other = 10;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_015_02_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 25;
+	txn.amount_other = 10;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_015_02_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 20;
+	txn.amount_other = 10;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_015_02_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -1770,6 +1954,12 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_013_00);
 	tcase_add_test(tc_pre_processing, test_2EB_013_01);
 	tcase_add_test(tc_pre_processing, test_2EB_013_02);
+	tcase_add_test(tc_pre_processing, test_2EB_014_00);
+	tcase_add_test(tc_pre_processing, test_2EB_014_01);
+	tcase_add_test(tc_pre_processing, test_2EB_014_02);
+	tcase_add_test(tc_pre_processing, test_2EB_015_00);
+	tcase_add_test(tc_pre_processing, test_2EB_015_01);
+	tcase_add_test(tc_pre_processing, test_2EB_015_02);
 	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;
