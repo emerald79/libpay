@@ -1093,6 +1093,38 @@ START_TEST(test_2EB_003_00)
 }
 END_TEST
 
+/* 2EB.003.01 Status Check present and set, Amount = 1 and Transaction Type
+ * 'Purchase'								      */
+START_TEST(test_2EB_003_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_003_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.003.02 Status Check present and set, Amount = 1 and Transaction Type
+ * 'Refund'								      */
+START_TEST(test_2EB_003_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_refund;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_4, pc_2eb_003_02, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -1137,6 +1169,8 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_001_00);
 	tcase_add_test(tc_pre_processing, test_2EB_002_00);
 	tcase_add_test(tc_pre_processing, test_2EB_003_00);
+	tcase_add_test(tc_pre_processing, test_2EB_003_01);
+	tcase_add_test(tc_pre_processing, test_2EB_003_02);
 	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;

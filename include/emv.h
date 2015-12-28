@@ -238,7 +238,6 @@ struct emv_ep_preproc_indicators {
 	bool	zero_amount:1;
 	bool	cvm_reqd_limit_exceeded:1;
 	bool	floor_limit_exceeded:1;
-	bool	txn_limit_exceeded:1;
 	uint8_t ttq[4];
 };
 

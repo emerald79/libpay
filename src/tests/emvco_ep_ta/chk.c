@@ -1606,6 +1606,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 	case pc_2eb_003_00_case02:
 	case pc_2eb_003_00_case03:
 	case pc_2eb_003_00_case05:
+	case pc_2eb_003_01:
 		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
 						   "\x10\x00", "\x10\x00", 2) ||
 		    !check_value_under_mask(chk, data,
@@ -1616,6 +1617,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		break;
 
 	case pc_2eb_003_00_case04:
+	case pc_2eb_003_02:
 		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
 						     "\x10\x00", "\x10\x00", 2))
 			chk->pass_criteria_met = false;

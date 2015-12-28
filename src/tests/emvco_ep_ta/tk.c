@@ -53,9 +53,6 @@ static struct tlv *tlv_kernel_parms(struct tk *tk,
 	if (ind->floor_limit_exceeded)
 		test_flags[0] |= 0x80u;
 
-	if (ind->txn_limit_exceeded)
-		test_flags[0] |= 0x40u;
-
 	if (ind->cvm_reqd_limit_exceeded)
 		test_flags[0] |= 0x20u;
 

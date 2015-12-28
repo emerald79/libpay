@@ -613,7 +613,8 @@ struct emv_ep_combination termset3[] = {
 struct emv_ep_combination termset4[] = {
 	{
 		.txn_types = {
-			txn_purchase
+			txn_purchase,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000030003, KERNEL_ID_21  }
@@ -635,7 +636,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_purchase
+			txn_purchase,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000020002, KERNEL_ID_22  },
@@ -651,7 +653,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_purchase
+			txn_purchase,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000010001, KERNEL_ID_23  }
@@ -675,7 +678,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_purchase
+			txn_purchase,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000040004, KERNEL_ID_24  }
@@ -699,7 +703,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_refund
+			txn_refund,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000020002, KERNEL_ID_22  }
@@ -723,7 +728,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_cash_advance
+			txn_cash_advance,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000010001, KERNEL_ID_23  },
@@ -740,7 +746,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_purchase_with_cashback
+			txn_purchase_with_cashback,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000030003, KERNEL_ID_21  }
@@ -764,7 +771,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_refund
+			txn_refund,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000040004, KERNEL_ID_24  }
@@ -788,7 +796,8 @@ struct emv_ep_combination termset4[] = {
 	},
 	{
 		.txn_types = {
-			txn_refund
+			txn_refund,
+			num_txn_types
 		},
 		.combinations = {
 			{ AID_A0000000030003, KERNEL_ID_21  },

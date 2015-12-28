@@ -269,6 +269,27 @@ static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
 }
 #endif
 
+static const char *combination_string(struct emv_ep_combination *combination)
+{
+	static char str[256];
+	char tmp[64];
+	size_t i = 0;
+
+	strncpy(str, "AID: '", sizeof(str));
+	for (i = 0; i < combination->aid_len; i++) {
+		snprintf(tmp, sizeof(tmp), "%02hhX", combination->aid[i]);
+		strncat(str, tmp, sizeof(str));
+	}
+	strncat(str, "', Kernel ID: '", sizeof(str));
+	for (i = 0; i < combination->kernel_id_len; i++) {
+		snprintf(tmp, sizeof(tmp), "%02hhX", combination->kernel_id[i]);
+		strncat(str, tmp, sizeof(str));
+	}
+	strncat(str, "'", sizeof(str));
+
+	return (const char *)str;
+}
+
 int emv_ep_preprocessing(struct emv_ep *ep)
 {
 	struct emv_ep_combination_set *combination_set = NULL;
@@ -295,6 +316,12 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		combination = &combination_set->combinations[i];
 		cfg	    = &combination->config;
 		indicators  = &combination->indicators;
+
+
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+				"%s(): Combination %d/%d: %s", __func__, i + 1,
+						     (int)combination_set->size,
+					       combination_string(combination));
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.1");
@@ -331,8 +358,14 @@ int emv_ep_preprocessing(struct emv_ep *ep)
 		if (cfg->present.status_check_support &&
 		    cfg->enabled.status_check_support &&
 		    (ep->parms.txn->amount_authorized ==
-				     unit_of_currency(ep->parms.txn->currency)))
+				   unit_of_currency(ep->parms.txn->currency))) {
+
 			indicators->status_check_requested = true;
+
+			log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+				"%s(): Status Check Requested for %s", __func__,
+					       combination_string(combination));
+		}
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.1.1.4");
@@ -1294,6 +1327,10 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 					     candidate->extended_selection_len);
 		adf_len += candidate->extended_selection_len;
 	}
+
+	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
+				       "%s(): Selecting Candidate %s", __func__,
+				    combination_string(candidate->combination));
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.4");

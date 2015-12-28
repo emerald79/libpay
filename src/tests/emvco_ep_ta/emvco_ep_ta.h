@@ -369,6 +369,8 @@ enum pass_criteria {
 	pc_2eb_003_00_case03 = 74,
 	pc_2eb_003_00_case04 = 75,
 	pc_2eb_003_00_case05 = 76,
+	pc_2eb_003_01	     = 77,
+	pc_2eb_003_02	     = 78,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
