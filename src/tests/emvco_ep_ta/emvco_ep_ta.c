@@ -1883,6 +1883,315 @@ START_TEST(test_2EB_015_02)
 }
 END_TEST
 
+/* 2EB.016.00 Reader Contactless Floor Limit and Terminal Floor Limit not
+ * present								      */
+START_TEST(test_2EB_016_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 999999999999;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2eb_016_00, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.016.01 Reader Contactless Floor Limit and Terminal Floor Limit not
+ * present with Transaction Type 'Purchase'				      */
+START_TEST(test_2EB_016_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 999999999999;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_2, pc_2eb_016_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.016.02 Reader Contactless Floor Limit and Terminal Floor Limit not
+ * present with Transaction Type 'Cash Advance'				      */
+START_TEST(test_2EB_016_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_cash_advance;
+	txn.amount_authorized = 999999999999;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_016_02_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_97, pc_2eb_016_02_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.017.00 Reader CVM Required Limit present, Amount Authorized greater or
+ * equal to limit							      */
+START_TEST(test_2EB_017_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 16;
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_1, pc_2eb_017_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 10;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2eb_017_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 21;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_4, pc_2eb_017_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 20;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_97, pc_2eb_017_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.017.01 Reader CVM Required Limit present, Amount Authorized greater than
+ * limit with Transaction Type 'Purchase'				      */
+START_TEST(test_2EB_017_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 21;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_4, pc_2eb_017_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.017.02 Reader CVM Required Limit present, Amount Authorized greater than
+ * limit with Transaction Type 'Cash Advance'				      */
+START_TEST(test_2EB_017_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_cash_advance;
+	txn.amount_authorized = 11;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_017_02, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.018.00 Reader CVM Required Limit present, Amount Authorized less than
+ * limit								      */
+START_TEST(test_2EB_018_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 14;
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_1, pc_2eb_018_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 5;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2eb_018_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 19;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_4, pc_2eb_018_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 19;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_97, pc_2eb_018_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.018.01 Reader CVM Required Limit present, Amount Authorized less than
+ * limit with Transaction Type 'Purchase'				      */
+START_TEST(test_2EB_018_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 9;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_2, pc_2eb_018_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.018.02 Reader CVM Required Limit present, Amount Authorized less than
+ * limit with Transaction Type 'Refund'					      */
+START_TEST(test_2EB_018_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_refund;
+	txn.amount_authorized = 19;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_4, pc_2eb_018_02, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.019.00 Reader CVM Required Limit not present			      */
+START_TEST(test_2EB_019_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 999999999999;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_92, pc_2eb_019_00,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.019.01 Reader CVM Required Limit not present with Transaction Type
+ * 'Purchase'								      */
+START_TEST(test_2EB_019_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 999999999999;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_019_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.019.02 Reader CVM Required Limit not present with Transaction Type
+ * 'Refund'								      */
+START_TEST(test_2EB_019_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_refund;
+	txn.amount_authorized = 999999999999;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_019_02, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.020.00 Zero Amount indicator set with TTQ (online capable reader)      */
+START_TEST(test_2EB_020_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_3, pc_2eb_020_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_3, pc_2eb_020_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.020.01 Zero Amount indicator set with TTQ (online capable reader) with
+ * Transaction Type 'Purchase'						      */
+START_TEST(test_2EB_020_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_020_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_020_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.021.00 Zero Amount indicator set with TTQ (offline only reader)	      */
+START_TEST(test_2EB_021_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_5, pc_2eb_021_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_5, pc_2eb_021_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.022.00 Contactless Application Not Allowed for all combinations after
+ * Pre-Processing							      */
+START_TEST(test_2EB_022_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 121;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_5, pc_2eb_022_00, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -1960,6 +2269,22 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_015_00);
 	tcase_add_test(tc_pre_processing, test_2EB_015_01);
 	tcase_add_test(tc_pre_processing, test_2EB_015_02);
+	tcase_add_test(tc_pre_processing, test_2EB_016_00);
+	tcase_add_test(tc_pre_processing, test_2EB_016_01);
+	tcase_add_test(tc_pre_processing, test_2EB_016_02);
+	tcase_add_test(tc_pre_processing, test_2EB_017_00);
+	tcase_add_test(tc_pre_processing, test_2EB_017_01);
+	tcase_add_test(tc_pre_processing, test_2EB_017_02);
+	tcase_add_test(tc_pre_processing, test_2EB_018_00);
+	tcase_add_test(tc_pre_processing, test_2EB_018_01);
+	tcase_add_test(tc_pre_processing, test_2EB_018_02);
+	tcase_add_test(tc_pre_processing, test_2EB_019_00);
+	tcase_add_test(tc_pre_processing, test_2EB_019_01);
+	tcase_add_test(tc_pre_processing, test_2EB_019_02);
+	tcase_add_test(tc_pre_processing, test_2EB_020_00);
+	tcase_add_test(tc_pre_processing, test_2EB_020_01);
+	tcase_add_test(tc_pre_processing, test_2EB_021_00);
+	tcase_add_test(tc_pre_processing, test_2EB_022_00);
 	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;

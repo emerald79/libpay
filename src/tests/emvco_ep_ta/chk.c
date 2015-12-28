@@ -1014,6 +1014,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2eb_010_01_case03:
 	case pc_2eb_011_01:
 	case pc_2eb_012_00_case01:
+	case pc_2eb_021_00_case01:
 		switch (chk->state) {
 
 		case 0:
@@ -1043,6 +1044,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2eb_011_00_case02:
 	case pc_2eb_011_02:
 	case pc_2eb_012_00_case02:
+	case pc_2eb_021_00_case02:
 		switch (chk->state) {
 
 		case 0:
@@ -1093,6 +1095,9 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2eb_022_00:
+		chk->pass_criteria_met = false;
+		break;
 
 	default:
 		break;
@@ -1802,6 +1807,10 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 	case pc_2eb_015_01_case04:
 	case pc_2eb_015_02_case03:
 	case pc_2eb_015_02_case04:
+	case pc_2eb_016_00:
+	case pc_2eb_016_01:
+	case pc_2eb_016_02_case01:
+	case pc_2eb_016_02_case02:
 		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
 						     "\x00\x00", "\x08\x00", 2))
 			chk->pass_criteria_met = false;
@@ -1856,6 +1865,64 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 				   "\x00\x00\x00\x00", "\x00\x80\x00\x00", 4) ||
 		    !check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
 						     "\x00\x00", "\x80\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_018_00_case01:
+	case pc_2eb_018_00_case02:
+	case pc_2eb_018_00_case03:
+	case pc_2eb_018_00_case04:
+	case pc_2eb_018_01:
+	case pc_2eb_018_02:
+	case pc_2eb_019_00:
+	case pc_2eb_019_01:
+	case pc_2eb_019_02:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						     "\x00\x00", "\x20\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_017_00_case02:
+	case pc_2eb_017_02:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						     "\x20\x00", "\x20\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_017_00_case01:
+	case pc_2eb_017_00_case03:
+	case pc_2eb_017_00_case04:
+	case pc_2eb_017_01:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x20\x00", "\x20\x00", 2) ||
+		    !check_value_under_mask(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+				     "\x00\x40\x00\x00", "\x00\x40\x00\x00", 4))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_020_00_case01:
+	case pc_2eb_020_01_case01:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x08\x00", "\x08\x00", 2) ||
+		    !check_value_under_mask(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+				     "\x00\x80\x00\x00", "\x00\x80\x00\x00", 4))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_020_00_case02:
+	case pc_2eb_020_01_case02:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						   "\x00\x00", "\x08\x00", 2) ||
+		    !check_value_under_mask(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+				     "\x00\x00\x00\x00", "\x00\x80\x00\x00", 4))
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
 		break;
@@ -2120,6 +2187,11 @@ static void checker_ui_request(struct chk *checker,
 	case pc_2ea_015_00_case03:
 	case pc_2ea_015_00_case04:
 		if (ui_request->msg_id == msg_card_read_ok)
+			chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_022_00:
+		if (ui_request->msg_id == msg_insert_or_swipe_card)
 			chk->pass_criteria_checked = true;
 		break;
 
