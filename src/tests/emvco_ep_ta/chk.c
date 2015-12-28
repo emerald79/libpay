@@ -1624,6 +1624,15 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2eb_004_00_case01:
+	case pc_2eb_004_00_case02:
+	case pc_2eb_004_00_case03:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						     "\x10\x00", "\x00\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}

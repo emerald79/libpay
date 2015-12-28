@@ -1125,6 +1125,30 @@ START_TEST(test_2EB_003_02)
 }
 END_TEST
 
+/* 2EB.004.00 Status Check present and set				      */
+START_TEST(test_2EB_004_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_2, pc_2eb_004_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_89, pc_2eb_004_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_2, pc_2eb_004_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -1171,6 +1195,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_003_00);
 	tcase_add_test(tc_pre_processing, test_2EB_003_01);
 	tcase_add_test(tc_pre_processing, test_2EB_003_02);
+	tcase_add_test(tc_pre_processing, test_2EB_004_00);
 	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;
