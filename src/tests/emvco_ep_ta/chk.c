@@ -978,8 +978,9 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
-	case pc_2eb_007_00_case01:
-	case pc_2eb_007_01_case01:
+	case pc_2eb_010_00_case01:
+	case pc_2eb_010_01_case01:
+	case pc_2eb_011_00_case03:
 		switch (chk->state) {
 
 		case 0:
@@ -989,11 +990,47 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 			break;
 
 		case 1:
-			if ((len != 7) ||
-			    (memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 2;
+			else
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 			break;
+
+
+		default:
+			chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2eb_007_00_case01:
+	case pc_2eb_007_01_case01:
+	case pc_2eb_010_00_case02:
+	case pc_2eb_010_00_case03:
+	case pc_2eb_010_00_case05:
+	case pc_2eb_010_01_case02:
+	case pc_2eb_010_01_case03:
+	case pc_2eb_011_01:
+	case pc_2eb_012_00_case01:
+		switch (chk->state) {
+
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 2;
+			else
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+			break;
+
 
 		default:
 			chk->pass_criteria_met = false;
@@ -1002,6 +1039,10 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		break;
 
 	case pc_2eb_007_00_case02:
+	case pc_2eb_011_00_case01:
+	case pc_2eb_011_00_case02:
+	case pc_2eb_011_02:
+	case pc_2eb_012_00_case02:
 		switch (chk->state) {
 
 		case 0:
@@ -1011,8 +1052,10 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 			break;
 
 		case 1:
-			if ((len != 7) ||
-			    (memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			else
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 			break;
@@ -1024,6 +1067,9 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		break;
 
 	case pc_2eb_007_01_case02:
+	case pc_2eb_010_00_case04:
+	case pc_2eb_011_00_case04:
+	case pc_2eb_012_01:
 		switch (chk->state) {
 
 		case 0:
@@ -1033,8 +1079,10 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 			break;
 
 		case 1:
-			if ((len != 7) ||
-			    (memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+				chk->state = 2;
+			else
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 			break;
