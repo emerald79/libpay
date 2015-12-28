@@ -3098,6 +3098,8 @@ done:
 struct lt {
 	const struct emv_hal_ops *ops;
 	const struct lt_setting	 *setting;
+	int			  mode;
+	int			  collision_state;
 	int                       selected_aid;
 	int			  i_gpo_resp;
 	struct chk		 *checker;
@@ -3133,12 +3135,45 @@ int lt_field_off(struct emv_hal *hal)
 	return EMV_RC_OK;
 }
 
-int lt_wait_for_card(struct emv_hal *hal)
+int lt_wait_for_card(struct emv_hal *hal, int timeout)
 {
 	struct lt *lt = (struct lt *)hal;
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 						     "%s(): success", __func__);
+
+	if (lt->mode == LT_NORMAL)
+		return EMV_RC_OK;
+
+	if (lt->mode == LT_COLLISION_THEN_WITHDRAW_ONE) {
+		switch (lt->collision_state) {
+		case 0:
+			lt->collision_state = 1;
+			return EMV_RC_COLLISION;
+		case 1:
+			lt->collision_state = 0;
+			return EMV_RC_OK;
+		default:
+			return EMV_RC_FAIL;
+		}
+	}
+
+	if (lt->mode == LT_COLLISION_THEN_WITHDRAW_BOTH) {
+		switch (lt->collision_state) {
+		case 0:
+			lt->collision_state = 1;
+			return EMV_RC_COLLISION;
+		case 1:
+			lt->collision_state = 2;
+			return EMV_RC_CONTINUE;
+		case 2:
+			lt->collision_state = 0;
+			return EMV_RC_OK;
+		default:
+			return EMV_RC_FAIL;
+		}
+	}
+
 	return EMV_RC_OK;
 }
 
@@ -3378,7 +3413,7 @@ const struct emv_hal_ops lt_ops  = {
 };
 
 struct emv_hal *lt_new(enum ltsetting i_lts, struct chk *checker,
-						     const char *log4c_category)
+					   const char *log4c_category, int mode)
 {
 	struct lt *lt = NULL;
 	char cat[64];
@@ -3398,6 +3433,7 @@ struct emv_hal *lt_new(enum ltsetting i_lts, struct chk *checker,
 	lt->log_cat = log4c_category_get(cat);
 	lt->setting = &ltsetting[i_lts];
 	lt->checker = checker;
+	lt->mode    = mode;
 
 	return (struct emv_hal *)lt;
 }

@@ -253,7 +253,7 @@ struct emv_hal_ops {
 
 	int	(*field_off)(struct emv_hal *hal);
 
-	int	(*wait_for_card)(struct emv_hal *hal);
+	int	(*wait_for_card)(struct emv_hal *hal, int timeout);
 
 	int	(*transceive)(struct emv_hal *hal,
 			      const void     *capdu,

@@ -506,6 +506,14 @@ enum pass_criteria {
 	pc_2ec_005_00_case02 = 208,
 	pc_2ec_005_00_case03 = 209,
 	pc_2ec_005_00_case04 = 210,
+	pc_2ec_006_00_case01 = 211,
+	pc_2ec_006_00_case02 = 212,
+	pc_2ec_006_00_case03 = 213,
+	pc_2ec_006_00_case04 = 214,
+	pc_2ec_007_00_case01 = 215,
+	pc_2ec_007_00_case02 = 216,
+	pc_2ec_007_00_case03 = 217,
+	pc_2ec_007_00_case04 = 218,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -619,8 +627,12 @@ enum ltsetting {
 	num_ltsettings
 };
 
+#define LT_NORMAL			0
+#define LT_COLLISION_THEN_WITHDRAW_BOTH	1
+#define LT_COLLISION_THEN_WITHDRAW_ONE	2
+
 struct emv_hal *lt_new(enum ltsetting ltsetting, struct chk *checker,
-						    const char *log4c_category);
+					  const char *log4c_category, int mode);
 void lt_free(struct emv_hal *lt);
 
 

@@ -1112,6 +1112,18 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ec_006_00_case01:
+	case pc_2ec_006_00_case02:
+	case pc_2ec_006_00_case03:
+	case pc_2ec_006_00_case04:
+	case pc_2ec_007_00_case01:
+	case pc_2ec_007_00_case02:
+	case pc_2ec_007_00_case03:
+	case pc_2ec_007_00_case04:
+		if (chk->state == 1)
+			chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}
@@ -2311,6 +2323,19 @@ static void checker_ui_request(struct chk *checker,
 	case pc_2ec_004_00_case02:
 		if ((chk->state == 0) &&
 		    (ui_request->msg_id == msg_present_card))
+			chk->state = 1;
+		break;
+
+	case pc_2ec_006_00_case01:
+	case pc_2ec_006_00_case02:
+	case pc_2ec_006_00_case03:
+	case pc_2ec_006_00_case04:
+	case pc_2ec_007_00_case01:
+	case pc_2ec_007_00_case02:
+	case pc_2ec_007_00_case03:
+	case pc_2ec_007_00_case04:
+		if ((chk->state == 0) &&
+		    (ui_request->msg_id == msg_present_one_card_only))
 			chk->state = 1;
 		break;
 

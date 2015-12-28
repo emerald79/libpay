@@ -128,7 +128,8 @@ static void emvco_ep_ta_tc_fixture_teardown(
 }
 
 static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
-	struct chk *chk, enum termsetting termsetting, enum ltsetting ltsetting)
+	struct chk *chk, enum termsetting termsetting, enum ltsetting ltsetting,
+								    int lt_mode)
 {
 	uint8_t cfg[4096];
 	size_t cfg_sz = sizeof(cfg);
@@ -168,7 +169,7 @@ static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
 		goto done;
 	}
 
-	fixture->lt = lt_new(ltsetting, chk, log4c_category);
+	fixture->lt = lt_new(ltsetting, chk, log4c_category, lt_mode);
 	if (!fixture->lt) {
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;
@@ -221,7 +222,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 	}
 
 	rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk, termsetting,
-								     ltsetting);
+							  ltsetting, LT_NORMAL);
 	if (rc != EMV_RC_OK)
 		goto done;
 
@@ -614,7 +615,7 @@ START_TEST(test_2EA_007_00)
 
 	for (i = 0; i < 500; i++) {
 		rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk,
-						    termsetting2, ltset[i % 3]);
+					 termsetting2, ltset[i % 3], LT_NORMAL);
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
@@ -626,7 +627,7 @@ START_TEST(test_2EA_007_00)
 
 	for (i = 0; i < 500; i++) {
 		rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk,
-						    termsetting3, ltset[i % 3]);
+					 termsetting3, ltset[i % 3], LT_NORMAL);
 		ck_assert(rc == EMV_RC_OK);
 
 		rc = emv_ep_activate(fixture.ep, start_a, &txn,
@@ -2372,6 +2373,98 @@ START_TEST(test_2EC_005_00)
 }
 END_TEST
 
+static int emvco_ep_ta_tc_collision(enum termsetting termsetting,
+		   enum ltsetting ltsetting, int ltmode, enum pass_criteria pc,
+						     const struct emv_txn *txn)
+{
+	struct emv_outcome_parms outcome;
+	struct emvco_ep_ta_tc_fixture fixture;
+	struct chk *chk = NULL;
+	int rc;
+
+	chk = chk_pass_criteria_new(pc, log4c_category);
+	if (!chk) {
+		rc = EMV_RC_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk, termsetting, ltsetting,
+									ltmode);
+	if (rc != EMV_RC_OK)
+		goto done;
+
+	rc = emv_ep_activate(fixture.ep, start_a, txn,
+			      ++transaction_sequence_counter, txn, 0, &outcome);
+	if (rc != EMV_RC_OK)
+		goto done;
+
+	emvco_ep_ta_tc_fixture_teardown(&fixture);
+
+	if (!chk->ops->pass_criteria_met(chk))
+		rc = EMV_RC_FAIL;
+done:
+	if (chk && chk->ops && chk->ops->free)
+		chk->ops->free(chk);
+
+	return rc;
+}
+
+/* 2EC.006.00 Protocol Activation Collision				      */
+START_TEST(test_2EC_006_00)
+{
+	struct emv_txn txn;
+	int rc, ltmode = LT_COLLISION_THEN_WITHDRAW_BOTH;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc_collision(termsetting1, ltsetting1_1, ltmode,
+						    pc_2ec_006_00_case01, &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc_collision(termsetting1, ltsetting1_2, ltmode,
+						    pc_2ec_006_00_case02, &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc_collision(termsetting3, ltsetting1_1, ltmode,
+						    pc_2ec_006_00_case03, &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc_collision(termsetting3, ltsetting1_2, ltmode,
+						    pc_2ec_006_00_case04, &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.007.00 Protocol Activation Collision				      */
+START_TEST(test_2EC_007_00)
+{
+	struct emv_txn txn;
+	int rc, ltmode = LT_COLLISION_THEN_WITHDRAW_ONE;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc_collision(termsetting1, ltsetting1_1, ltmode,
+						    pc_2ec_007_00_case01, &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc_collision(termsetting1, ltsetting1_2, ltmode,
+						    pc_2ec_007_00_case02, &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc_collision(termsetting3, ltsetting1_1, ltmode,
+						    pc_2ec_006_00_case03, &txn);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc_collision(termsetting3, ltsetting1_2, ltmode,
+						    pc_2ec_006_00_case04, &txn);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -2478,6 +2571,8 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_protocol_activation, test_2EC_003_00);
 	tcase_add_test(tc_protocol_activation, test_2EC_004_00);
 	tcase_add_test(tc_protocol_activation, test_2EC_005_00);
+	tcase_add_test(tc_protocol_activation, test_2EC_006_00);
+	tcase_add_test(tc_protocol_activation, test_2EC_007_00);
 	suite_add_tcase(suite, tc_protocol_activation);
 
 	return suite;

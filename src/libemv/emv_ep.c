@@ -586,7 +586,7 @@ int emv_ep_protocol_activation(struct emv_ep *ep)
 		goto done;
 
 	do {
-		rc = ep->hal->ops->wait_for_card(ep->hal);
+		rc = ep->hal->ops->wait_for_card(ep->hal, 100);
 
 
 		REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.4");
