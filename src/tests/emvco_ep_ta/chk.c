@@ -1927,6 +1927,60 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2ec_001_00_case01:
+	case pc_2ec_001_01:
+	case pc_2ec_001_02:
+		if (!check_value(chk, data, EMV_ID_TEST_FLAGS, "\x00\x00", 2) ||
+		    !check_value(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+							 "\x28\x00\x00\x00", 4))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ec_001_00_case02:
+	case pc_2ec_001_03:
+	case pc_2ec_001_04:
+		if (!check_value(chk, data, EMV_ID_TEST_FLAGS, "\x00\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ec_001_00_case03:
+		if (!check_value(chk, data, EMV_ID_TEST_FLAGS, "\x00\x00", 2) ||
+		    !check_value(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+							 "\x84\x00\x80\x00", 4))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ec_001_00_case04:
+	case pc_2ec_001_00_case05:
+		if (!check_value(chk, data, EMV_ID_TEST_FLAGS, "\x00\x00", 2) ||
+		    !check_value(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+							 "\x84\xC0\x80\x00", 4))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ec_002_00_case01:
+	case pc_2ec_002_00_case02:
+	case pc_2ec_002_00_case03:
+	case pc_2ec_002_00_case04:
+	case pc_2ec_003_00_case01:
+	case pc_2ec_003_00_case02:
+	case pc_2ec_003_00_case03:
+	case pc_2ec_003_00_case04:
+		if (chk->state == 2) {
+			if (!check_value_under_mask(chk, data,
+				 EMV_ID_TEST_FLAGS, "\x00\x80", "\x00\x80", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -1985,6 +2039,18 @@ static void checker_ep_restart(struct chk *chk)
 	case pc_2ea_016_00_case08:
 		if (checker->state == 2)
 			checker->state = 3;
+		break;
+
+	case pc_2ec_002_00_case01:
+	case pc_2ec_002_00_case02:
+	case pc_2ec_002_00_case03:
+	case pc_2ec_002_00_case04:
+	case pc_2ec_003_00_case01:
+	case pc_2ec_003_00_case02:
+	case pc_2ec_003_00_case03:
+	case pc_2ec_003_00_case04:
+		if (checker->state == 0)
+			checker->state = 1;
 		break;
 
 	default:
@@ -2193,6 +2259,29 @@ static void checker_ui_request(struct chk *checker,
 	case pc_2eb_022_00:
 		if (ui_request->msg_id == msg_insert_or_swipe_card)
 			chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ec_002_00_case01:
+	case pc_2ec_002_00_case02:
+	case pc_2ec_002_00_case03:
+		if ((chk->state == 1) &&
+		    (ui_request->msg_id == msg_present_card_again))
+			chk->state = 2;
+		break;
+
+	case pc_2ec_002_00_case04:
+		if ((chk->state == 1) &&
+		    (ui_request->msg_id == msg_processing))
+			chk->state = 2;
+		break;
+
+	case pc_2ec_003_00_case01:
+	case pc_2ec_003_00_case02:
+	case pc_2ec_003_00_case03:
+	case pc_2ec_003_00_case04:
+		if ((chk->state == 1) &&
+		    (ui_request->msg_id == msg_present_card))
+			chk->state = 2;
 		break;
 
 	default:

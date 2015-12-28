@@ -2192,10 +2192,143 @@ START_TEST(test_2EB_022_00)
 }
 END_TEST
 
+/* 2EC.001.00 All Pre-Processing indicators set to zero when Pre-Processing not
+ * performed								      */
+START_TEST(test_2EC_001_00)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_1, pc_2ec_001_00_case01,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_2, pc_2ec_001_00_case02,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_3, pc_2ec_001_00_case03,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_4, pc_2ec_001_00_case04,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_97, pc_2ec_001_00_case05,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.001.01 All Pre-Processing indicators set to zero when Pre-Processing not
+* performed with Transaction Type 'Purchase'				      */
+START_TEST(test_2EC_001_01)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting5_1, ltsetting1_1, pc_2ec_001_01, NULL,
+									     0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.001.02 All Pre-Processing indicators set to zero when Pre-Processing not
+ * performed with Transaction Type 'Purchase with Cashback'		      */
+START_TEST(test_2EC_001_02)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting5_2, ltsetting1_3, pc_2ec_001_02, NULL,
+									     0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.001.03 All Pre-Processing indicators set to zero when Pre-Processing not
+ * performed with Transaction Type 'Cash Advance'			      */
+START_TEST(test_2EC_001_03)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting5_3, ltsetting1_1, pc_2ec_001_03, NULL,
+									     0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.001.04 All Pre-Processing indicators set to zero when Pre-Processing not
+ * performed with Transaction Type ‘Refund’				      */
+START_TEST(test_2EC_001_04)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting5_4, ltsetting1_4, pc_2ec_001_04, NULL,
+									     0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.002.00 Restart flag set and UI Request on Restart present	      */
+START_TEST(test_2EC_002_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_17, pc_2ec_002_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_19, pc_2ec_002_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_12, pc_2ec_002_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_9, pc_2ec_002_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EC.003.00 Restart flag set and UI Request on Restart not present	      */
+START_TEST(test_2EC_003_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 1;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_20, pc_2ec_003_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_26, pc_2ec_003_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_22, pc_2ec_003_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_29, pc_2ec_003_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
 	TCase *tc_general_reqs = NULL, *tc_pre_processing = NULL;
+	TCase *tc_protocol_activation = NULL;
 
 	suite = suite_create("EMVCo Type Approval - Book A & Book B - Test "
 							"Cases - Version 2.4a");
@@ -2286,6 +2419,16 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_021_00);
 	tcase_add_test(tc_pre_processing, test_2EB_022_00);
 	suite_add_tcase(suite, tc_pre_processing);
+
+	tc_protocol_activation = tcase_create("Protocol Activation");
+	tcase_add_test(tc_protocol_activation, test_2EC_001_00);
+	tcase_add_test(tc_protocol_activation, test_2EC_001_01);
+	tcase_add_test(tc_protocol_activation, test_2EC_001_02);
+	tcase_add_test(tc_protocol_activation, test_2EC_001_03);
+	tcase_add_test(tc_protocol_activation, test_2EC_001_04);
+	tcase_add_test(tc_protocol_activation, test_2EC_002_00);
+	tcase_add_test(tc_protocol_activation, test_2EC_003_00);
+	suite_add_tcase(suite, tc_protocol_activation);
 
 	return suite;
 }

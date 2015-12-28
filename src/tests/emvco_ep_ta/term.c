@@ -610,7 +610,7 @@ struct emv_ep_combination termset3[] = {
 	}
 };
 
-struct emv_ep_combination termset4[] = {
+struct emv_ep_combination termset4and5[] = {
 	{
 		.txn_types = {
 			txn_purchase,
@@ -956,9 +956,49 @@ struct termset termsettings[num_termsettings] = {
 		}
 	},
 	{
-		.combination_sets	= termset4,
-		.num_combination_sets	= ARRAY_SIZE(termset4),
+		.combination_sets	= termset4and5,
+		.num_combination_sets	= ARRAY_SIZE(termset4and5),
 		.terminal_data		= &terminal_data
+	},
+	{
+		.combination_sets	= termset4and5,
+		.num_combination_sets	= ARRAY_SIZE(termset4and5),
+		.terminal_data		= &terminal_data,
+		.autorun = {
+			.enabled	   = true,
+			.txn_type	   = txn_purchase,
+			.amount_authorized = 10
+		}
+	},
+	{
+		.combination_sets	= termset4and5,
+		.num_combination_sets	= ARRAY_SIZE(termset4and5),
+		.terminal_data		= &terminal_data,
+		.autorun = {
+			.enabled	   = true,
+			.txn_type	   = txn_purchase_with_cashback,
+			.amount_authorized = 10
+		}
+	},
+	{
+		.combination_sets	= termset4and5,
+		.num_combination_sets	= ARRAY_SIZE(termset4and5),
+		.terminal_data		= &terminal_data,
+		.autorun = {
+			.enabled	   = true,
+			.txn_type	   = txn_cash_advance,
+			.amount_authorized = 10
+		}
+	},
+	{
+		.combination_sets	= termset4and5,
+		.num_combination_sets	= ARRAY_SIZE(termset4and5),
+		.terminal_data		= &terminal_data,
+		.autorun = {
+			.enabled	   = true,
+			.txn_type	   = txn_refund,
+			.amount_authorized = 10
+		}
 	},
 	{
 		.combination_sets	= termset8,

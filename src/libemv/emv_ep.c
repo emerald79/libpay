@@ -255,20 +255,6 @@ static uint64_t bcd_to_u64(const uint8_t *bcd, size_t len)
 	return u64;
 }
 
-#if 0
-static void u64_to_bcd(uint64_t u64, uint8_t *bcd, size_t len)
-{
-	unsigned i = 0;
-
-	for (i = len; i > 0; i--) {
-		bcd[i] = (uint8_t)(u64 % 10);
-		u64 /= 10;
-		bcd[i] |= (uint8_t)((u64 % 10) << 4);
-		u64 /= 10;
-	}
-}
-#endif
-
 static const char *combination_string(struct emv_ep_combination *combination)
 {
 	static char str[256];
@@ -589,29 +575,6 @@ int emv_ep_protocol_activation(struct emv_ep *ep)
 			free(ep->candidate_list.candidates);
 		ep->candidate_list.candidates = NULL;
 		ep->candidate_list.size = 0;
-	}
-
-
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.2");
-	/* If the Restart flag is 1, and the value of the retained UI Request on
-	 * Restart Present parameter is 'Yes', then Entry Point shall send the
-	 * retained User Interface Request.
-	 * Otherwise (the Restart flag is 0 or the value of the retained UI
-	 * Request on Restart Present parameter is 'No'), Entry Point shall send
-	 * a User Interface Request with the following parameters:
-	 *   - Message Identifier: '15' (“Present Card”)
-	 *   - Status: Ready to Read
-	 */
-	if (ep->restart && ep->outcome.present.ui_request_on_restart) {
-		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
-	} else {
-		struct emv_ui_request ui_request;
-
-		memset(&ui_request, 0, sizeof(ui_request));
-		ui_request.msg_id = msg_present_card;
-		ui_request.status = sts_ready_to_read;
-
-		emv_ep_ui_request(ep, &ui_request);
 	}
 
 
@@ -1442,16 +1405,6 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
 
-
-	/* FIXME: There is no requirement in EMVCo Book B for this. However,
-	 * Entry Point Typo Approval Test 2EA.014.00 Case 06 requires something
-	 * like this to happen. Should be clarified with EMVCo.
-	 */
-	if (ep->parms.start == start_d &&
-	    ep->restart && ep->outcome.present.ui_request_on_restart)
-		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
-
-
 	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
 	ep->parms.kernel_id_len = candidate->combination->kernel_id_len;
 	memcpy(ep->parms.kernel_id, candidate->combination->kernel_id,
@@ -1569,6 +1522,30 @@ int emv_ep_activate(struct emv_ep *ep, enum emv_start start_at,
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.2.1.2");
+	/* If the Restart flag is 1, and the value of the retained UI Request on
+	 * Restart Present parameter is 'Yes', then Entry Point shall send the
+	 * retained User Interface Request.
+	 * Otherwise (the Restart flag is 0 or the value of the retained UI
+	 * Request on Restart Present parameter is 'No'), Entry Point shall send
+	 * a User Interface Request with the following parameters:
+	 *   - Message Identifier: '15' (“Present Card”)
+	 *   - Status: Ready to Read
+	 */
+	if (ep->restart && ep->outcome.present.ui_request_on_restart) {
+		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_restart);
+	} else {
+		struct emv_ui_request ui_request;
+
+		memset(&ui_request, 0, sizeof(ui_request));
+		ui_request.msg_id = msg_present_card;
+		ui_request.status = sts_ready_to_read;
+
+		emv_ep_ui_request(ep, &ui_request);
+	}
+
 
 	switch (start_at) {
 	case start_a:
