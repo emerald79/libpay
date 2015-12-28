@@ -1625,6 +1625,80 @@ START_TEST(test_2EB_012_01)
 }
 END_TEST
 
+/* 2EB.013.00 Reader Contactless Floor Limit present, Amount Authorized greater
+ * than limit								      */
+START_TEST(test_2EB_013_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 13;
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_2, pc_2eb_013_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 21;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_3, pc_2eb_013_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 51;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_4, pc_2eb_013_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 19;
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_97, pc_2eb_013_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 99;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_3, pc_2eb_013_00_case05,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 123456;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_4, pc_2eb_013_00_case06,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.013.01 Reader Contactless Floor Limit present, Amount Authorized greater
+ * than limit with Transaction Type 'Purchase'				      */
+START_TEST(test_2EB_013_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 21;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_3, pc_2eb_013_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.013.01 Reader Contactless Floor Limit present, Amount Authorized greater
+ * than limit with Transaction Type 'Refund'				      */
+START_TEST(test_2EB_013_02)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_refund;
+	txn.amount_authorized = 51;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_4, pc_2eb_013_02, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -1693,6 +1767,9 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_011_02);
 	tcase_add_test(tc_pre_processing, test_2EB_012_00);
 	tcase_add_test(tc_pre_processing, test_2EB_012_01);
+	tcase_add_test(tc_pre_processing, test_2EB_013_00);
+	tcase_add_test(tc_pre_processing, test_2EB_013_01);
+	tcase_add_test(tc_pre_processing, test_2EB_013_02);
 	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;

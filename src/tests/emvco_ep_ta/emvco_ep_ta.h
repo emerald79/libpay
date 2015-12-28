@@ -427,6 +427,14 @@ enum pass_criteria {
 	pc_2eb_012_00_case01 = 129,
 	pc_2eb_012_00_case02 = 130,
 	pc_2eb_012_01	     = 131,
+	pc_2eb_013_00_case01 = 132,
+	pc_2eb_013_00_case02 = 133,
+	pc_2eb_013_00_case03 = 134,
+	pc_2eb_013_00_case04 = 135,
+	pc_2eb_013_00_case05 = 136,
+	pc_2eb_013_00_case06 = 137,
+	pc_2eb_013_01	     = 138,
+	pc_2eb_013_02	     = 139,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,

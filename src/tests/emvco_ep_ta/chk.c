@@ -1799,6 +1799,36 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2eb_013_00_case01:
+	case pc_2eb_013_00_case02:
+	case pc_2eb_013_00_case03:
+	case pc_2eb_013_00_case04:
+	case pc_2eb_013_00_case05:
+	case pc_2eb_013_00_case06:
+		if (!check_value_under_mask(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+				     "\x00\x80\x00\x00", "\x00\x80\x00\x00", 4))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_013_01:
+		if (!check_value_under_mask(chk, data,
+					 EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS,
+				   "\x00\x80\x00\x00", "\x00\x80\x00\x00", 4) ||
+		    !check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						     "\x80\x00", "\x80\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_013_02:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						     "\x80\x00", "\x80\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}
