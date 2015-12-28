@@ -1723,6 +1723,34 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2eb_008_00_case01:
+	case pc_2eb_008_00_case03:
+	case pc_2eb_008_01_case01:
+	case pc_2eb_008_02_case01:
+	case pc_2eb_009_00_case01:
+	case pc_2eb_009_01_case01:
+	case pc_2eb_009_01_case03:
+	case pc_2eb_009_02_case01:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						     "\x08\x00", "\x08\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2eb_008_00_case02:
+	case pc_2eb_008_00_case04:
+	case pc_2eb_008_01_case02:
+	case pc_2eb_008_02_case02:
+	case pc_2eb_009_00_case02:
+	case pc_2eb_009_01_case02:
+	case pc_2eb_009_01_case04:
+	case pc_2eb_009_02_case02:
+		if (!check_value_under_mask(chk, data, EMV_ID_TEST_FLAGS,
+						     "\x00\x00", "\x08\x00", 2))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}
