@@ -1225,6 +1225,96 @@ START_TEST(test_2EB_005_01)
 }
 END_TEST
 
+/* 2EB.006.00 Status Check present and set, Amount different from 1	      */
+START_TEST(test_2EB_006_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_2, pc_2eb_006_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_1, pc_2eb_006_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_1, pc_2eb_006_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_3, pc_2eb_006_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_97, pc_2eb_006_00_case05,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.006.01 Status Check present and set, Amount different from 1 with
+ * Transaction Type 'Purchase'						      */
+START_TEST(test_2EB_006_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting1_1, pc_2eb_006_01, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.007.00 Zero Amount not allowed */
+START_TEST(test_2EB_007_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_42, pc_2eb_007_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_42, pc_2eb_007_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2EB.007.01 Zero Amount not allowed with Transaction Type 'Purchase'	      */
+START_TEST(test_2EB_007_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting2_4, pc_2eb_007_01_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting4, ltsetting2_4, pc_2eb_007_01_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -1276,6 +1366,10 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_pre_processing, test_2EB_004_02);
 	tcase_add_test(tc_pre_processing, test_2EB_005_00);
 	tcase_add_test(tc_pre_processing, test_2EB_005_01);
+	tcase_add_test(tc_pre_processing, test_2EB_006_00);
+	tcase_add_test(tc_pre_processing, test_2EB_006_01);
+	tcase_add_test(tc_pre_processing, test_2EB_007_00);
+	tcase_add_test(tc_pre_processing, test_2EB_007_01);
 	suite_add_tcase(suite, tc_pre_processing);
 
 	return suite;

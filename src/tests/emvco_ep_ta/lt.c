@@ -1982,6 +1982,46 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting2.4 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 2,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_D1029F6604,
+				.app_prio = 1
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_D1029F6604,
+				.app_prio = 2
+			},
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting2.10 */
 	{
 		.ppse_entries = {
@@ -2117,6 +2157,46 @@ static const struct lt_setting ltsetting[] = {
 					.start	 = start_c
 				}
 			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.42 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_25,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 2,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_D1029F6604,
+				.app_prio = 1
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_D1029F6604,
+				.app_prio = 2
+			}
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
 			{
 				.outcome_parms = {
 					.outcome = out_approved
