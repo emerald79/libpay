@@ -106,6 +106,7 @@ void ui_req_to_gpo_ui_req(const struct emv_ui_request *in,
 struct emvco_ep_ta_tc_fixture {
 	struct emv_ep	  *ep;
 	struct emv_hal	  *lt;
+	struct chk	  *chk;
 	struct emv_kernel *tk[18];
 };
 
@@ -158,6 +159,7 @@ static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
 	int rc = EMV_RC_OK;
 
 	memset(fixture, 0, sizeof(*fixture));
+	fixture->chk = chk;
 
 	rc = term_get_setting(termsetting, cfg, &cfg_sz);
 	if (rc != EMV_RC_OK)
@@ -206,14 +208,129 @@ done:
 	return rc;
 }
 
+static int emvco_ep_ta_tc_perform_transaction(
+	      struct emvco_ep_ta_tc_fixture *fixture, const struct emv_txn *txn)
+{
+	bool autorun = emv_ep_get_autorun(fixture->ep)->enabled;
+	enum emv_start start_at = autorun ? start_b : start_a;
+	struct emv_outcome_parms outcome;
+	int rc = EMV_RC_OK;
+	struct chk *chk = fixture->chk;
+
+	if (autorun) {
+		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.6"); */
+		/* If the value of the POS System configuration parameter
+		 * Autorun is 'Yes', then the reader shall do all of the
+		 * following:
+		 *  o Ensure the field is on.
+		 *  o Request message '15' (Present Card), status Read to Read.
+		 *  o Activate Entry Point at Start B and make the following
+		 *    available to Entry Point:
+		 *     o for the selected type of transaction (as configured),
+		 *	 the corresponding set of supported Combinations and
+		 *	 Entry Point Configuration Data/fixed TTQ value.      */
+		struct emv_ui_request present_card = {
+			.msg_id = msg_present_card,
+			.status = sts_ready_to_read
+		};
+
+		rc = emv_ep_field_on(fixture->ep);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		rc = emv_ep_ui_request(fixture->ep, &present_card);
+		if (rc != EMV_RC_OK)
+			goto done;
+	} else {
+		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.5"); */
+		/* If the value of the POS System configuration parameter
+		 * Autorun is 'No',then the reader shall do all of the
+		 * following:
+		 *  o Ensure the field is off.
+		 *  o Request message '14' (Welcome), status Idle.
+		 *  o Wait for instruction from the terminal and then activate
+		 *    Entry Point at Start A and make the following available to
+		 *    Entry Point:
+		 *     o Transaction Type
+		 *     o the corresponding set of supported Combinations and
+		 *	 Entry Point Configuration Data
+		 *     o Amount, Authorised
+		 *     o Amount, Other					      */
+		struct emv_ui_request welcome = {
+			.msg_id = msg_welcome,
+			.status = sts_idle
+		};
+
+		rc = emv_ep_field_off(fixture->ep);
+		if (rc != EMV_RC_OK)
+			goto done;
+
+		rc = emv_ep_ui_request(fixture->ep, &welcome);
+		if (rc != EMV_RC_OK)
+			goto done;
+	}
+
+	chk->ops->ep_start(chk);
+
+	rc = emv_ep_activate(fixture->ep, start_at, txn,
+					++transaction_sequence_counter, NULL, 0,
+								      &outcome);
+	if (rc != EMV_RC_OK)
+		goto done;
+
+	chk->ops->outcome(chk, &outcome);
+#if 0
+	if (outcome.data_record.len) {
+		char hex[outcome.data_record.len * 2 + 1];
+		printf("DATA RECORD: '%s'\n", libtlv_bin_to_hex(
+		       outcome.data_record.data, outcome.data_record.len, hex));
+	}
+#endif
+
+	if (outcome.start != start_na) {
+		if ((outcome.online_response_type != ort_na) &&
+		    (outcome.data_record.len == 0)) {
+
+			/* No online response data -> timeout */
+			/* should sleep for		      */
+			/* outcome.removal_timeout	      */
+			struct emv_ui_request rm_card = {
+				.msg_id = msg_card_read_ok,
+				.status = sts_card_read_successfully
+			};
+
+			rc = emv_ep_ui_request(fixture->ep, &rm_card);
+			if (rc != EMV_RC_OK)
+				goto done;
+		}
+
+		if ((outcome.online_response_type != ort_emv_data) ||
+		    (outcome.data_record.len)) {
+
+			chk->ops->ep_restart(chk);
+
+			rc = emv_ep_activate(fixture->ep, outcome.start, txn,
+						   transaction_sequence_counter,
+						       outcome.data_record.data,
+					     outcome.data_record.len, &outcome);
+			if (rc != EMV_RC_OK)
+				goto done;
+
+			chk->ops->outcome(chk, &outcome);
+		}
+	}
+
+done:
+	return rc;
+}
+
 static int emvco_ep_ta_tc(enum termsetting termsetting,
 				enum ltsetting ltsetting, enum pass_criteria pc,
 				      const struct emv_txn *txn, size_t num_txn)
 {
-	struct emv_outcome_parms outcome;
 	struct emvco_ep_ta_tc_fixture fixture;
 	struct chk *chk = NULL;
-	int rc = EMV_RC_OK;
+	int rc = EMV_RC_OK, i_txn = 0;
 
 	chk = chk_pass_criteria_new(pc, log4c_category);
 	if (!chk) {
@@ -227,123 +344,20 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		goto done;
 
 	if (emv_ep_get_autorun(fixture.ep)->enabled) {
-		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.6"); */
-		/* If the value of the POS System configuration parameter
-		 * Autorun is 'Yes', then the reader shall do all of the
-		 * following:
-		 *  o Ensure the field is on.
-		 *  o Request message '15' (Present Card), status Ready to Read.
-		 *  o Activate Entry Point at Start B and make the following
-		 *    available to Entry Point:
-		 *     o for the selected type of transaction (as configured),
-		 *	 the corresponding set of supported Combinations and
-		 *	 Entry Point Configuration Data/fixed TTQ value.      */
-		struct emv_ui_request present_card = {
-			.msg_id = msg_present_card,
-			.status = sts_ready_to_read
-		};
 
-		rc = emv_ep_field_on(fixture.ep);
+		rc = emvco_ep_ta_tc_perform_transaction(&fixture,
+					  &emv_ep_get_autorun(fixture.ep)->txn);
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		rc = emv_ep_ui_request(fixture.ep, &present_card);
-		if (rc != EMV_RC_OK)
-			goto done;
-
-		chk->ops->ep_start(chk);
-
-		rc = emv_ep_activate(fixture.ep, start_b,
-					   &emv_ep_get_autorun(fixture.ep)->txn,
-			     ++transaction_sequence_counter, NULL, 0, &outcome);
-		if (rc != EMV_RC_OK)
-			goto done;
-
-		chk->ops->outcome(chk, &outcome);
 	} else {
-		int i_txn;
 
 		for (i_txn = 0; i_txn < num_txn; i_txn++) {
-			/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.5"); */
-			/* If the value of the POS System configuration
-			 * parameter Autorun is 'No',then the reader shall do
-			 * all of the following:
-			 *  o Ensure the field is off.
-			 *  o Request message '14' (Welcome), status Idle.
-			 *  o Wait for instruction from the terminal and then
-			 *    activate Entry Point at Start A and make the
-			 *    following available to Entry Point:
-			 *     o Transaction Type
-			 *     o the corresponding set of supported Combinations
-			 *       and Entry Point Configuration Data
-			 *     o Amount, Authorised
-			 *     o Amount, Other				      */
-			struct emv_ui_request welcome = {
-				.msg_id = msg_welcome,
-				.status = sts_idle
-			};
 
-			rc = emv_ep_field_off(fixture.ep);
+			rc = emvco_ep_ta_tc_perform_transaction(&fixture,
+								   &txn[i_txn]);
 			if (rc != EMV_RC_OK)
 				goto done;
-
-			rc = emv_ep_ui_request(fixture.ep, &welcome);
-			if (rc != EMV_RC_OK)
-				goto done;
-
-			chk->ops->ep_start(chk);
-
-			rc = emv_ep_activate(fixture.ep, start_a, &txn[i_txn],
-					++transaction_sequence_counter, NULL, 0,
-								      &outcome);
-			if (rc != EMV_RC_OK)
-				goto done;
-
-			chk->ops->outcome(chk, &outcome);
-#if 0
-			if (outcome.data_record.len) {
-				char hex[outcome.data_record.len * 2 + 1];
-				printf("DATA RECORD: '%s'\n", libtlv_bin_to_hex(
-						       outcome.data_record.data,
-						 outcome.data_record.len, hex));
-			}
-#endif
-
-			if (outcome.start != start_na) {
-				if ((outcome.online_response_type != ort_na) &&
-				    (outcome.data_record.len == 0)) {
-					/* No online response data -> timeout */
-					/* should sleep for		      */
-					/* outcome.removal_timeout	      */
-					struct emv_ui_request rm_card = {
-						.msg_id = msg_card_read_ok,
-						.status =
-						      sts_card_read_successfully
-					};
-
-					rc = emv_ep_ui_request(fixture.ep,
-								      &rm_card);
-					if (rc != EMV_RC_OK)
-						goto done;
-				}
-
-				if ((outcome.online_response_type !=
-								ort_emv_data) ||
-				    (outcome.data_record.len)) {
-					chk->ops->ep_restart(chk);
-
-					rc = emv_ep_activate(fixture.ep,
-						     outcome.start, &txn[i_txn],
-						   transaction_sequence_counter,
-						       outcome.data_record.data,
-							outcome.data_record.len,
-								      &outcome);
-					if (rc != EMV_RC_OK)
-						goto done;
-
-					chk->ops->outcome(chk, &outcome);
-				}
-			}
 		}
 	}
 
@@ -2481,6 +2495,22 @@ START_TEST(test_2ED_001_00)
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_7, pc_2ed_001_00_case02,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_17, pc_2ed_001_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_8, pc_2ed_001_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_9, pc_2ed_001_00_case05,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_18, pc_2ed_001_00_case06,
 								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
