@@ -49,12 +49,20 @@ extern uint32_t transaction_sequence_counter;
 +-----------------------------------------------------------------------------*/
 #define AID_A0000000010001 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01 }, .aid_len = 7
+#define AID_A000000001000103 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x03 }, .aid_len = 8
 #define AID_A0000000020002 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02 }, .aid_len = 7
+#define AID_A000000002000202 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x02 }, .aid_len = 8
 #define AID_A0000000030003 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00, 0x03 }, .aid_len = 7
+#define AID_A000000003000301 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00, 0x03, 0x01 }, .aid_len = 8
 #define AID_A0000000040004 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04 }, .aid_len = 7
+#define AID_A000000004000404 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x04 }, .aid_len = 8
 #define AID_A0000000031010 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10 }, .aid_len = 7
 #define AID_A0000000041010 \
@@ -75,6 +83,11 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x03, 0x33, 0x01, 0x01 }, .aid_len = 7
 #define AID_B0000000010101 \
 	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01 }, .aid_len = 7
+
+#define EXT_SEL_01	.ext_select = { 0x01 }, .ext_select_len = 1
+#define EXT_SEL_02	.ext_select = { 0x02 }, .ext_select_len = 1
+#define EXT_SEL_03	.ext_select = { 0x03 }, .ext_select_len = 1
+#define EXT_SEL_04	.ext_select = { 0x04 }, .ext_select_len = 1
 
 /*-----------------------------------------------------------------------------+
 | Application Labels							       |
@@ -196,6 +209,13 @@ extern uint32_t transaction_sequence_counter;
 #define PDOL_D1029F66049F2A086F23					       \
 	.pdol = {							       \
 		0xD1, 0x02, 0x9F, 0x66, 0x04, 0x9F, 0x2A, 0x08, 0x6F, 0x23     \
+	},								       \
+	.pdol_len = 10
+
+/* PDOL with Pre-Processing indicator, TTQ, kernel ID, FCI		      */
+#define PDOL_D1029F66049F2A086F24					       \
+	.pdol = {							       \
+		0xD1, 0x02, 0x9F, 0x66, 0x04, 0x9F, 0x2A, 0x08, 0x6F, 0x24     \
 	},								       \
 	.pdol_len = 10
 
@@ -520,6 +540,12 @@ enum pass_criteria {
 	pc_2ed_001_00_case04 = 222,
 	pc_2ed_001_00_case05 = 223,
 	pc_2ed_001_00_case06 = 224,
+	pc_2ed_001_01_case01 = 225,
+	pc_2ed_001_01_case02 = 226,
+	pc_2ed_001_01_case03 = 227,
+	pc_2ed_001_01_case04 = 228,
+	pc_2ed_001_01_case05 = 229,
+	pc_2ed_001_01_case06 = 230,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -623,6 +649,12 @@ enum ltsetting {
 	ltsetting2_8,
 	ltsetting2_9,
 	ltsetting2_10,
+	ltsetting2_11,
+	ltsetting2_12,
+	ltsetting2_13,
+	ltsetting2_14,
+	ltsetting2_15,
+	ltsetting2_16,
 	ltsetting2_17,
 	ltsetting2_18,
 	ltsetting2_40,

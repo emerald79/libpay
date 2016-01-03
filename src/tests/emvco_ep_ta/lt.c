@@ -2725,6 +2725,513 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting2.11 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 4,
+				EXT_SEL_01
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+				.app_prio = 3,
+				EXT_SEL_02
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+				EXT_SEL_03
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+				EXT_SEL_04
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 4
+			},
+			{
+				AID_A000000002000202,
+				APP_LABEL_APP2,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 3
+			},
+			{
+				AID_A000000001000103,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 2
+			},
+			{
+				AID_A000000004000404,
+				APP_LABEL_APP4,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_b,
+					.online_response_type = ort_emv_data,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10",
+						.len = 18
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.12 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 4,
+				EXT_SEL_01
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+				.app_prio = 3,
+				EXT_SEL_02
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+				EXT_SEL_03
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+				EXT_SEL_04
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 4
+			},
+			{
+				AID_A000000002000202,
+				APP_LABEL_APP2,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 3
+			},
+			{
+				AID_A000000001000103,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 2
+			},
+			{
+				AID_A000000004000404,
+				APP_LABEL_APP4,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_b,
+					.online_response_type = ort_emv_data,
+					.data_record = {
+						.data = "\x71\x10\x11\x12\x13"
+							"\x14\x15\x16\x17\x18"
+							"\x19\x1A\x1B\x1C\x1D"
+							"\x1E\x1F\x20",
+						.len = 18
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.13 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 4,
+				EXT_SEL_01
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+				.app_prio = 3,
+				EXT_SEL_02
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+				EXT_SEL_03
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+				EXT_SEL_04
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 4
+			},
+			{
+				AID_A000000002000202,
+				APP_LABEL_APP2,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 3
+			},
+			{
+				AID_A000000001000103,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 2
+			},
+			{
+				AID_A000000004000404,
+				APP_LABEL_APP4,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_b,
+					.online_response_type = ort_emv_data,
+					.data_record = {
+						.data = "\x72\x10\x21\x22\x23"
+							"\x24\x25\x26\x27\x28"
+							"\x29\x2A\x2B\x2C\x2D"
+							"\x2E\x2F\x30",
+						.len = 18
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.14 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 4,
+				EXT_SEL_01
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+				.app_prio = 3,
+				EXT_SEL_02
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+				EXT_SEL_03
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+				EXT_SEL_04
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 4
+			},
+			{
+				AID_A000000002000202,
+				APP_LABEL_APP2,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 3
+			},
+			{
+				AID_A000000001000103,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 2
+			},
+			{
+				AID_A000000004000404,
+				APP_LABEL_APP4,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_b,
+					.online_response_type = ort_emv_data,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10\x71\x10"
+							"\x11\x12\x13\x14\x15"
+							"\x16\x17\x18\x19\x1A"
+							"\x1B\x1C\x1D\x1E\x1F"
+							"\x20",
+						.len = 36
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.15 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 4,
+				EXT_SEL_01
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+				.app_prio = 3,
+				EXT_SEL_02
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+				EXT_SEL_03
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+				EXT_SEL_04
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 4
+			},
+			{
+				AID_A000000002000202,
+				APP_LABEL_APP2,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 3
+			},
+			{
+				AID_A000000001000103,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 2
+			},
+			{
+				AID_A000000004000404,
+				APP_LABEL_APP4,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_b,
+					.online_response_type = ort_emv_data,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10\x72\x10"
+							"\x21\x22\x23\x24\x25"
+							"\x26\x27\x28\x29\x2A"
+							"\x2B\x2C\x2D\x2E\x2F"
+							"\x30",
+						.len = 36
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.16 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 4,
+				EXT_SEL_01
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+				.app_prio = 3,
+				EXT_SEL_02
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+				EXT_SEL_03
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_25,
+				.app_prio = 1,
+				EXT_SEL_04
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 4
+			},
+			{
+				AID_A000000002000202,
+				APP_LABEL_APP2,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 3
+			},
+			{
+				AID_A000000001000103,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 2
+			},
+			{
+				AID_A000000004000404,
+				APP_LABEL_APP4,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_b,
+					.online_response_type = ort_emv_data,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10\x71\x10"
+							"\x11\x12\x13\x14\x15"
+							"\x16\x17\x18\x19\x1A"
+							"\x1B\x1C\x1D\x1E\x1F"
+							"\x20\x72\x10\x21\x22"
+							"\x23\x24\x25\x26\x27"
+							"\x28\x29\x2A\x2B\x2C"
+							"\x2D\x2E\x2F\x30",
+						.len = 54
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting2.17 */
 	{
 		.ppse_entries = {

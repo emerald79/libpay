@@ -2516,6 +2516,43 @@ START_TEST(test_2ED_001_00)
 }
 END_TEST
 
+/* 2ED.001.01 Entry point Activation at Start B with Issuer Authentication Data
+ * or Issuer Script present with Extended Selection			      */
+START_TEST(test_2ED_001_01)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_11, pc_2ed_001_01_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_12, pc_2ed_001_01_case02,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_13, pc_2ed_001_01_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_14, pc_2ed_001_01_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_15, pc_2ed_001_01_case05,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_16, pc_2ed_001_01_case06,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -2630,6 +2667,7 @@ Suite *emvco_ep_ta_test_suite(void)
 
 	tc_aid_and_kernel_selection = tcase_create("AID and Kernel Selection");
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_001_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_001_01);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

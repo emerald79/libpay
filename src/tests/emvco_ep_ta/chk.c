@@ -1148,6 +1148,22 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ed_001_01_case01:
+	case pc_2ed_001_01_case02:
+	case pc_2ed_001_01_case03:
+	case pc_2ed_001_01_case04:
+	case pc_2ed_001_01_case05:
+	case pc_2ed_001_01_case06:
+		if (chk->state == 1) {
+			if ((len == 8) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04\x04",
+									    8)))
+				chk->state = 2;
+			else
+				chk->pass_criteria_met = false;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -2072,6 +2088,38 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		}
 		break;
 
+	case pc_2ed_001_01_case01:
+	case pc_2ed_001_01_case02:
+	case pc_2ed_001_01_case03:
+	case pc_2ed_001_01_case04:
+	case pc_2ed_001_01_case05:
+		if (chk->state == 2) {
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								   "\x24", 1) ||
+			    !check_value(chk, data, EMV_ID_FCI_TEMPLATE,
+					  "\x6F\x22\x84\x08\xA0\x00\x00\x00\x04"
+					  "\x00\x04\x04\xA5\x16\x50\x04\x41\x50"
+					  "\x50\x34\x87\x01\x01\x9F\x38\x0A\xD1"
+				    "\x02\x9F\x66\x04\x9F\x2A\x08\x6F\x24", 36))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_001_01_case06:
+		if (chk->state == 2) {
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								   "\x25", 1) ||
+			    !check_value(chk, data, EMV_ID_FCI_TEMPLATE,
+					  "\x6F\x22\x84\x08\xA0\x00\x00\x00\x04"
+					  "\x00\x04\x04\xA5\x16\x50\x04\x41\x50"
+					  "\x50\x34\x87\x01\x01\x9F\x38\x0A\xD1"
+				    "\x02\x9F\x66\x04\x9F\x2A\x08\x6F\x24", 36))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -2146,6 +2194,12 @@ static void checker_ep_restart(struct chk *chk)
 	case pc_2ed_001_00_case04:
 	case pc_2ed_001_00_case05:
 	case pc_2ed_001_00_case06:
+	case pc_2ed_001_01_case01:
+	case pc_2ed_001_01_case02:
+	case pc_2ed_001_01_case03:
+	case pc_2ed_001_01_case04:
+	case pc_2ed_001_01_case05:
+	case pc_2ed_001_01_case06:
 		if (checker->state == 0)
 			checker->state = 1;
 		break;
