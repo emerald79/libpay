@@ -3466,6 +3466,81 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting2.25 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				.app_prio = 4,
+				EXT_SEL_01
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+				.app_prio = 3,
+				EXT_SEL_02
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+				EXT_SEL_03
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+				EXT_SEL_04
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 4
+			},
+			{
+				AID_A000000002000202,
+				APP_LABEL_APP2,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 3
+			},
+			{
+				AID_A000000001000103,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 2
+			},
+			{
+				AID_A000000004000404,
+				APP_LABEL_APP4,
+				PDOL_D1029F66049F2A086F24,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_c,
+					.online_response_type = ort_any
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting2.40 */
 	{
 		.ppse_entries = {
