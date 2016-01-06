@@ -981,6 +981,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2eb_010_00_case01:
 	case pc_2eb_010_01_case01:
 	case pc_2eb_011_00_case03:
+	case pc_2ed_003_01_case01:
 		switch (chk->state) {
 
 		case 0:
@@ -1015,6 +1016,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2eb_011_01:
 	case pc_2eb_012_00_case01:
 	case pc_2eb_021_00_case01:
+	case pc_2ed_003_01_case02:
 		switch (chk->state) {
 
 		case 0:
@@ -1045,6 +1047,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2eb_011_02:
 	case pc_2eb_012_00_case02:
 	case pc_2eb_021_00_case02:
+	case pc_2ed_003_01_case03:
 		switch (chk->state) {
 
 		case 0:
@@ -2165,6 +2168,36 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 					  "\x00\x04\x04\xA5\x16\x50\x04\x41\x50"
 					  "\x50\x34\x87\x01\x01\x9F\x38\x0A\xD1"
 				    "\x02\x9F\x66\x04\x9F\x2A\x08\x6F\x24", 36))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_003_01_case01:
+		if (chk->state == 2) {
+			chk->state = 3;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x23", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_003_01_case02:
+		if (chk->state == 2) {
+			chk->state = 3;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x22", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_003_01_case03:
+		if (chk->state == 2) {
+			chk->state = 3;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x21", 1))
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 		}

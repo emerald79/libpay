@@ -1378,6 +1378,115 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 2
 	},
+	/* LTsetting1.50 */
+	{
+		.ppse =
+		  "\x6F""\x30"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x1E"
+		      "\xBF\x0C""\x1B"
+			"\x61""\x16"
+			  "\x4F""\x07""\xA0\x00\x00\x00\x01\x00\x01"
+			  "\x50""\x04""\x41\x50\x50\x31"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x01""\x23"
+			"\x88""\x01""\x01",
+		.ppse_len = 50,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				.app_prio = 1,
+				PDOL_9F66049F2A08
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved,
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.51 */
+	{
+		.ppse =
+		  "\x6F""\x3E"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x2C"
+		      "\x88""\x01""\x01"
+		      "\x5F\x2D""\x02""\x65\x6E"
+		      "\x9F\x11""\x01""\x00"
+		      "\xBF\x0C""\x1D"
+			"\x61""\x16"
+			  "\x4F""\x07""\xA0\x00\x00\x00\x02\x00\x02"
+			  "\x50""\x04""\x41\x50\x50\x32"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x01""\x22"
+			"\x5F\x55""\x02""\x55\x53",
+		.ppse_len = 64,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				.app_prio = 1,
+				PDOL_9F2A08
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved,
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.52 */
+	{
+		.ppse =
+		  "\x6F""\x2D"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x1B"
+		      "\xBF\x0C""\x18"
+			"\x61""\x16"
+			  "\x4F""\x07""\xA0\x00\x00\x00\x03\x00\x03"
+			  "\x50""\x04""\x41\x50\x50\x33"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x01""\x21"
+		  "\x73""\x23"
+		    "\x5F\x54""\x08""\x41\x42\x43\x44\x45\x46\x47\x48"
+		    "\x5F\x53""\x05""\x12\x34\x56\x78\x90"
+		    "\x5F\x55""\x02""\x55\x53"
+		    "\x5F\x56""\x03""\x55\x53\x41"
+		    "\x42""\x03""\x49\x72\x00",
+		.ppse_len = 84,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				.app_prio = 1,
+				PDOL_9F2A08
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved,
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+
+
 	/* LTsetting1.60 */
 	{
 		.ppse_entries = {
