@@ -12,7 +12,7 @@
 #include "emvco_ep_ta.h"
 
 struct ppse_entry {
-	uint8_t			aid[16];
+	uint8_t			aid[17];
 	size_t			aid_len;
 	uint8_t			app_label[17];
 	size_t			app_label_len;
@@ -3799,16 +3799,50 @@ static const struct lt_setting ltsetting[] = {
 	},
 	/* LTsetting6.2 */
 	{
+		.ppse_sw = EMV_SW_6283_SELECTED_FILE_INVALIDATED
+	},
+	/* LTsetting6.3 */
+	{
+	},
+	/* LTsetting6.5 */
+	{
 		.ppse_entries = {
 			{
-				AID_A0000000040004,
+				AID_A00000000400040102030405060708090A,
 				APP_LABEL_APP4,
-				KERNEL_ID_25,
-				.app_prio = 1
+				KERNEL_ID_24,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 2,
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				.app_prio = 3,
 			}
 		},
-		.ppse_entries_num = 1,
-		.ppse_sw = EMV_SW_6283_SELECTED_FILE_INVALIDATED
+		.ppse_entries_num = 3,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_9F66049F2A08,
+				.app_prio = 0xF2
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
 	},
 	/* LTsetting6.10 */
 	{
@@ -4047,6 +4081,40 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting6.16 */
+	{
+		.ppse_entries = {
+			{
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+				.app_prio = 2,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_D1029F66049F02069F03069C019F37049F2A08,
+				.app_prio = 2
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting8.0 */
 	{
 		.ppse_entries = {
@@ -4218,11 +4286,6 @@ static int ber_get_ppse(const struct ppse_entry *entries, size_t num_entries,
 	size_t i = 0;
 	int rc = TLV_RC_OK;
 
-	if (num_entries == 0) {
-		*ber_sz = 0;
-		return rc;
-	}
-
 	tlv_ppse = tlv_new(EMV_ID_FCI_TEMPLATE, 0, NULL);
 
 	tlv = tlv_insert_below(tlv_ppse, tlv_new(EMV_ID_DF_NAME,
@@ -4232,9 +4295,12 @@ static int ber_get_ppse(const struct ppse_entry *entries, size_t num_entries,
 	tlv = tlv_insert_below(tlv,
 			tlv_new(EMV_ID_FCI_ISSUER_DISCRETIONARY_DATA, 0, NULL));
 
-	tlv = tlv_insert_below(tlv, tlv_get_ppse_entry(&entries[0]));
-	for (i = 1; i < num_entries; i++)
-		tlv = tlv_insert_after(tlv, tlv_get_ppse_entry(&entries[i]));
+	if (num_entries) {
+		tlv = tlv_insert_below(tlv, tlv_get_ppse_entry(&entries[0]));
+		for (i = 1; i < num_entries; i++)
+			tlv = tlv_insert_after(tlv,
+					       tlv_get_ppse_entry(&entries[i]));
+	}
 
 	rc = tlv_encode(tlv_ppse, ber, ber_sz);
 

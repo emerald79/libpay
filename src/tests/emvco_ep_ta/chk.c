@@ -982,6 +982,8 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2eb_010_01_case01:
 	case pc_2eb_011_00_case03:
 	case pc_2ed_003_01_case01:
+	case pc_2ed_007_00:
+	case pc_2ed_007_01:
 		switch (chk->state) {
 
 		case 0:
@@ -2541,6 +2543,7 @@ static void checker_ui_request(struct chk *checker,
 		break;
 
 	case pc_2ed_004_00:
+	case pc_2ed_005_00:
 		if (ui_request->msg_id == msg_try_another_card)
 			chk->pass_criteria_checked = true;
 		break;

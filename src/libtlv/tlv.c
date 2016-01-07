@@ -167,7 +167,10 @@ static int tlv_parse_recursive(const void **buffer, size_t length,
 	ssize_t remaining = 0;
 	int rc = TLV_RC_OK;
 
-	if (!buffer || !(*buffer) || !length || !tlv) {
+	if (!length)
+		goto done;
+
+	if (!buffer || !(*buffer) || !tlv) {
 		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
 			    "%s(buffer: %p, *buffer: %p, length: %d, tlv: %p): "
 					  "Invalid arguments", __func__, buffer,

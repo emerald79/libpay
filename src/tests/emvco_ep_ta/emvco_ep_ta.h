@@ -47,6 +47,8 @@ extern uint32_t transaction_sequence_counter;
 /*-----------------------------------------------------------------------------+
 | Application Identifiers used in EMVCo Type Approval - Book A & Book B	       |
 +-----------------------------------------------------------------------------*/
+#define AID_A0000000 .aid = { 0xA0, 0x00, 0x00, 0x00 }, .aid_len = 4
+
 #define AID_A0000000010001 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01 }, .aid_len = 7
 #define AID_A000000001000103 \
@@ -63,6 +65,12 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04 }, .aid_len = 7
 #define AID_A000000004000404 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x04 }, .aid_len = 8
+#define AID_A00000000400040102030405060708090A				       \
+	.aid = {							       \
+		0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x01, 0x02, 0x03,    \
+		0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A		       \
+	},								       \
+	.aid_len = 17
 #define AID_A0000000031010 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10 }, .aid_len = 7
 #define AID_A0000000041010 \
@@ -555,6 +563,9 @@ enum pass_criteria {
 	pc_2ed_003_01_case02 = 235,
 	pc_2ed_003_01_case03 = 236,
 	pc_2ed_004_00	     = 237,
+	pc_2ed_005_00	     = 238,
+	pc_2ed_007_00	     = 239,
+	pc_2ed_007_01	     = 240,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -676,11 +687,14 @@ enum ltsetting {
 	ltsetting2_43,
 	ltsetting6_1,
 	ltsetting6_2,
+	ltsetting6_3,
+	ltsetting6_5,
 	ltsetting6_10,
 	ltsetting6_11,
 	ltsetting6_12,
 	ltsetting6_13,
 	ltsetting6_14,
+	ltsetting6_16,
 	ltsetting8_0,
 	ltsetting8_1,
 	num_ltsettings

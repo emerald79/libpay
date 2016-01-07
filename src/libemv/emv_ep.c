@@ -789,7 +789,15 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 			dir_entry->adf_name_len = sizeof(dir_entry->adf_name);
 			rc = tlv_encode_value(adf_name, dir_entry->adf_name,
 						      &dir_entry->adf_name_len);
-			assert(rc == TLV_RC_OK);
+			if ((rc != TLV_RC_OK) ||
+			    (dir_entry->adf_name_len < 5) ||
+			    (dir_entry->adf_name_len > 16)) {
+				log4c_category_log(ep->log_cat,
+					    LOG4C_PRIORITY_NOTICE, "%s(): PPSE "
+					    "entry with malformed ADF ignored!",
+								      __func__);
+				continue;
+			}
 		}
 
 		if (label) {
@@ -798,7 +806,13 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 			rc = tlv_encode_value(label,
 						   dir_entry->application_label,
 					     &dir_entry->application_label_len);
-			assert(rc == TLV_RC_OK);
+			if (rc != TLV_RC_OK) {
+				log4c_category_log(ep->log_cat,
+					    LOG4C_PRIORITY_NOTICE, "%s(): PPSE "
+					  "entry with malformed label ignored!",
+								      __func__);
+				continue;
+			}
 		}
 
 		if (kernel_id) {
@@ -807,7 +821,13 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 			rc = tlv_encode_value(kernel_id,
 						   dir_entry->kernel_identifier,
 					     &dir_entry->kernel_identifier_len);
-			assert(rc == TLV_RC_OK);
+			if (rc != TLV_RC_OK) {
+				log4c_category_log(ep->log_cat,
+					    LOG4C_PRIORITY_NOTICE, "%s(): PPSE "
+					       "entry with malformed Kernel-ID "
+							  "ignored!", __func__);
+				continue;
+			}
 		}
 
 		if (ext_sel) {
@@ -816,7 +836,13 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 			rc = tlv_encode_value(ext_sel,
 						  dir_entry->extended_selection,
 					    &dir_entry->extended_selection_len);
-			assert(rc == TLV_RC_OK);
+			if (rc != TLV_RC_OK) {
+				log4c_category_log(ep->log_cat,
+					    LOG4C_PRIORITY_NOTICE, "%s(): PPSE "
+						"entry with malformed extended "
+						"selection ignored!", __func__);
+				continue;
+			}
 		}
 
 		if (prio) {
@@ -825,8 +851,13 @@ static int emv_ep_parse_ppse(struct emv_ep *ep, const void *fci, size_t fci_len,
 			rc = tlv_encode_value(prio,
 				     &dir_entry->application_priority_indicator,
 									  &len);
-
-			assert(rc == TLV_RC_OK);
+			if (rc != TLV_RC_OK) {
+				log4c_category_log(ep->log_cat,
+					    LOG4C_PRIORITY_NOTICE, "%s(): PPSE "
+					    "entry with malformed API ignored!",
+								      __func__);
+				continue;
+			}
 		}
 
 		num++;
