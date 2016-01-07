@@ -45,6 +45,7 @@ struct gpo_resp {
 struct lt_setting {
 	const char	 *ppse;
 	size_t		  ppse_len;
+	uint8_t		  ppse_sw[2];
 	struct ppse_entry ppse_entries[8];
 	size_t		  ppse_entries_num;
 	struct aid_fci	  aid_fci[8];
@@ -1485,8 +1486,6 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
-
-
 	/* LTsetting1.60 */
 	{
 		.ppse_entries = {
@@ -3794,6 +3793,23 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting6.1 */
+	{
+		.ppse_sw = EMV_SW_6A82_FILE_NOT_FOUND
+	},
+	/* LTsetting6.2 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_25,
+				.app_prio = 1
+			}
+		},
+		.ppse_entries_num = 1,
+		.ppse_sw = EMV_SW_6283_SELECTED_FILE_INVALIDATED
+	},
 	/* LTsetting6.10 */
 	{
 		.ppse_entries = {
@@ -4202,6 +4218,11 @@ static int ber_get_ppse(const struct ppse_entry *entries, size_t num_entries,
 	size_t i = 0;
 	int rc = TLV_RC_OK;
 
+	if (num_entries == 0) {
+		*ber_sz = 0;
+		return rc;
+	}
+
 	tlv_ppse = tlv_new(EMV_ID_FCI_TEMPLATE, 0, NULL);
 
 	tlv = tlv_insert_below(tlv_ppse, tlv_new(EMV_ID_DF_NAME,
@@ -4367,7 +4388,11 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		memcpy(sw, EMV_SW_9000_OK, 2);
+		if (memcmp(lt->setting->ppse_sw, "\x00\x00", 2))
+			memcpy(sw, lt->setting->ppse_sw, 2);
+		else
+			memcpy(sw, EMV_SW_9000_OK, 2);
+
 		goto done;
 	}
 

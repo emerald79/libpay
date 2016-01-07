@@ -2540,6 +2540,11 @@ static void checker_ui_request(struct chk *checker,
 			chk->state = 1;
 		break;
 
+	case pc_2ed_004_00:
+		if (ui_request->msg_id == msg_try_another_card)
+			chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		memcpy(&chk->ui_request, ui_request, sizeof(*ui_request));
 	}

@@ -49,11 +49,12 @@
 #define DF_NAME_2PAY_SYS_DDF01 "2PAY.SYS.DDF01"
 
 #define EMV_SW(sw1, sw2) ((const uint8_t []){ sw1, sw2 })
-#define EMV_SW_6700_WRONG_LENGTH	EMV_SW('\x67', '\x00')
-#define EMV_SW_6A82_FILE_NOT_FOUND	EMV_SW('\x6A', '\x82')
-#define EMV_SW_6D00_INS_NOT_SUPPORTED	EMV_SW('\x6E', '\x00')
-#define EMV_SW_6E00_CLA_NOT_SUPPORTED	EMV_SW('\x6E', '\x00')
-#define EMV_SW_9000_OK			EMV_SW('\x90', '\x00')
+#define EMV_SW_6283_SELECTED_FILE_INVALIDATED	EMV_SW('\x62', '\x83')
+#define EMV_SW_6700_WRONG_LENGTH		EMV_SW('\x67', '\x00')
+#define EMV_SW_6A82_FILE_NOT_FOUND		EMV_SW('\x6A', '\x82')
+#define EMV_SW_6D00_INS_NOT_SUPPORTED		EMV_SW('\x6E', '\x00')
+#define EMV_SW_6E00_CLA_NOT_SUPPORTED		EMV_SW('\x6E', '\x00')
+#define EMV_SW_9000_OK				EMV_SW('\x90', '\x00')
 
 #define EMV_ID_ADF_NAME				"\x4F"
 #define EMV_ID_APPLICATION_LABEL		"\x50"

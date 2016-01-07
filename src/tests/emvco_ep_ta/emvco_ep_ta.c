@@ -2623,6 +2623,24 @@ START_TEST(test_2ED_003_01)
 }
 END_TEST
 
+/* 2ED.004.00 PPSE selection rejected					      */
+START_TEST(test_2ED_004_00)
+{
+	struct emv_txn txn;
+	int rc;
+
+	memset(&txn, 0, sizeof(txn));
+	txn.type = txn_purchase;
+	txn.amount_authorized = 2;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting6_1, pc_2ed_004_00, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting6_2, pc_2ed_004_00, NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -2742,6 +2760,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_002_01);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_003_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_003_01);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_004_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");
