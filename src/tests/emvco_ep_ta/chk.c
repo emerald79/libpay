@@ -1019,6 +1019,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2eb_012_00_case01:
 	case pc_2eb_021_00_case01:
 	case pc_2ed_003_01_case02:
+	case pc_2ed_008_00:
 		switch (chk->state) {
 
 		case 0:

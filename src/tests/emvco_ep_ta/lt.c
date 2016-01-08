@@ -3844,6 +3844,53 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting6.6 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000661010,
+				APP_LABEL_APP2,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000005,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000006101001,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				.app_prio = 2,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_9F66049F2A08,
+				.app_prio = 2
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting6.10 */
 	{
 		.ppse_entries = {
