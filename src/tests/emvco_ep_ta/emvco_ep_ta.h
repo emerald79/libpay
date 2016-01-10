@@ -75,6 +75,8 @@ extern uint32_t transaction_sequence_counter;
 	.aid_len = 17
 #define AID_A0000000041010 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x10, 0x10 }, .aid_len = 7
+#define AID_A000000004101001 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x10, 0x10, 0x01 }, .aid_len = 8
 #define AID_A000000006101001 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x06, 0x10, 0x10, 0x01 }, .aid_len = 8
 #define AID_A000000005 \
@@ -115,6 +117,14 @@ extern uint32_t transaction_sequence_counter;
 	.app_label = "APP3", .app_label_len = 4
 #define APP_LABEL_APP4 \
 	.app_label = "APP4", .app_label_len = 4
+#define APP_LABEL_VISA \
+	.app_label = "VISA", .app_label_len = 4
+#define APP_LABEL_MASTERCARD \
+	.app_label = "MASTERCARD", .app_label_len = 10
+#define APP_LABEL_JCB \
+	.app_label = "JCB", .app_label_len = 3
+#define APP_LABEL_AMEX \
+	.app_label = "AMEX", .app_label_len = 4
 
 /*-----------------------------------------------------------------------------+
 | PDOLs									       |
@@ -573,6 +583,8 @@ enum pass_criteria {
 	pc_2ed_007_00	     = 239,
 	pc_2ed_007_01	     = 240,
 	pc_2ed_008_00	     = 241,
+	pc_2ed_009_00	     = 242,
+	pc_2ed_009_02	     = 243,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -692,6 +704,9 @@ enum ltsetting {
 	ltsetting2_40,
 	ltsetting2_42,
 	ltsetting2_43,
+	ltsetting5_1,
+	ltsetting5_2,
+	ltsetting5_11,
 	ltsetting6_1,
 	ltsetting6_2,
 	ltsetting6_3,

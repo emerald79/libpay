@@ -2718,6 +2718,34 @@ START_TEST(test_2ED_008_00)
 }
 END_TEST
 
+/* 2ED.009.00 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = Visa AID, TK3 Kernel ID = ’03’)		      */
+START_TEST(test_2ED_009_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_1, pc_2ed_009_00, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.02 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = MasterCard AID, TK2 Kernel ID = '02')	      */
+START_TEST(test_2ED_009_02)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_2, pc_2ed_009_02, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_11, pc_2ed_009_02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -2842,6 +2870,8 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_007_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_007_01);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_008_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_02);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

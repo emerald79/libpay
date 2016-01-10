@@ -3793,6 +3793,123 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting5.1 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				.app_prio = 1,
+			},
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			},
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.2 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				.app_prio = 1,
+			},
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			},
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.11 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				KERNEL_ID_TK1,
+				.app_prio = 4,
+			},
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				KERNEL_ID_TK3,
+				.app_prio = 3,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				KERNEL_ID_TK4,
+				.app_prio = 2,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				PDOL_9F66049F2A08,
+				.app_prio = 4,
+			},
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				PDOL_9F66049F2A08,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				PDOL_9F66049F2A08,
+				.app_prio = 3,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				PDOL_9F66049F2A08,
+				.app_prio = 2,
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting6.1 */
 	{
 		.ppse_sw = EMV_SW_6A82_FILE_NOT_FOUND

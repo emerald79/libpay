@@ -1192,8 +1192,33 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ed_009_00:
+		if (chk->state == 0) {
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x10\x10", 7)))
+				chk->state = 1;
+		}
+		break;
+
+	case pc_2ed_009_02:
+		if (chk->state == 0) {
+			if ((len == 8) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x10\x10\x01",
+									    8)))
+				chk->state = 1;
+		}
+		break;
+
 	default:
 		break;
+	}
+
+	if (!chk->pass_criteria_met) {
+		char hex[2 * len + 1];
+
+		log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+			       "%s('%s): pass criteria check failed!", __func__,
+					     libtlv_bin_to_hex(data, len, hex));
 	}
 }
 
@@ -2206,8 +2231,44 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		}
 		break;
 
+	case pc_2ed_009_00:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x03", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_009_02:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x02", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		break;
+	}
+
+	if (!chk->pass_criteria_met) {
+		uint8_t bin[256];
+		size_t len = sizeof(bin);
+		int rc;
+
+		rc = tlv_encode(data, bin, &len);
+		if (rc == TLV_RC_OK) {
+			char hex[2 * len + 1];
+
+			log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+					"%s('%s): pass criteria check failed!",
+				   __func__, libtlv_bin_to_hex(bin, len, hex));
+
+		}
 	}
 }
 
