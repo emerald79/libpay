@@ -2737,11 +2737,52 @@ START_TEST(test_2ED_009_02)
 	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
 	int rc;
 
-	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_2, pc_2ed_009_02, &txn, 1);
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_2, pc_2ed_009_02, NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
 
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_11, pc_2ed_009_02,
 								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.04 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = JCB AID, TK1 Kernel ID = '05'		      */
+START_TEST(test_2ED_009_04)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_3, pc_2ed_009_04, NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.06 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = AMEX AID, TK4 Kernel ID = '04')		      */
+START_TEST(test_2ED_009_06)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_4, pc_2ed_009_06_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_10, pc_2ed_009_06_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.10 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = Visa AID, TK3 Kernel ID = '03')		      */
+START_TEST(test_2ED_009_10)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_13, pc_2ed_009_10, &txn,
+									     1);
 	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
@@ -2872,6 +2913,9 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_008_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_02);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_04);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_06);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_10);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

@@ -3800,7 +3800,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				.app_prio = 1,
-			},
+			}
 		},
 		.ppse_entries_num = 1,
 		.aid_fci = {
@@ -3809,7 +3809,7 @@ static const struct lt_setting ltsetting[] = {
 				APP_LABEL_VISA,
 				PDOL_9F66049F2A08,
 				.app_prio = 1
-			},
+			}
 		},
 		.aid_fci_num = 1,
 		.gpo_resp = {
@@ -3827,7 +3827,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
 				.app_prio = 1,
-			},
+			}
 		},
 		.ppse_entries_num = 1,
 		.aid_fci = {
@@ -3836,9 +3836,126 @@ static const struct lt_setting ltsetting[] = {
 				APP_LABEL_MASTERCARD,
 				PDOL_9F66049F2A08,
 				.app_prio = 1
-			},
+			}
 		},
 		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.3 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.4 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000025101001,
+				APP_LABEL_AMEX,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A000000025101001,
+				APP_LABEL_AMEX,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.10 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				KERNEL_ID_TK1,
+				.app_prio = 4,
+			},
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				KERNEL_ID_TK4,
+				.app_prio = 3,
+			},
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				KERNEL_ID_TK3,
+				.app_prio = 3,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				PDOL_9F66049F2A08,
+				.app_prio = 4,
+			},
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				PDOL_9F66049F2A08,
+				.app_prio = 3,
+			},
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				PDOL_9F66049F2A08,
+				.app_prio = 3,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				PDOL_9F66049F2A08,
+				.app_prio = 1,
+			}
+		},
+		.aid_fci_num = 4,
 		.gpo_resp = {
 			{
 				.outcome_parms = {
@@ -3902,6 +4019,37 @@ static const struct lt_setting ltsetting[] = {
 			}
 		},
 		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.13 */
+	{
+		.ppse =
+		  "\x6F""\x2D"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x1B"
+		      "\xBF\x0C""\x18"
+			"\x61""\x16"
+			  "\x4F""\x08""\xA0\x00\x00\x00\x03\x10\x10\x01"
+			  "\x50""\x04""\x56\x49\x53\x41"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x00",
+		.ppse_len = 47,
+		.aid_fci = {
+			{
+				AID_A000000003101001,
+				APP_LABEL_VISA,
+				PDOL_9F66049F2A08,
+				.app_prio = 1,
+			}
+		},
+		.aid_fci_num = 1,
 		.gpo_resp = {
 			{
 				.outcome_parms = {
@@ -4367,17 +4515,20 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 
 	tlv_ppse_entry = tlv_new(EMV_ID_DIRECTORY_ENTRY, 0, NULL);
 
-	tlv = tlv_insert_below(tlv_ppse_entry,
+	if (ent->aid_len)
+		tlv = tlv_insert_below(tlv_ppse_entry,
 			      tlv_new(EMV_ID_ADF_NAME, ent->aid_len, ent->aid));
 
-	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
+	if (ent->app_label_len)
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
 					   ent->app_label_len, ent->app_label));
 
 	tlv = tlv_insert_after(tlv,
 				  tlv_new(EMV_ID_APPLICATION_PRIORITY_INDICATOR,
 							    1, &ent->app_prio));
 
-	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_KERNEL_IDENTIFIER,
+	if (ent->kernel_id_len)
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_KERNEL_IDENTIFIER,
 					   ent->kernel_id_len, ent->kernel_id));
 
 	if (ent->ext_select_len)
