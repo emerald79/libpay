@@ -97,6 +97,8 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x66, 0x10, 0x10 }, .aid_len = 7
 #define AID_A0000001523010 \
 	.aid = { 0xA0, 0x00, 0x00, 0x01, 0x52, 0x30, 0x10 }, .aid_len = 7
+#define AID_A000000152301001 \
+	.aid = { 0xA0, 0x00, 0x00, 0x01, 0x52, 0x30, 0x10, 0x01 }, .aid_len = 8
 #define AID_A0000001532010 \
 	.aid = { 0xA0, 0x00, 0x00, 0x01, 0x53, 0x20, 0x10 }, .aid_len = 7
 #define AID_A0000003241010 \
@@ -131,6 +133,8 @@ extern uint32_t transaction_sequence_counter;
 	.app_label = "JCB", .app_label_len = 3
 #define APP_LABEL_AMEX \
 	.app_label = "AMEX", .app_label_len = 4
+#define APP_LABEL_DISCOVER \
+	.app_label = "DISCOVER", .app_label_len = 8
 
 /*-----------------------------------------------------------------------------+
 | PDOLs									       |
@@ -598,6 +602,8 @@ enum pass_criteria {
 	pc_2ed_009_12	     = 248,
 	pc_2ed_009_14	     = 249,
 	pc_2ed_009_16	     = 250,
+	pc_2ed_009_18	     = 251,
+	pc_2ed_009_20	     = 252,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -727,6 +733,8 @@ enum ltsetting {
 	ltsetting5_14,
 	ltsetting5_15,
 	ltsetting5_16,
+	ltsetting5_17,
+	ltsetting5_18,
 	ltsetting6_1,
 	ltsetting6_2,
 	ltsetting6_3,

@@ -2824,6 +2824,31 @@ START_TEST(test_2ED_009_16)
 }
 END_TEST
 
+/* 2ED.009.18 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = DISCOVER AID, TK6 Kernel ID = '06')		      */
+START_TEST(test_2ED_009_18)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_17, pc_2ed_009_18, &txn,
+									     1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.20 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = DISCOVER AID, TK6 Kernel ID = '06')	      */
+START_TEST(test_2ED_009_20)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_18, pc_2ed_009_20, &txn,
+									     1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
 
 Suite *emvco_ep_ta_test_suite(void)
 {
@@ -2957,6 +2982,8 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_12);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_14);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_16);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_18);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_20);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

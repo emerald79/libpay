@@ -4151,6 +4151,64 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting5.17 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000001523010,
+				APP_LABEL_DISCOVER,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000001523010,
+				APP_LABEL_DISCOVER,
+				.app_prio = 1,
+				PDOL_9F66049F2A08,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.18 */
+	{
+		.ppse =
+		  "\x6F""\x32"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x1F"
+		      "\xBF\x0C""\x1C"
+			"\x61""\x1A"
+			  "\x4F""\x08""\xA0\x00\x00\x01\x52\x30\x10\x01"
+			  "\x50""\x08""\x44\x49\x53\x43\x4F\x56\x45\x52"
+			   "\x87\x01\x01"
+			   "\x9F\x2A""\x00",
+		.ppse_len = 52,
+		.aid_fci = {
+			{
+				AID_A000000152301001,
+				APP_LABEL_DISCOVER,
+				.app_prio = 1,
+				PDOL_9F66049F2A08,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting6.1 */
 	{
 		.ppse_sw = EMV_SW_6A82_FILE_NOT_FOUND
