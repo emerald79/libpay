@@ -1218,6 +1218,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		break;
 
 	case pc_2ed_009_06_case01:
+	case pc_2ed_009_16:
 		if (chk->state == 0) {
 			if ((len == 8) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x25\x10\x10\x01",
@@ -1238,6 +1239,23 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		if (chk->state == 0) {
 			if ((len == 8) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x10\x10\x01",
+									    8)))
+				chk->state = 1;
+		}
+		break;
+
+	case pc_2ed_009_12:
+		if (chk->state == 0) {
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x10\x10", 7)))
+				chk->state = 1;
+		}
+		break;
+
+	case pc_2ed_009_14:
+		if (chk->state == 0) {
+			if ((len == 8) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x65\x10\x10\x01",
 									    8)))
 				chk->state = 1;
 		}
@@ -2276,6 +2294,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		break;
 
 	case pc_2ed_009_02:
+	case pc_2ed_009_12:
 		if (chk->state == 1) {
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
@@ -2286,6 +2305,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		break;
 
 	case pc_2ed_009_04:
+	case pc_2ed_009_14:
 		if (chk->state == 1) {
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
@@ -2297,6 +2317,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 
 	case pc_2ed_009_06_case01:
 	case pc_2ed_009_06_case02:
+	case pc_2ed_009_16:
 		if (chk->state == 1) {
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,

@@ -4058,6 +4058,99 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting5.14 */
+	{
+		.ppse =
+		  "\x6F""\x32"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x20"
+		      "\xBF\x0C""\x1D"
+			"\x61""\x1B"
+			  "\x4F""\x07""\xA0\x00\x00\x00\x04\x10\x10"
+			  "\x50""\x0A""\x4D\x41\x53\x54\x45\x52\x43\x41\x52\x44"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x00",
+		.ppse_len = 52,
+		.aid_fci = {
+			{
+				AID_A0000000041010,
+				APP_LABEL_MASTERCARD,
+				.app_prio = 1,
+				PDOL_9F66049F2A08,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.15 */
+	{
+		.ppse =
+		  "\x6F""\x2C"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x1A"
+		      "\xBF\x0C""\x17"
+			"\x61""\x15"
+			  "\x4F""\x08""\xA0\x00\x00\x00\x65\x10\x10\x01"
+			  "\x50""\x03""\x4A\x43\x42"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x00",
+		.ppse_len = 46,
+		.aid_fci = {
+			{
+				AID_A000000065101001,
+				APP_LABEL_JCB,
+				.app_prio = 1,
+				PDOL_9F66049F2A08,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.16 */
+	{
+		.ppse =
+		  "\x6F""\x2D"
+		    "\x84""\x0E""\x32\x50\x41\x59\x2E\x53\x59\x53\x2E\x44\x44"
+								  "\x46\x30\x31"
+		    "\xA5""\x1B"
+		      "\xBF\x0C""\x18"
+			"\x61""\x16"
+			  "\x4F""\x08""\xA0\x00\x00\x00\x25\x10\x10\x01"
+			  "\x50""\x04""\x41\x4D\x45\x58"
+			  "\x87""\x01""\x01"
+			  "\x9F\x2A""\x00",
+		.ppse_len = 47,
+		.aid_fci = {
+			{
+				AID_A000000025101001,
+				APP_LABEL_AMEX,
+				.app_prio = 1,
+				PDOL_9F66049F2A08,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting6.1 */
 	{
 		.ppse_sw = EMV_SW_6A82_FILE_NOT_FOUND

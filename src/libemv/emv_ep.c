@@ -1178,7 +1178,13 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	 * Entry Point shall add no Combinations to the Candidate List
 	 * and shall proceed to Step 3. */
 	rc = emv_ep_parse_ppse(ep, fci, fci_len, dir_entry, &num_dir_entries);
-	assert(rc == EMV_RC_OK);
+
+	if (rc != EMV_RC_OK) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
+				    "%s(): Failed to parse 2PAY.SYS", __func__);
+		ep->state = eps_combination_selection_step3;
+		goto done;
+	}
 
 	if (!num_dir_entries) {
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
