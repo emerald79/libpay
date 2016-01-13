@@ -55,6 +55,8 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x03 }, .aid_len = 8
 #define AID_A0000000020002 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02 }, .aid_len = 7
+#define AID_A000000002000201 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01 }, .aid_len = 8
 #define AID_A000000002000202 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x02 }, .aid_len = 8
 #define AID_A0000000030003 \
@@ -103,6 +105,8 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x01, 0x53, 0x20, 0x10 }, .aid_len = 7
 #define AID_A0000003241010 \
 	.aid = { 0xA0, 0x00, 0x00, 0x03, 0x24, 0x10, 0x10 }, .aid_len = 7
+#define AID_A000000324101001 \
+	.aid = { 0xA0, 0x00, 0x00, 0x03, 0x24, 0x10, 0x10, 0x01 }, .aid_len = 8
 #define AID_A0000003330101 \
 	.aid = { 0xA0, 0x00, 0x00, 0x03, 0x33, 0x01, 0x01 }, .aid_len = 7
 #define AID_B0000000010101 \
@@ -135,6 +139,8 @@ extern uint32_t transaction_sequence_counter;
 	.app_label = "AMEX", .app_label_len = 4
 #define APP_LABEL_DISCOVER \
 	.app_label = "DISCOVER", .app_label_len = 8
+#define APP_LABEL_CUP \
+	.app_label = "CUP", .app_label_len = 3
 
 /*-----------------------------------------------------------------------------+
 | PDOLs									       |
@@ -604,6 +610,11 @@ enum pass_criteria {
 	pc_2ed_009_16	     = 250,
 	pc_2ed_009_18	     = 251,
 	pc_2ed_009_20	     = 252,
+	pc_2ed_009_22	     = 253,
+	pc_2ed_009_24	     = 254,
+	pc_2ed_009_26	     = 255,
+	pc_2ed_009_28	     = 256,
+	pc_2ed_010_00	     = 257,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -735,11 +746,16 @@ enum ltsetting {
 	ltsetting5_16,
 	ltsetting5_17,
 	ltsetting5_18,
+	ltsetting5_19,
+	ltsetting5_20,
+	ltsetting5_23,
+	ltsetting5_24,
 	ltsetting6_1,
 	ltsetting6_2,
 	ltsetting6_3,
 	ltsetting6_5,
 	ltsetting6_6,
+	ltsetting6_7,
 	ltsetting6_10,
 	ltsetting6_11,
 	ltsetting6_12,
@@ -786,10 +802,12 @@ void lt_free(struct emv_hal *lt);
 #define KERNEL_ID_25	 .kernel_id = { 0x25 },		    .kernel_id_len = 1
 #define KERNEL_ID_2B	 .kernel_id = { 0x26 },		    .kernel_id_len = 1
 #define KERNEL_ID_32	 .kernel_id = { 0x32 },		    .kernel_id_len = 1
+#define KERNEL_ID_80	 .kernel_id = { 0x80 },		    .kernel_id_len = 1
 #define KERNEL_ID_810978 .kernel_id = { 0x81, 0x09, 0x78 }, .kernel_id_len = 3
 #define KERNEL_ID_811111 .kernel_id = { 0x81, 0x11, 0x11 }, .kernel_id_len = 3
 #define KERNEL_ID_BF0840 .kernel_id = { 0xBF, 0x08, 0x40 }, .kernel_id_len = 3
 #define KERNEL_ID_BF2222 .kernel_id = { 0xBF, 0x22, 0x22 }, .kernel_id_len = 3
+#define KERNEL_ID_C001	 .kernel_id = { 0xC0, 0x01 },	    .kernel_id_len = 2
 #define KERNEL_ID_C11111 .kernel_id = { 0xC1, 0x11, 0x11 }, .kernel_id_len = 3
 #define KERNEL_ID_FF2222 .kernel_id = { 0xFF, 0x22, 0x22 }, .kernel_id_len = 3
 
