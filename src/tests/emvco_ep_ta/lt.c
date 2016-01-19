@@ -3793,6 +3793,134 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting4.1 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_6,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_62,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_810977,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				KERNEL_ID_BF0841,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000002000201,
+				APP_LABEL_APP2,
+				KERNEL_ID_811110,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000001000101,
+				APP_LABEL_APP1,
+				KERNEL_ID_BF2223,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 2,
+			},
+		},
+		.ppse_entries_num = 7,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_9F66049F2A08,
+				.app_prio = 2
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting4.2 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_23,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_25,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_22,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000004000402,
+				APP_LABEL_APP4,
+				KERNEL_ID_21,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000003000301,
+				APP_LABEL_APP3,
+				KERNEL_ID_24,
+				.app_prio = 1,
+			},
+			{
+				AID_A000000002000201,
+				APP_LABEL_APP2,
+				KERNEL_ID_23,
+				.app_prio = 1,
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				.app_prio = 2,
+			},
+		},
+		.ppse_entries_num = 7,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_9F66049F2A08,
+				.app_prio = 2
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting5.1 */
 	{
 		.ppse_entries = {

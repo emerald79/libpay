@@ -2917,6 +2917,24 @@ START_TEST(test_2ED_010_00)
 }
 END_TEST
 
+/* 2ED.011.00 PPSE select response having a Directory Entry with Kernel ID not
+ * matching								      */
+START_TEST(test_2ED_011_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting4_1, pc_2ed_011_00, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting4_2, pc_2ed_011_00, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting4_2, pc_2ed_011_00, NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3056,6 +3074,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_26);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_28);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_010_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_011_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

@@ -51,6 +51,8 @@ extern uint32_t transaction_sequence_counter;
 
 #define AID_A0000000010001 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01 }, .aid_len = 7
+#define AID_A000000001000101 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x01 }, .aid_len = 8
 #define AID_A000000001000103 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x03 }, .aid_len = 8
 #define AID_A0000000020002 \
@@ -69,6 +71,8 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10, 0x01 }, .aid_len = 8
 #define AID_A0000000040004 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04 }, .aid_len = 7
+#define AID_A000000004000402 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x02 }, .aid_len = 8
 #define AID_A000000004000404 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x04 }, .aid_len = 8
 #define AID_A00000000400040102030405060708090A				       \
@@ -615,6 +619,7 @@ enum pass_criteria {
 	pc_2ed_009_26	     = 255,
 	pc_2ed_009_28	     = 256,
 	pc_2ed_010_00	     = 257,
+	pc_2ed_011_00	     = 258,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -734,6 +739,8 @@ enum ltsetting {
 	ltsetting2_40,
 	ltsetting2_42,
 	ltsetting2_43,
+	ltsetting4_1,
+	ltsetting4_2,
 	ltsetting5_1,
 	ltsetting5_2,
 	ltsetting5_3,
@@ -802,11 +809,17 @@ void lt_free(struct emv_hal *lt);
 #define KERNEL_ID_25	 .kernel_id = { 0x25 },		    .kernel_id_len = 1
 #define KERNEL_ID_2B	 .kernel_id = { 0x26 },		    .kernel_id_len = 1
 #define KERNEL_ID_32	 .kernel_id = { 0x32 },		    .kernel_id_len = 1
+#define KERNEL_ID_6	 .kernel_id = { 0x06 },		    .kernel_id_len = 1
+#define KERNEL_ID_62	 .kernel_id = { 0x62 },		    .kernel_id_len = 1
 #define KERNEL_ID_80	 .kernel_id = { 0x80 },		    .kernel_id_len = 1
+#define KERNEL_ID_810977 .kernel_id = { 0x81, 0x09, 0x77 }, .kernel_id_len = 3
 #define KERNEL_ID_810978 .kernel_id = { 0x81, 0x09, 0x78 }, .kernel_id_len = 3
+#define KERNEL_ID_811110 .kernel_id = { 0x81, 0x11, 0x10 }, .kernel_id_len = 3
 #define KERNEL_ID_811111 .kernel_id = { 0x81, 0x11, 0x11 }, .kernel_id_len = 3
 #define KERNEL_ID_BF0840 .kernel_id = { 0xBF, 0x08, 0x40 }, .kernel_id_len = 3
+#define KERNEL_ID_BF0841 .kernel_id = { 0xBF, 0x08, 0x41 }, .kernel_id_len = 3
 #define KERNEL_ID_BF2222 .kernel_id = { 0xBF, 0x22, 0x22 }, .kernel_id_len = 3
+#define KERNEL_ID_BF2223 .kernel_id = { 0xBF, 0x22, 0x23 }, .kernel_id_len = 3
 #define KERNEL_ID_C001	 .kernel_id = { 0xC0, 0x01 },	    .kernel_id_len = 2
 #define KERNEL_ID_C11111 .kernel_id = { 0xC1, 0x11, 0x11 }, .kernel_id_len = 3
 #define KERNEL_ID_FF2222 .kernel_id = { 0xFF, 0x22, 0x22 }, .kernel_id_len = 3

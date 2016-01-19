@@ -1305,6 +1305,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		break;
 
 	case pc_2ed_010_00:
+	case pc_2ed_011_00:
 		if (chk->state == 0) {
 			if ((len == 7) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
@@ -2413,6 +2414,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		break;
 
 	case pc_2ed_010_00:
+	case pc_2ed_011_00:
 		if (chk->state == 1) {
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
