@@ -4057,8 +4057,90 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
-
-
+	/* LTsetting5.6 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				KERNEL_ID_00,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A000000004101001,
+				APP_LABEL_MASTERCARD,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.7 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				KERNEL_ID_00,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.8 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000025101001,
+				APP_LABEL_AMEX,
+				KERNEL_ID_00,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A000000025101001,
+				APP_LABEL_AMEX,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting5.10 */
 	{
 		.ppse_entries = {
@@ -4177,6 +4259,46 @@ static const struct lt_setting ltsetting[] = {
 			}
 		},
 		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting5.12 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				KERNEL_ID_TK1,
+				.app_prio = 2,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				KERNEL_ID_00,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000651010,
+				APP_LABEL_JCB,
+				PDOL_9F66049F2A08,
+				.app_prio = 2,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				PDOL_9F66049F2A08,
+				.app_prio = 1,
+			}
+		},
+		.aid_fci_num = 2,
 		.gpo_resp = {
 			{
 				.outcome_parms = {
