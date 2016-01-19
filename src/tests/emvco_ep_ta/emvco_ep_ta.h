@@ -620,6 +620,7 @@ enum pass_criteria {
 	pc_2ed_009_28	     = 256,
 	pc_2ed_010_00	     = 257,
 	pc_2ed_011_00	     = 258,
+	pc_2ed_012_00	     = 259,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -745,6 +746,7 @@ enum ltsetting {
 	ltsetting5_2,
 	ltsetting5_3,
 	ltsetting5_4,
+	ltsetting5_5,
 	ltsetting5_10,
 	ltsetting5_11,
 	ltsetting5_13,
@@ -794,6 +796,7 @@ void lt_free(struct emv_hal *lt);
 #define KERNEL_ID_TK5	 .kernel_id = { 0x05 },		    .kernel_id_len = 1
 #define KERNEL_ID_TK6	 .kernel_id = { 0x06 },		    .kernel_id_len = 1
 #define KERNEL_ID_TK7	 .kernel_id = { 0x07 },		    .kernel_id_len = 1
+#define KERNEL_ID_00	 .kernel_id = { 0x00 },		    .kernel_id_len = 1
 #define KERNEL_ID_21	 .kernel_id = { 0x21 },		    .kernel_id_len = 1
 #define KERNEL_ID_2102030405060708					       \
 	      .kernel_id = { 0x21, 0x02, 0x02, 0x04, 0x05, 0x06, 0x07, 0x08 }, \

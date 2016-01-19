@@ -4029,6 +4029,36 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting5.5 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				KERNEL_ID_00,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				PDOL_9F66049F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+
+
 	/* LTsetting5.10 */
 	{
 		.ppse_entries = {
