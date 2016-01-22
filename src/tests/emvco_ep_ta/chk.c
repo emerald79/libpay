@@ -1402,10 +1402,6 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 
 	case pc_2ed_012_10_case06:
 		if (chk->state == 0) {
-			char hex[15];
-
-			printf("data: '%s'\n", libtlv_bin_to_hex(data, 7, hex));
-
 			if ((len == 7) &&
 			    (!memcmp(data, "\xB0\x00\x00\x00\x01\x01\x01", 7)))
 				chk->state = 1;
