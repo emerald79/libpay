@@ -1917,6 +1917,151 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting1.84 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000002000201,
+				APP_LABEL_APP2,
+				KERNEL_ID_32,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A000000002000201,
+				APP_LABEL_APP2,
+				PDOL_9F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.85 */
+	{
+		.ppse_entries = {
+			{
+				AID_B0000000010101,
+				APP_LABEL_DOMESTIC,
+				KERNEL_ID_810978,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_B0000000010101,
+				APP_LABEL_DOMESTIC,
+				PDOL_9F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.86 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000004000401,
+				APP_LABEL_APP4,
+				KERNEL_ID_BF0840,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A000000004000401,
+				APP_LABEL_APP4,
+				PDOL_9F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.87 */
+	{
+		.ppse_entries = {
+			{
+				AID_B000000001010102,
+				APP_LABEL_DOMESTIC,
+				KERNEL_ID_C11111,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_B000000001010102,
+				APP_LABEL_DOMESTIC,
+				PDOL_9F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.88 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_FF2222,
+				.app_prio = 1,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				PDOL_9F2A08,
+				.app_prio = 1
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting1.89 */
 	{
 		.ppse_entries = {

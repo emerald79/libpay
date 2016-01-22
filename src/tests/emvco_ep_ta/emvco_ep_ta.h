@@ -71,6 +71,8 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10, 0x01 }, .aid_len = 8
 #define AID_A0000000040004 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04 }, .aid_len = 7
+#define AID_A000000004000401 \
+	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x01 }, .aid_len = 8
 #define AID_A000000004000402 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x02 }, .aid_len = 8
 #define AID_A000000004000404 \
@@ -115,6 +117,8 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x03, 0x33, 0x01, 0x01 }, .aid_len = 7
 #define AID_B0000000010101 \
 	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01 }, .aid_len = 7
+#define AID_B000000001010102 \
+	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02}, .aid_len = 8
 #define AID_B0000000010102 \
 	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x02 }, .aid_len = 7
 #define AID_B0000000010103 \
@@ -639,6 +643,16 @@ enum pass_criteria {
 	pc_2ed_012_08_case02 = 265,
 	pc_2ed_012_08_case03 = 266,
 	pc_2ed_012_08_case04 = 267,
+	pc_2ed_012_10_case01 = 268,
+	pc_2ed_012_10_case02 = 269,
+	pc_2ed_012_10_case03 = 270,
+	pc_2ed_012_10_case04 = 271,
+	pc_2ed_012_10_case05 = 272,
+	pc_2ed_012_10_case06 = 273,
+	pc_2ed_012_10_case07 = 274,
+	pc_2ed_012_10_case08 = 275,
+	pc_2ed_012_10_case09 = 276,
+	pc_2ed_012_10_case10 = 277,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -728,6 +742,11 @@ enum ltsetting {
 	ltsetting1_80,
 	ltsetting1_81,
 	ltsetting1_82,
+	ltsetting1_84,
+	ltsetting1_85,
+	ltsetting1_86,
+	ltsetting1_87,
+	ltsetting1_88,
 	ltsetting1_89,
 	ltsetting1_90,
 	ltsetting1_91,
