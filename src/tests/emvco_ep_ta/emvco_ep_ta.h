@@ -115,6 +115,14 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x03, 0x33, 0x01, 0x01 }, .aid_len = 7
 #define AID_B0000000010101 \
 	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01 }, .aid_len = 7
+#define AID_B0000000010102 \
+	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x02 }, .aid_len = 7
+#define AID_B0000000010103 \
+	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x03 }, .aid_len = 7
+#define AID_B0000000010104 \
+	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x04 }, .aid_len = 7
+#define AID_B0000000010105 \
+	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x04 }, .aid_len = 7
 
 #define EXT_SEL_01	.ext_select = { 0x01 }, .ext_select_len = 1
 #define EXT_SEL_02	.ext_select = { 0x02 }, .ext_select_len = 1
@@ -145,6 +153,8 @@ extern uint32_t transaction_sequence_counter;
 	.app_label = "DISCOVER", .app_label_len = 8
 #define APP_LABEL_CUP \
 	.app_label = "CUP", .app_label_len = 3
+#define APP_LABEL_DOMESTIC \
+	.app_label = "Domestic", .app_label_len = 8
 
 /*-----------------------------------------------------------------------------+
 | PDOLs									       |
@@ -625,6 +635,10 @@ enum pass_criteria {
 	pc_2ed_012_04	     = 261,
 	pc_2ed_012_06_case01 = 262,
 	pc_2ed_012_06_case02 = 263,
+	pc_2ed_012_08_case01 = 264,
+	pc_2ed_012_08_case02 = 265,
+	pc_2ed_012_08_case03 = 266,
+	pc_2ed_012_08_case04 = 267,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -658,6 +672,7 @@ enum termsetting {
 	termsetting5_3	= 6,
 	termsetting5_4	= 7,
 	termsetting8	= 8,
+	termsetting13	= 9,
 	num_termsettings
 };
 
@@ -717,6 +732,10 @@ enum ltsetting {
 	ltsetting1_90,
 	ltsetting1_91,
 	ltsetting1_92,
+	ltsetting1_93,
+	ltsetting1_94,
+	ltsetting1_95,
+	ltsetting1_96,
 	ltsetting1_97,
 	ltsetting1_98,
 	ltsetting1_99,

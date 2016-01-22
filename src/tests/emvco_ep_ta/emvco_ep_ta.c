@@ -2987,6 +2987,30 @@ START_TEST(test_2ED_012_06)
 }
 END_TEST
 
+/* 2ED.012.08 PPSE select response having a Directory Entry with null Kernel ID
+ * (Matching AID, Kernel ID = domestic Kernel)				      */
+START_TEST(test_2ED_012_08)
+{
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting13, ltsetting1_93, pc_2ed_012_08_case01,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting13, ltsetting1_94, pc_2ed_012_08_case02,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting13, ltsetting1_95, pc_2ed_012_08_case03,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting13, ltsetting1_96, pc_2ed_012_08_case04,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3131,6 +3155,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_02);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_04);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_06);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_08);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

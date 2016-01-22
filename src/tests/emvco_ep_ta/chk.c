@@ -1325,6 +1325,38 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ed_012_08_case01:
+		if (chk->state == 0) {
+			if ((len == 7) &&
+			    (!memcmp(data, "\xB0\x00\x00\x00\x01\x01\x01", 7)))
+				chk->state = 1;
+		}
+		break;
+
+	case pc_2ed_012_08_case02:
+		if (chk->state == 0) {
+			if ((len == 7) &&
+			    (!memcmp(data, "\xB0\x00\x00\x00\x01\x01\x02", 7)))
+				chk->state = 1;
+		}
+		break;
+
+	case pc_2ed_012_08_case03:
+		if (chk->state == 0) {
+			if ((len == 7) &&
+			    (!memcmp(data, "\xB0\x00\x00\x00\x01\x01\x03", 7)))
+				chk->state = 1;
+		}
+		break;
+
+	case pc_2ed_012_08_case04:
+		if (chk->state == 0) {
+			if ((len == 7) &&
+			    (!memcmp(data, "\xB0\x00\x00\x00\x01\x01\x04", 7)))
+				chk->state = 1;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -2493,7 +2525,45 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		}
 		break;
 
+	case pc_2ed_012_08_case01:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+							     "\x81\x09\x78", 3))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
 
+	case pc_2ed_012_08_case02:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+							     "\xBF\x08\x40", 3))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_012_08_case03:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+							     "\xC1\x11\x11", 3))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_012_08_case04:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+							     "\xFF\x22\x22", 3))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
 
 	default:
 		break;
@@ -2511,7 +2581,6 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 			log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
 					"%s('%s): pass criteria check failed!",
 				   __func__, libtlv_bin_to_hex(bin, len, hex));
-
 		}
 	}
 }

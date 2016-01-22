@@ -894,6 +894,28 @@ struct emv_ep_combination termset8[] = {
 	}
 };
 
+struct emv_ep_combination termset13[] = {
+	{
+		.txn_types = {
+			txn_purchase,
+			txn_purchase_with_cashback,
+			txn_cash_advance,
+			txn_refund
+		},
+		.combinations = {
+			{ AID_A0000000010001, KERNEL_ID_23	},
+			{ AID_A0000000020002, KERNEL_ID_22	},
+			{ AID_A0000000030003, KERNEL_ID_21	},
+			{ AID_A0000000030003, KERNEL_ID_25	},
+			{ AID_A0000000040004, KERNEL_ID_24	},
+			{ AID_B0000000010101, KERNEL_ID_810978	},
+			{ AID_B0000000010102, KERNEL_ID_BF0840	},
+			{ AID_B0000000010103, KERNEL_ID_C11111	},
+			{ AID_B0000000010104, KERNEL_ID_FF2222	},
+			{ AID_B0000000010105, KERNEL_ID_32	}
+		}
+	}
+};
 
 struct emv_ep_autorun {
 	bool		  enabled;
@@ -1004,6 +1026,16 @@ struct termset termsettings[num_termsettings] = {
 		.combination_sets	= termset8,
 		.num_combination_sets	= ARRAY_SIZE(termset8),
 		.terminal_data		= &terminal_data
+	},
+	{
+		.combination_sets	= termset13,
+		.num_combination_sets	= ARRAY_SIZE(termset13),
+		.terminal_data		= &terminal_data,
+		.autorun = {
+			.enabled	   = true,
+			.txn_type	   = txn_purchase,
+			.amount_authorized = 10
+		}
 	}
 };
 
