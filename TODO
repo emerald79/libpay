@@ -1,5 +1,5 @@
 TODOs:
 - Compile out logging at level trace and below when not building in debug mode.
 - Tag information (format, template, size, etc.) for all EMV and proprietary tags.
-- Memory Leaks
+- Memory Leaks (Reference counting in TLV node objects?)
 - Supported Currency Codes
