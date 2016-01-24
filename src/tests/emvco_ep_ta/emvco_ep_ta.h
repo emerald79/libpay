@@ -75,6 +75,11 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00, 0x03 }, .aid_len = 7
 #define AID_A000000003000301 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x00, 0x03, 0x01 }, .aid_len = 8
+#define AID_A0000000030003010203040506070809				       \
+	.aid = {							       \
+		0xA0, 0x00, 0x00, 0x00, 0x03, 0x00, 0x03, 0x01, 0x02, 0x03,    \
+		0x04, 0x05, 0x06, 0x07, 0x08, 0x09			       \
+	}, .aid_len = 16
 #define AID_A0000000031010 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x10 }, .aid_len = 7
 #define AID_A000000003101001 \
@@ -174,6 +179,49 @@ extern uint32_t transaction_sequence_counter;
 	.app_label = "CUP", .app_label_len = 3
 #define APP_LABEL_DOMESTIC \
 	.app_label = "Domestic", .app_label_len = 8
+
+/*-----------------------------------------------------------------------------+
+| Application Priority Indicators					       |
++-----------------------------------------------------------------------------*/
+
+#define API_00 \
+	.app_prio = { 0x00 }, .app_prio_len = 1
+#define API_01 \
+	.app_prio = { 0x01 }, .app_prio_len = 1
+#define API_02 \
+	.app_prio = { 0x02 }, .app_prio_len = 1
+#define API_03 \
+	.app_prio = { 0x03 }, .app_prio_len = 1
+#define API_04 \
+	.app_prio = { 0x04 }, .app_prio_len = 1
+#define API_05 \
+	.app_prio = { 0x05 }, .app_prio_len = 1
+#define API_06 \
+	.app_prio = { 0x06 }, .app_prio_len = 1
+#define API_07 \
+	.app_prio = { 0x07 }, .app_prio_len = 1
+#define API_08 \
+	.app_prio = { 0x08 }, .app_prio_len = 1
+#define API_09 \
+	.app_prio = { 0x09 }, .app_prio_len = 1
+#define API_0A \
+	.app_prio = { 0x0A }, .app_prio_len = 1
+#define API_0B \
+	.app_prio = { 0x0B }, .app_prio_len = 1
+#define API_0C \
+	.app_prio = { 0x0C }, .app_prio_len = 1
+#define API_0D \
+	.app_prio = { 0x0D }, .app_prio_len = 1
+#define API_0E \
+	.app_prio = { 0x0E }, .app_prio_len = 1
+#define API_0F \
+	.app_prio = { 0x0F }, .app_prio_len = 1
+#define API_41 \
+	.app_prio = { 0x41 }, .app_prio_len = 1
+#define API_F2 \
+	.app_prio = { 0xF2 }, .app_prio_len = 1
+#define API_FF \
+	.app_prio = { 0xFF }, .app_prio_len = 1
 
 /*-----------------------------------------------------------------------------+
 | PDOLs									       |
@@ -686,6 +734,11 @@ enum pass_criteria {
 	pc_2ed_014_00_case03 = 293,
 	pc_2ed_014_00_case04 = 294,
 	pc_2ed_014_00_case05 = 295,
+	pc_2ed_015_00_case01 = 296,
+	pc_2ed_015_00_case02 = 297,
+	pc_2ed_015_00_case03 = 298,
+	pc_2ed_015_00_case04 = 299,
+	pc_2ed_015_00_case05 = 300,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -814,6 +867,7 @@ enum ltsetting {
 	ltsetting2_20,
 	ltsetting2_21,
 	ltsetting2_22,
+	ltsetting2_23,
 	ltsetting2_24,
 	ltsetting2_25,
 	ltsetting2_40,
@@ -822,8 +876,10 @@ enum ltsetting {
 	ltsetting2_44,
 	ltsetting3_1,
 	ltsetting3_2,
+	ltsetting3_3,
 	ltsetting3_4,
 	ltsetting3_6,
+	ltsetting3_7,
 	ltsetting4_1,
 	ltsetting4_2,
 	ltsetting5_1,

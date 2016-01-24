@@ -16,7 +16,8 @@ struct ppse_entry {
 	size_t			aid_len;
 	uint8_t			app_label[17];
 	size_t			app_label_len;
-	uint8_t			app_prio;
+	uint8_t			app_prio[1];
+	size_t			app_prio_len;
 	uint8_t			kernel_id[8];
 	size_t			kernel_id_len;
 	uint8_t			ext_select[16];
@@ -30,7 +31,8 @@ struct aid_fci {
 	size_t		     aid_len;
 	uint8_t		     app_label[17];
 	size_t		     app_label_len;
-	uint8_t		     app_prio;
+	uint8_t		     app_prio[1];
+	size_t		     app_prio_len;
 	uint8_t		     pdol[256];
 	size_t		     pdol_len;
 	char		     lang_pref[2];
@@ -62,7 +64,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -71,7 +73,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -99,7 +101,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -108,7 +110,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -136,7 +138,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -145,7 +147,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -173,7 +175,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -182,7 +184,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -210,7 +212,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -218,7 +220,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -248,7 +250,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -256,7 +258,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -286,7 +288,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -295,7 +297,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -324,7 +326,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -333,7 +335,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -373,7 +375,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -382,7 +384,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -418,7 +420,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -427,7 +429,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D102D2019F6604,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -454,7 +456,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -463,7 +465,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D102D2017110,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -506,7 +508,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -515,7 +517,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -552,7 +554,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -561,7 +563,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D102D20191107110,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -609,7 +611,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -618,7 +620,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -662,7 +664,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -671,7 +673,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F6604,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -694,7 +696,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -703,7 +705,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D102D2019F6604,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -737,7 +739,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -746,7 +748,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D102D2019F6604,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -788,7 +790,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -796,7 +798,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -819,7 +821,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -828,7 +830,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -871,7 +873,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -880,7 +882,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D102D2019F66049110,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -914,7 +916,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -923,7 +925,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -950,7 +952,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -959,7 +961,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D102D2017210,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -995,7 +997,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1004,7 +1006,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1031,7 +1033,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1039,7 +1041,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1062,7 +1064,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1071,7 +1073,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1113,7 +1115,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1122,7 +1124,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1156,7 +1158,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1165,7 +1167,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D102D20191107210,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1205,7 +1207,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1213,7 +1215,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1236,7 +1238,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1245,7 +1247,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1283,7 +1285,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1292,7 +1294,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D102D2019F6604,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1336,7 +1338,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1345,7 +1347,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D102D201,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1398,7 +1400,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08
 			}
 		},
@@ -1434,7 +1436,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F2A08
 			}
 		},
@@ -1472,7 +1474,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F2A08
 			}
 		},
@@ -1493,7 +1495,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1501,7 +1503,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1530,7 +1532,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1538,7 +1540,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1567,7 +1569,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1576,7 +1578,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F6604,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1620,7 +1622,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1629,7 +1631,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F6604,
-				.app_prio = 1,
+				API_01,
 				.lang_pref = "en"
 			}
 		},
@@ -1659,7 +1661,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1667,7 +1669,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 1,
+				API_01,
 				.lang_pref = "en"
 			}
 		},
@@ -1712,7 +1714,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1721,7 +1723,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F6604,
-				.app_prio = 1,
+				API_01,
 				.lang_pref = "de"
 			}
 		},
@@ -1751,7 +1753,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1759,7 +1761,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 1,
+				API_01,
 				.lang_pref = "de"
 			}
 		},
@@ -1804,7 +1806,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1812,7 +1814,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1844,7 +1846,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1852,7 +1854,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1884,7 +1886,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1892,7 +1894,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1924,7 +1926,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000002000201,
 				APP_LABEL_APP2,
 				KERNEL_ID_32,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1933,7 +1935,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000002000201,
 				APP_LABEL_APP2,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1953,7 +1955,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010101,
 				APP_LABEL_DOMESTIC,
 				KERNEL_ID_810978,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1962,7 +1964,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010101,
 				APP_LABEL_DOMESTIC,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -1982,7 +1984,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000004000401,
 				APP_LABEL_APP4,
 				KERNEL_ID_BF0840,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -1991,7 +1993,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000004000401,
 				APP_LABEL_APP4,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2011,7 +2013,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B000000001010102,
 				APP_LABEL_DOMESTIC,
 				KERNEL_ID_C11111,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2020,7 +2022,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B000000001010102,
 				APP_LABEL_DOMESTIC,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2040,7 +2042,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_FF2222,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2049,7 +2051,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2069,7 +2071,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_2B,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2078,7 +2080,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D102,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2106,7 +2108,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2115,7 +2117,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F01069F40059F06079F0902___9F21039C01,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2135,7 +2137,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2144,7 +2146,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_9F01069F40059F06079F0902___9F21039C01,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2164,7 +2166,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2173,7 +2175,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D102,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2193,7 +2195,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010101,
 				APP_LABEL_DOMESTIC,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2202,7 +2204,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010101,
 				APP_LABEL_DOMESTIC,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2222,7 +2224,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010102,
 				APP_LABEL_DOMESTIC,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2231,7 +2233,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010102,
 				APP_LABEL_DOMESTIC,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2251,7 +2253,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010103,
 				APP_LABEL_DOMESTIC,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2260,7 +2262,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010103,
 				APP_LABEL_DOMESTIC,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2280,7 +2282,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010104,
 				APP_LABEL_DOMESTIC,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2289,7 +2291,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_B0000000010104,
 				APP_LABEL_DOMESTIC,
 				PDOL_9F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2309,7 +2311,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2318,7 +2320,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2346,7 +2348,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2355,7 +2357,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_9F01069F40059F06079F0902___9F21039C01,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2375,7 +2377,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2384,7 +2386,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D102D20191107210,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2432,7 +2434,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -2441,7 +2443,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -2469,25 +2471,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_21,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_22,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -2496,25 +2498,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F6604,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F6604,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -2533,25 +2535,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_21,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_23,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -2560,25 +2562,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F6604,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F6604,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -2597,25 +2599,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_21,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_23,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_23,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -2624,25 +2626,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F6604,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F6604,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -2661,13 +2663,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 2,
@@ -2676,13 +2678,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			},
 		},
 		.aid_fci_num = 2,
@@ -2701,13 +2703,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 2,
@@ -2716,13 +2718,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			},
 		},
 		.aid_fci_num = 2,
@@ -2741,13 +2743,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 2,
@@ -2756,13 +2758,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			},
 		},
 		.aid_fci_num = 2,
@@ -2781,25 +2783,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -2808,25 +2810,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -2859,25 +2861,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -2886,25 +2888,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -2941,25 +2943,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -2968,25 +2970,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -3023,25 +3025,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -3050,25 +3052,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -3101,28 +3103,28 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 				EXT_SEL_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 				EXT_SEL_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 				EXT_SEL_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 				EXT_SEL_04
 			}
 		},
@@ -3132,25 +3134,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A000000002000202,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A000000001000103,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A000000004000404,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -3183,28 +3185,28 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 				EXT_SEL_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 				EXT_SEL_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 				EXT_SEL_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 				EXT_SEL_04
 			}
 		},
@@ -3214,25 +3216,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A000000002000202,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A000000001000103,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A000000004000404,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -3265,28 +3267,28 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 				EXT_SEL_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 				EXT_SEL_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 				EXT_SEL_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 				EXT_SEL_04
 			}
 		},
@@ -3296,25 +3298,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A000000002000202,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A000000001000103,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A000000004000404,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -3347,28 +3349,28 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 				EXT_SEL_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 				EXT_SEL_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 				EXT_SEL_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 				EXT_SEL_04
 			}
 		},
@@ -3378,25 +3380,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A000000002000202,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A000000001000103,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A000000004000404,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -3433,28 +3435,28 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 				EXT_SEL_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 				EXT_SEL_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 				EXT_SEL_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 				EXT_SEL_04
 			}
 		},
@@ -3464,25 +3466,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A000000002000202,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A000000001000103,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A000000004000404,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -3519,28 +3521,28 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 				EXT_SEL_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 				EXT_SEL_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 				EXT_SEL_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 				EXT_SEL_04
 			}
 		},
@@ -3550,25 +3552,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A000000002000202,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A000000001000103,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A000000004000404,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -3608,25 +3610,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -3635,25 +3637,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -3686,25 +3688,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 4,
+				API_04,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -3713,25 +3715,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 4
+				API_04
 			}
 		},
 		.aid_fci_num = 4,
@@ -3771,25 +3773,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -3798,25 +3800,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F23,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 4,
@@ -3841,25 +3843,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1,
+				API_01,
 				KERNEL_ID_21,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 2,
+				API_02,
 				KERNEL_ID_2B,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 4,
+				API_04,
 				KERNEL_ID_24,
 			}
 		},
@@ -3868,25 +3870,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 2,
+				API_02,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 4,
+				API_04,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -3905,25 +3907,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 7,
+				API_07,
 				KERNEL_ID_21,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 0,
+				API_00,
 				KERNEL_ID_24,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 4,
+				API_04,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 5,
+				API_05,
 				KERNEL_ID_23,
 			}
 		},
@@ -3932,25 +3934,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 7,
+				API_07,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 0,
+				API_00,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 4,
+				API_04,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 5,
+				API_05,
 				PDOL_9F66049F2A08
 			}
 		},
@@ -3969,25 +3971,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1,
+				API_01,
 				KERNEL_ID_24,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 1,
+				API_01,
 				KERNEL_ID_24,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1,
+				API_01,
 				KERNEL_ID_22,
 			}
 		},
@@ -3996,25 +3998,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08
 			}
 		},
@@ -4027,31 +4029,94 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting2.23 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				KERNEL_ID_23,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_00,
+				KERNEL_ID_21,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_00,
+				KERNEL_ID_24,
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				PDOL_9F66049F2A08
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_00,
+				PDOL_9F66049F2A08
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_00,
+				PDOL_9F66049F2A08
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				PDOL_9F66049F2A08
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+
+
+
 	/* LTsetting2.24 */
 	{
 		.ppse_entries = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 12,
+				API_0C,
 				KERNEL_ID_23
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 11,
+				API_0B,
 				KERNEL_ID_BF0840
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 10,
+				API_0A,
 				KERNEL_ID_810978
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 14,
+				API_0E,
 				KERNEL_ID_24
 			}
 		},
@@ -4060,25 +4125,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 12,
+				API_0C,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 11,
+				API_0B,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 10,
+				API_0A,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 14,
+				API_0E,
 				PDOL_9F66049F2A08
 			}
 		},
@@ -4098,28 +4163,28 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 4,
+				API_04,
 				EXT_SEL_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24,
-				.app_prio = 3,
+				API_03,
 				EXT_SEL_02
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 				EXT_SEL_03
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 				EXT_SEL_04
 			}
 		},
@@ -4129,25 +4194,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A000000002000202,
 				APP_LABEL_APP2,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 3
+				API_03
 			},
 			{
 				AID_A000000001000103,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A000000004000404,
 				APP_LABEL_APP4,
 				PDOL_D1029F66049F2A086F24,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 4,
@@ -4173,19 +4238,19 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_21,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP3,
 				KERNEL_ID_22,
-				.app_prio = 3,
+				API_03,
 			}
 		},
 		.ppse_entries_num = 3,
@@ -4194,19 +4259,19 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F66049F2A089F3704,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_9F66049F2A089F3704,
-				.app_prio = 2
+				API_02
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_9F66049F2A089F3704,
-				.app_prio = 3
+				API_03
 			}
 		},
 		.aid_fci_num = 3,
@@ -4237,13 +4302,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 2,
@@ -4252,13 +4317,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 2,
@@ -4277,13 +4342,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 2,
@@ -4292,13 +4357,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_D1029F6604,
-				.app_prio = 1
+				API_01
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_D1029F6604,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 2,
@@ -4316,25 +4381,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 4,
+				API_04,
 				KERNEL_ID_25,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 5,
+				API_05,
 				KERNEL_ID_2B,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 6,
+				API_06,
 				KERNEL_ID_24,
 			}
 		},
@@ -4343,25 +4408,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 4,
+				API_04,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 5,
+				API_05,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
-				.app_prio = 6,
+				API_06,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -4380,25 +4445,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 4,
+				API_04,
 				KERNEL_ID_21,
 			},
 			{
 				AID_A0000000020002010203040506070809,
 				APP_LABEL_APP2,
-				.app_prio = 2,
+				API_02,
 				KERNEL_ID_24,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 1,
+				API_01,
 				KERNEL_ID_24,
 			}
 		},
@@ -4407,25 +4472,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 4,
+				API_04,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000020002010203040506070809,
 				APP_LABEL_APP2,
-				.app_prio = 2,
+				API_02,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -4444,25 +4509,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 0,
+				API_00,
 				KERNEL_ID_24,
 			},
 			{
 				AID_A0000000010001010203040506070809,
 				APP_LABEL_APP1,
-				.app_prio = 14,
+				API_0E,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 14,
+				API_0E,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 14,
+				API_0E,
 				KERNEL_ID_22,
 			}
 		},
@@ -4471,25 +4536,85 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 0,
+				API_00,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000010001010203040506070809,
 				APP_LABEL_APP1,
-				.app_prio = 14,
+				API_0E,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 14,
+				API_0E,
 				PDOL_9F66049F2A08
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 14,
+				API_0E,
+				PDOL_9F66049F2A08
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting3.3 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000010001010203040506070809,
+				APP_LABEL_APP1,
+				API_00,
+				KERNEL_ID_23,
+			},
+			{
+				AID_A0000000040004010203040506070809,
+				APP_LABEL_APP4,
+				KERNEL_ID_23,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_00,
+				KERNEL_ID_21,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A0000000010001010203040506070809,
+				APP_LABEL_APP1,
+				API_00,
+				PDOL_9F66049F2A08
+			},
+			{
+				AID_A0000000040004010203040506070809,
+				APP_LABEL_APP4,
+				PDOL_9F66049F2A08
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_00,
+				PDOL_9F66049F2A08
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
 				PDOL_9F66049F2A08
 			}
 		},
@@ -4508,25 +4633,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 12,
+				API_0C,
 				KERNEL_ID_23,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 11,
+				API_0B,
 				KERNEL_ID_21,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 10,
+				API_0A,
 				KERNEL_ID_810978
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 3,
+				API_03,
 				KERNEL_ID_FF2222,
 			}
 		},
@@ -4535,25 +4660,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 12,
+				API_0C,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 11,
+				API_0B,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 10,
+				API_0A,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 3,
+				API_03,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -4572,25 +4697,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 9,
+				API_09,
 				KERNEL_ID_24,
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 8,
+				API_08,
 				KERNEL_ID_25,
 			},
 			{
 				AID_A0000000010001010203040506070809,
 				APP_LABEL_APP1,
-				.app_prio = 8,
+				API_08,
 				KERNEL_ID_23
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 8,
+				API_08,
 				KERNEL_ID_22,
 			}
 		},
@@ -4599,25 +4724,25 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 9,
+				API_09,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000040004010203040506070809,
 				APP_LABEL_APP4,
-				.app_prio = 8,
+				API_08,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000010001010203040506070809,
 				APP_LABEL_APP1,
-				.app_prio = 8,
+				API_08,
 				PDOL_9F66049F2A08,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
-				.app_prio = 8,
+				API_08,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -4632,6 +4757,69 @@ static const struct lt_setting ltsetting[] = {
 	},
 
 
+	/* LTsetting3.7 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003010203040506070809,
+				APP_LABEL_APP3,
+				KERNEL_ID_25,
+			},
+			{
+				AID_A0000000040004010203040506070809,
+				APP_LABEL_APP4,
+				API_00,
+				KERNEL_ID_23,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_00,
+				KERNEL_ID_21
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_24,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A0000000030003010203040506070809,
+				APP_LABEL_APP3,
+				PDOL_9F66049F2A08,
+			},
+			{
+				AID_A0000000040004010203040506070809,
+				APP_LABEL_APP4,
+				API_00,
+				PDOL_9F66049F2A08,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_00,
+				PDOL_9F66049F2A08,
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				PDOL_9F66049F2A08,
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+
+
+
 	/* LTsetting4.1 */
 	{
 		.ppse_entries = {
@@ -4639,43 +4827,43 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_6,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_62,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_810977,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				KERNEL_ID_BF0841,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000002000201,
 				APP_LABEL_APP2,
 				KERNEL_ID_811110,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000001000101,
 				APP_LABEL_APP1,
 				KERNEL_ID_BF2223,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			},
 		},
 		.ppse_entries_num = 7,
@@ -4684,7 +4872,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_9F66049F2A08,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 1,
@@ -4703,43 +4891,43 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_25,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000004000402,
 				APP_LABEL_APP4,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000003000301,
 				APP_LABEL_APP3,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000002000201,
 				APP_LABEL_APP2,
 				KERNEL_ID_23,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			},
 		},
 		.ppse_entries_num = 7,
@@ -4748,7 +4936,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_9F66049F2A08,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 1,
@@ -4766,7 +4954,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000031010,
 				APP_LABEL_VISA,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4775,7 +4963,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4793,7 +4981,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4802,7 +4990,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4820,7 +5008,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000651010,
 				APP_LABEL_JCB,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4829,7 +5017,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4847,7 +5035,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A000000025101001,
 				APP_LABEL_AMEX,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4856,7 +5044,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000025101001,
 				APP_LABEL_AMEX,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4875,7 +5063,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4884,7 +5072,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4903,7 +5091,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4912,7 +5100,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4931,7 +5119,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4940,7 +5128,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4959,7 +5147,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000025101001,
 				APP_LABEL_AMEX,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -4968,7 +5156,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000025101001,
 				APP_LABEL_AMEX,
 				PDOL_9F66049F2A08,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -4987,24 +5175,24 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				KERNEL_ID_TK1,
-				.app_prio = 4,
+				API_04,
 			},
 			{
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
 				KERNEL_ID_TK4,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				KERNEL_ID_TK3,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000251010,
 				APP_LABEL_AMEX,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -5013,25 +5201,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				PDOL_9F66049F2A08,
-				.app_prio = 4,
+				API_04,
 			},
 			{
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
 				PDOL_9F66049F2A08,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				PDOL_9F66049F2A08,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000251010,
 				APP_LABEL_AMEX,
 				PDOL_9F66049F2A08,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.aid_fci_num = 4,
@@ -5050,24 +5238,24 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				KERNEL_ID_TK1,
-				.app_prio = 4,
+				API_04,
 			},
 			{
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				KERNEL_ID_TK3,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000251010,
 				APP_LABEL_AMEX,
 				KERNEL_ID_TK4,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -5076,25 +5264,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				PDOL_9F66049F2A08,
-				.app_prio = 4,
+				API_04,
 			},
 			{
 				AID_A000000004101001,
 				APP_LABEL_MASTERCARD,
 				PDOL_9F66049F2A08,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000031010,
 				APP_LABEL_VISA,
 				PDOL_9F66049F2A08,
-				.app_prio = 3,
+				API_03,
 			},
 			{
 				AID_A0000000251010,
 				APP_LABEL_AMEX,
 				PDOL_9F66049F2A08,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.aid_fci_num = 4,
@@ -5113,13 +5301,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				KERNEL_ID_TK1,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000251010,
 				APP_LABEL_AMEX,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 2,
@@ -5128,13 +5316,13 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000651010,
 				APP_LABEL_JCB,
 				PDOL_9F66049F2A08,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000251010,
 				APP_LABEL_AMEX,
 				PDOL_9F66049F2A08,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.aid_fci_num = 2,
@@ -5165,7 +5353,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000003101001,
 				APP_LABEL_VISA,
 				PDOL_9F66049F2A08,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.aid_fci_num = 1,
@@ -5195,7 +5383,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000041010,
 				APP_LABEL_MASTERCARD,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5226,7 +5414,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A000000065101001,
 				APP_LABEL_JCB,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5257,7 +5445,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A000000025101001,
 				APP_LABEL_AMEX,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5276,7 +5464,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000001523010,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5284,7 +5472,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000001523010,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5315,7 +5503,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A000000152301001,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5334,7 +5522,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000003330101,
 				APP_LABEL_CUP,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5342,7 +5530,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000003330101,
 				APP_LABEL_CUP,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5373,7 +5561,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000003330101,
 				APP_LABEL_CUP,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5393,7 +5581,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000001523010,
 				APP_LABEL_DISCOVER,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5401,7 +5589,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000001523010,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08
 			}
 		},
@@ -5421,7 +5609,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000003330101,
 				APP_LABEL_CUP,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5429,7 +5617,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000003330101,
 				APP_LABEL_CUP,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08
 			}
 		},
@@ -5448,7 +5636,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000003241010,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5456,7 +5644,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000003241010,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5487,7 +5675,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A000000324101001,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5507,7 +5695,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000003241010,
 				APP_LABEL_DISCOVER,
 				KERNEL_ID_00,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5515,7 +5703,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000003241010,
 				APP_LABEL_DISCOVER,
-				.app_prio = 1,
+				API_01,
 				PDOL_9F66049F2A08,
 			}
 		},
@@ -5546,18 +5734,18 @@ static const struct lt_setting ltsetting[] = {
 				AID_A00000000400040102030405060708090A,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 2,
+				API_02,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
-				.app_prio = 3,
+				API_03,
 			}
 		},
 		.ppse_entries_num = 3,
@@ -5566,7 +5754,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F66049F2A08,
-				.app_prio = 0xF2
+				API_F2
 			}
 		},
 		.aid_fci_num = 1,
@@ -5586,25 +5774,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000661010,
 				APP_LABEL_APP2,
 				KERNEL_ID_21,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000005,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A000000006101001,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -5613,7 +5801,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_9F66049F2A08,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 1,
@@ -5633,19 +5821,19 @@ static const struct lt_setting ltsetting[] = {
 				AID_A000000002000201,
 				APP_LABEL_APP2,
 				KERNEL_ID_80,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_C001,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 3,
@@ -5654,7 +5842,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_9F66049F2A08,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 1,
@@ -5674,25 +5862,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_24FFFF,
-				.app_prio = 0xF2,
+				API_F2,
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				KERNEL_ID_240000,
-				.app_prio = 4,
+				API_04,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23FF00FF00FF00FF,
-				.app_prio = 0xFF,
+				API_FF,
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				KERNEL_ID_2102030405060708,
-				.app_prio = 0x41,
+				API_41,
 			}
 		},
 		.ppse_entries_num = 4,
@@ -5701,25 +5889,25 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_9F66049F2A08,
-				.app_prio = 0xF2
+				API_F2
 			},
 			{
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_9F66049F2A08,
-				.app_prio = 4
+				API_04
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F66049F2A08,
-				.app_prio = 0xFF
+				API_FF
 			},
 			{
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_9F66049F2A08,
-				.app_prio = 0x41
+				API_41
 			}
 		},
 		.aid_fci_num = 4,
@@ -5739,7 +5927,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5748,7 +5936,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_9F66049F02069F03069F3704DF0101C102__9F2502,
-				.app_prio = 1,
+				API_01,
 				.other = "\x9F\x02\x06\x10\x20\x30\x40\x50\x60"
 					 "\x9F\x03\x06\x01\x02\x03\x04\x05\x06"
 					 "\x9F\x37\x04\x11\x22\x33\x44"
@@ -5803,7 +5991,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				PDOL_9F02079F37059F16109F1C09,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -5850,7 +6038,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000040004,
 				APP_LABEL_APP4,
 				PDOL_9F02109F370E9F16199F1C12,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -5891,7 +6079,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000030003,
 				APP_LABEL_APP3,
 				PDOL_9F0206,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -5910,13 +6098,13 @@ static const struct lt_setting ltsetting[] = {
 			{
 				APP_LABEL_APP4,
 				KERNEL_ID_24,
-				.app_prio = 1,
+				API_01,
 			},
 			{
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				KERNEL_ID_23,
-				.app_prio = 2,
+				API_02,
 			}
 		},
 		.ppse_entries_num = 2,
@@ -5925,7 +6113,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000010001,
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
-				.app_prio = 2
+				API_02
 			}
 		},
 		.aid_fci_num = 1,
@@ -5945,7 +6133,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5953,7 +6141,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -5985,7 +6173,7 @@ static const struct lt_setting ltsetting[] = {
 				AID_A0000000020002,
 				APP_LABEL_APP2,
 				KERNEL_ID_22,
-				.app_prio = 1,
+				API_01,
 			}
 		},
 		.ppse_entries_num = 1,
@@ -5993,7 +6181,7 @@ static const struct lt_setting ltsetting[] = {
 			{
 				AID_A0000000020002,
 				APP_LABEL_APP2,
-				.app_prio = 1
+				API_01
 			}
 		},
 		.aid_fci_num = 1,
@@ -6034,9 +6222,10 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
 					   ent->app_label_len, ent->app_label));
 
-	tlv = tlv_insert_after(tlv,
+	if (ent->app_prio_len)
+		tlv = tlv_insert_after(tlv,
 				  tlv_new(EMV_ID_APPLICATION_PRIORITY_INDICATOR,
-							    1, &ent->app_prio));
+					    ent->app_prio_len, &ent->app_prio));
 
 	if (ent->kernel_id_len)
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_KERNEL_IDENTIFIER,
@@ -6149,8 +6338,10 @@ static int ber_get_aid_fci(const struct aid_fci *aid_fci, void *ber,
 									 NULL));
 	tlv = tlv_insert_below(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
 				   aid_fci->app_label_len, aid_fci->app_label));
-	tlv = tlv_insert_after(tlv, tlv_new(
-		 EMV_ID_APPLICATION_PRIORITY_INDICATOR, 1, &aid_fci->app_prio));
+	if (aid_fci->app_prio_len)
+		tlv = tlv_insert_after(tlv, tlv_new(
+					  EMV_ID_APPLICATION_PRIORITY_INDICATOR,
+				    aid_fci->app_prio_len, &aid_fci->app_prio));
 	if (aid_fci->pdol_len)
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_PDOL,
 					     aid_fci->pdol_len, aid_fci->pdol));

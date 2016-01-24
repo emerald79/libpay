@@ -3186,6 +3186,38 @@ START_TEST(test_2ED_014_00)
 }
 END_TEST
 
+/* 2ED.015.00 PPSE select response having Directory Entries with null priority
+ * or no priority set.							      */
+START_TEST(test_2ED_015_00)
+{
+	struct emv_txn txn = { .type = txn_purchase };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_23, pc_2ed_015_00_case01,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_23, pc_2ed_015_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting3_3, pc_2ed_015_00_case03,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting3_3, pc_2ed_015_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting3_7, pc_2ed_015_00_case05,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3337,6 +3369,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_15);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_013_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_014_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_015_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");
