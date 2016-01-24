@@ -3218,6 +3218,17 @@ START_TEST(test_2ED_015_00)
 }
 END_TEST
 
+/* 2ED.016.00 Candidate List empty					      */
+START_TEST(test_2ED_016_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 0 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting4_2, pc_2ed_016_00, &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3370,6 +3381,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_013_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_014_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_015_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_016_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

@@ -739,6 +739,7 @@ enum pass_criteria {
 	pc_2ed_015_00_case03 = 298,
 	pc_2ed_015_00_case04 = 299,
 	pc_2ed_015_00_case05 = 300,
+	pc_2ed_016_00	     = 301,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,

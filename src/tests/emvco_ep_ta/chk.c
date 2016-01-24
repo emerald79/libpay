@@ -3208,6 +3208,13 @@ static void checker_outcome(struct chk *checker,
 		}
 		break;
 
+	case pc_2ed_016_00:
+		if (outcome->present.ui_request_on_outcome &&
+		    (outcome->ui_request_on_outcome.msg_id ==
+							  msg_try_another_card))
+			chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}
