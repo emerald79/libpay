@@ -3240,8 +3240,36 @@ START_TEST(test_2ED_017_00)
 								       NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
 
-	txn.amount_authorized = 0;
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting3_5, pc_2ed_017_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.018.00 Extended selection present in Directory Entry and Extended
+ * Selection Support flag set in Reader Combination.			      */
+START_TEST(test_2ED_018_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting3_5, pc_2ed_018_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_30, pc_2ed_018_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_30, pc_2ed_018_00_case03,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_31, pc_2ed_018_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_101, pc_2ed_018_00_case05,
 								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 }
@@ -3401,6 +3429,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_015_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_016_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_017_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_018_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

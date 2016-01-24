@@ -145,6 +145,10 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x03, 0x33, 0x01, 0x01 }, .aid_len = 7
 #define AID_B0000000010101 \
 	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01 }, .aid_len = 7
+#define AID_B00000000101011122						       \
+	.aid = {							       \
+		0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x11, 0x22	       \
+	}, .aid_len = 9
 #define AID_B000000001010102 \
 	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x02}, .aid_len = 8
 #define AID_B0000000010102 \
@@ -157,11 +161,16 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01, 0x04 }, .aid_len = 7
 
 #define EXT_SEL_01	.ext_select = { 0x01 }, .ext_select_len = 1
+#define EXT_SEL_010203040506070809					       \
+	.ext_select = {							       \
+		0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09	       \
+	}, .ext_select_len = 9
 #define EXT_SEL_02	.ext_select = { 0x02 }, .ext_select_len = 1
 #define EXT_SEL_0202	.ext_select = { 0x02, 0x02 }, .ext_select_len = 2
 #define EXT_SEL_03	.ext_select = { 0x03 }, .ext_select_len = 1
 #define EXT_SEL_0303	.ext_select = { 0x03, 0x03 }, .ext_select_len = 2
 #define EXT_SEL_04	.ext_select = { 0x04 }, .ext_select_len = 1
+#define EXT_SEL_1122	.ext_select = { 0x11, 0x22 }, .ext_select_len = 2
 
 /*-----------------------------------------------------------------------------+
 | Application Labels							       |
@@ -752,6 +761,11 @@ enum pass_criteria {
 	pc_2ed_016_00	     = 301,
 	pc_2ed_017_00_case01 = 302,
 	pc_2ed_017_00_case02 = 303,
+	pc_2ed_018_00_case01 = 304,
+	pc_2ed_018_00_case02 = 305,
+	pc_2ed_018_00_case03 = 306,
+	pc_2ed_018_00_case04 = 307,
+	pc_2ed_018_00_case05 = 308,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -826,6 +840,8 @@ enum ltsetting {
 	ltsetting1_27,
 	ltsetting1_28,
 	ltsetting1_29,
+	ltsetting1_30,
+	ltsetting1_31,
 	ltsetting1_34,
 	ltsetting1_35,
 	ltsetting1_50,
@@ -858,6 +874,7 @@ enum ltsetting {
 	ltsetting1_98,
 	ltsetting1_99,
 	ltsetting1_100,
+	ltsetting1_101,
 	ltsetting2_1,
 	ltsetting2_2,
 	ltsetting2_3,
