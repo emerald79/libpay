@@ -4691,6 +4691,48 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting3.5 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000001000101,
+				APP_LABEL_APP1,
+				API_01,
+				KERNEL_ID_23,
+				EXT_SEL_0303
+			},
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_02,
+				KERNEL_ID_22,
+				EXT_SEL_0202
+			},
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000010001010303,
+				APP_LABEL_APP1,
+				API_01,
+				PDOL_9F66049F2A08,
+			},
+			{
+				AID_A00000000200020202,
+				APP_LABEL_APP2,
+				API_02,
+				PDOL_9F66049F2A08,
+			},
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting3.6 */
 	{
 		.ppse_entries = {
@@ -4755,8 +4797,6 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
-
-
 	/* LTsetting3.7 */
 	{
 		.ppse_entries = {
@@ -4817,9 +4857,6 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
-
-
-
 	/* LTsetting4.1 */
 	{
 		.ppse_entries = {

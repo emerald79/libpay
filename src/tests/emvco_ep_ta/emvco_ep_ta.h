@@ -58,12 +58,20 @@ extern uint32_t transaction_sequence_counter;
 		0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x01, 0x02, 0x03,    \
 		0x04, 0x05, 0x06, 0x07, 0x08, 0x09			       \
 	}, .aid_len = 16
+#define AID_A0000000010001010303					       \
+	.aid = {							       \
+		 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x01, 0x03, 0x03    \
+	}, .aid_len = 10
 #define AID_A000000001000103 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x03 }, .aid_len = 8
 #define AID_A0000000020002 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02 }, .aid_len = 7
 #define AID_A000000002000201 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01 }, .aid_len = 8
+#define AID_A00000000200020202						       \
+	.aid = {							       \
+		0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x02, 0x02	       \
+	}, .aid_len = 9
 #define AID_A0000000020002010203040506070809				       \
 	.aid = {							       \
 		0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01, 0x02, 0x03,    \
@@ -150,7 +158,9 @@ extern uint32_t transaction_sequence_counter;
 
 #define EXT_SEL_01	.ext_select = { 0x01 }, .ext_select_len = 1
 #define EXT_SEL_02	.ext_select = { 0x02 }, .ext_select_len = 1
+#define EXT_SEL_0202	.ext_select = { 0x02, 0x02 }, .ext_select_len = 2
 #define EXT_SEL_03	.ext_select = { 0x03 }, .ext_select_len = 1
+#define EXT_SEL_0303	.ext_select = { 0x03, 0x03 }, .ext_select_len = 2
 #define EXT_SEL_04	.ext_select = { 0x04 }, .ext_select_len = 1
 
 /*-----------------------------------------------------------------------------+
@@ -740,6 +750,8 @@ enum pass_criteria {
 	pc_2ed_015_00_case04 = 299,
 	pc_2ed_015_00_case05 = 300,
 	pc_2ed_016_00	     = 301,
+	pc_2ed_017_00_case01 = 302,
+	pc_2ed_017_00_case02 = 303,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -879,6 +891,7 @@ enum ltsetting {
 	ltsetting3_2,
 	ltsetting3_3,
 	ltsetting3_4,
+	ltsetting3_5,
 	ltsetting3_6,
 	ltsetting3_7,
 	ltsetting4_1,

@@ -1495,6 +1495,18 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ed_017_00_case01:
+		if ((len == 8) &&
+		    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01\x01", 8)))
+			chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ed_017_00_case02:
+		if ((len == 7) &&
+		    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+			chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}
