@@ -3098,6 +3098,62 @@ START_TEST(test_2ED_012_15)
 }
 END_TEST
 
+/* 2ED.013.00 PPSE select response having each Directory Entry with different
+ * priority set								      */
+START_TEST(test_2ED_013_00)
+{
+	struct emv_txn txn = { .type = txn_purchase };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_20, pc_2ed_013_00_case01,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_20, pc_2ed_013_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 121;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_20, pc_2ed_013_00_case03,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_21, pc_2ed_013_00_case04,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_21, pc_2ed_013_00_case05,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting3_1, pc_2ed_013_00_case06,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 0;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting3_1, pc_2ed_013_00_case07,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting2_24, pc_2ed_013_00_case08,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting3_4, pc_2ed_013_00_case09,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 201;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_44, pc_2ed_013_00_case10,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3247,6 +3303,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_11);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_13);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_15);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_013_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

@@ -59,6 +59,11 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02 }, .aid_len = 7
 #define AID_A000000002000201 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01 }, .aid_len = 8
+#define AID_A0000000020002010203040506070809				       \
+	.aid = {							       \
+		0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x01, 0x02, 0x03,    \
+		0x04, 0x05, 0x06, 0x07, 0x08, 0x09			       \
+	}, .aid_len = 16
 #define AID_A000000002000202 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x02, 0x02 }, .aid_len = 8
 #define AID_A0000000030003 \
@@ -77,6 +82,11 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x02 }, .aid_len = 8
 #define AID_A000000004000404 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x04 }, .aid_len = 8
+#define AID_A0000000040004010203040506070809				       \
+	.aid = {							       \
+		0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x01, 0x02, 0x03,    \
+		0x04, 0x05, 0x06, 0x07, 0x08, 0x09			       \
+	}, .aid_len = 16
 #define AID_A00000000400040102030405060708090A				       \
 	.aid = {							       \
 		0xA0, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04, 0x01, 0x02, 0x03,    \
@@ -656,6 +666,16 @@ enum pass_criteria {
 	pc_2ed_012_11	     = 278,
 	pc_2ed_012_13	     = 279,
 	pc_2ed_012_15	     = 280,
+	pc_2ed_013_00_case01 = 281,
+	pc_2ed_013_00_case02 = 282,
+	pc_2ed_013_00_case03 = 283,
+	pc_2ed_013_00_case04 = 284,
+	pc_2ed_013_00_case05 = 285,
+	pc_2ed_013_00_case06 = 286,
+	pc_2ed_013_00_case07 = 287,
+	pc_2ed_013_00_case08 = 288,
+	pc_2ed_013_00_case09 = 289,
+	pc_2ed_013_00_case10 = 290,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -781,10 +801,16 @@ enum ltsetting {
 	ltsetting2_17,
 	ltsetting2_18,
 	ltsetting2_19,
+	ltsetting2_20,
+	ltsetting2_21,
+	ltsetting2_24,
 	ltsetting2_25,
 	ltsetting2_40,
 	ltsetting2_42,
 	ltsetting2_43,
+	ltsetting2_44,
+	ltsetting3_1,
+	ltsetting3_4,
 	ltsetting4_1,
 	ltsetting4_2,
 	ltsetting5_1,
