@@ -27,6 +27,7 @@ struct ppse_entry {
 struct aid_fci {
 	const char	    *bin;
 	size_t		     bin_len;
+	uint8_t		     sw[2];
 	uint8_t		     aid[16];
 	size_t		     aid_len;
 	uint8_t		     app_label[17];
@@ -5979,6 +5980,66 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting6.8 */
+	{
+		.ppse_entries = {
+			{
+				AID_A00000000200020101,
+				APP_LABEL_APP2,
+				API_02,
+				KERNEL_ID_22,
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				KERNEL_ID_24,
+				API_04,
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				API_03,
+				KERNEL_ID_23,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				KERNEL_ID_21,
+				API_01,
+			}
+		},
+		.ppse_entries_num = 4,
+		.aid_fci = {
+			{
+				AID_A00000000200020101,
+				APP_LABEL_APP2,
+				API_02,
+				PDOL_9F66049F2A08,
+				.sw = EMV_SW_6283_SELECTED_FILE_INVALIDATED
+			},
+			{
+				.sw = EMV_SW_9000_OK
+			},
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				API_03,
+				PDOL_9F66049F2A08,
+			},
+			{
+				.sw = EMV_SW_6A82_FILE_NOT_FOUND
+			}
+		},
+		.aid_fci_num = 4,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting6.10 */
 	{
 		.ppse_entries = {
@@ -6238,6 +6299,82 @@ static const struct lt_setting ltsetting[] = {
 				APP_LABEL_APP1,
 				PDOL_D1029F66049F02069F03069C019F37049F2A08,
 				API_02
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting6.17 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_02,
+				KERNEL_ID_22,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_21,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_02,
+				PDOL_9F2A08
+			},
+			{
+				.sw = EMV_SW_6A82_FILE_NOT_FOUND
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting6.18 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				API_02,
+				KERNEL_ID_25,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_25,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				API_02,
+				PDOL_9F2A08
+			},
+			{
+				.sw = EMV_SW_6A82_FILE_NOT_FOUND
 			}
 		},
 		.aid_fci_num = 1,
@@ -6620,7 +6757,11 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 
 			lt->selected_aid = i_aid;
 
-			memcpy(sw, EMV_SW_9000_OK, 2);
+			if (memcmp(lt->setting->aid_fci[i_aid].sw, "\x00\x00",
+									     2))
+				memcpy(sw, lt->setting->aid_fci[i_aid].sw, 2);
+			else
+				memcpy(sw, EMV_SW_9000_OK, 2);
 			goto done;
 		}
 	}

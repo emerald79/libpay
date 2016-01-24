@@ -1544,6 +1544,100 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ed_019_00_case01:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 9) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02"
+								"\x01\x01", 9)))
+				chk->state = 3;
+			break;
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 4;
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case pc_2ed_019_00_case02:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 9) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02"
+								"\x01\x01", 9)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 3;
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case pc_2ed_019_00_case03:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 3;
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case pc_2ed_019_00_case04:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+				chk->state = 3;
+			break;
+		default:
+			break;
+		}
+		break;
 
 	default:
 		break;
@@ -2871,6 +2965,37 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
 								     "\x2B", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_019_00_case01:
+		if (chk->state == 4) {
+			chk->state = 5;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x23", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_019_00_case02:
+	case pc_2ed_019_00_case03:
+		if (chk->state == 3) {
+			chk->state = 4;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x23", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_019_00_case04:
+		if (chk->state == 3) {
+			chk->state = 4;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x25", 1))
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 		}

@@ -3275,6 +3275,33 @@ START_TEST(test_2ED_018_00)
 }
 END_TEST
 
+/* 2ED.019.00 Final selection rejected (restart flag = 0)		      */
+START_TEST(test_2ED_019_00)
+{
+	struct emv_txn txn = { .type = txn_purchase };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting6_8, pc_2ed_019_00_case01,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 121;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting6_8, pc_2ed_019_00_case02,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+#if 0 /* FIXME */
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting6_17, pc_2ed_019_00_case03,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+#endif
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting6_18, pc_2ed_019_00_case04,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3430,6 +3457,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_016_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_017_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_018_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_019_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");
