@@ -1370,6 +1370,8 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2ed_012_10_case02:
 	case pc_2ed_013_00_case03:
 	case pc_2ed_013_00_case08:
+	case pc_2ed_014_00_case01:
+	case pc_2ed_014_00_case02:
 		if (chk->state == 0) {
 			if ((len == 7) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
@@ -1452,6 +1454,8 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 
 	case pc_2ed_013_00_case06:
 	case pc_2ed_013_00_case09:
+	case pc_2ed_014_00_case04:
+	case pc_2ed_014_00_case05:
 		if (chk->state == 0) {
 			if ((len == 16) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04\x01"
@@ -1464,6 +1468,15 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		if (chk->state == 0) {
 			if ((len == 16) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02\x01"
+				       "\x02\x03\x04\x05\x06\x07\x08\x09", 16)))
+				chk->state = 1;
+		}
+		break;
+
+	case pc_2ed_014_00_case03:
+		if (chk->state == 0) {
+			if ((len == 16) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01\x01"
 				       "\x02\x03\x04\x05\x06\x07\x08\x09", 16)))
 				chk->state = 1;
 		}
@@ -2686,6 +2699,8 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 	case pc_2ed_012_10_case01:
 	case pc_2ed_013_00_case04:
 	case pc_2ed_013_00_case05:
+	case pc_2ed_014_00_case03:
+	case pc_2ed_014_00_case04:
 		if (chk->state == 1) {
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
@@ -2720,6 +2735,8 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 	case pc_2ed_012_10_case04:
 	case pc_2ed_013_00_case06:
 	case pc_2ed_013_00_case07:
+	case pc_2ed_014_00_case01:
+	case pc_2ed_014_00_case02:
 		if (chk->state == 1) {
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
@@ -2741,6 +2758,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 
 	case pc_2ed_012_10_case10:
 	case pc_2ed_013_00_case10:
+	case pc_2ed_014_00_case05:
 		if (chk->state == 1) {
 			chk->state = 2;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,

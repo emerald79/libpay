@@ -84,6 +84,7 @@ struct emv_ep_candidate {
 	size_t	extended_selection_len;
 	uint8_t order;
 	struct	emv_ep_combination *combination;
+	struct	emv_ep *ep;
 };
 
 struct emv_ep_candidate_list {
@@ -946,7 +947,7 @@ bool emv_ep_is_combination_candidate(struct emv_ep_combination *combination,
 		if (((dir_entry->kernel_identifier[0] & 0xc0) == 0x00) ||
 			   ((dir_entry->kernel_identifier[0] & 0xc0) == 0x40)) {
 			/* If byte 1, b8 and b7 of the Kernel Identifier have
-			 * the value 00b or 01b 12, then Requested Kernel ID is
+			 * the value 00b or 01b, then Requested Kernel ID is
 			 * equal to the value of byte 1 of the Kernel Identifier
 			 * (i.e. b8b7||Short Kernel ID).		      */
 			*requested_kernel_id = dir_entry->kernel_identifier[0];
@@ -1008,6 +1009,7 @@ done:
 static int compare_candidates(const void *candidate_a, const void *candidate_b)
 {
 	const struct emv_ep_candidate *a = NULL, *b = NULL;
+	int result = 0;
 
 	a = (const struct emv_ep_candidate *)candidate_a;
 	b = (const struct emv_ep_candidate *)candidate_b;
@@ -1015,24 +1017,28 @@ static int compare_candidates(const void *candidate_a, const void *candidate_b)
 	if ((a->application_priority_indicator & 0x0f) ==
 				   (b->application_priority_indicator & 0x0f)) {
 		if (a->order == b->order)
-			return 0;
-		if (a->order < b->order)
-			return -1;
+			result = 0;
+		else if (a->order < b->order)
+			result = 1;
 		else
-			return 1;
+			result = -1;
+	} else if (!a->application_priority_indicator) {
+		result = -1;
+	} else if (!b->application_priority_indicator) {
+		result = 1;
+	} else if ((a->application_priority_indicator & 0x0f) <
+				   (b->application_priority_indicator & 0x0f)) {
+		result = 1;
+	} else {
+		result = -1;
 	}
 
-	if (!a->application_priority_indicator)
-		return -1;
+	log4c_category_log(a->ep->log_cat, LOG4C_PRIORITY_TRACE,
+		       "%s({ api: %d, order: %d }, { api: %d, order: %d }): %d",
+			  __func__, a->application_priority_indicator, a->order,
+			   b->application_priority_indicator, b->order, result);
 
-	if (!b->application_priority_indicator)
-		return 1;
-
-	if ((a->application_priority_indicator & 0x0f) <
-				     (b->application_priority_indicator & 0x0f))
-		return 1;
-
-	return -1;
+	return result;
 }
 
 int emv_ep_combination_selection_step3(struct emv_ep *ep)
@@ -1255,6 +1261,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 						  entry->extended_selection_len;
 			candidate->order = (uint8_t)i_dir;
 			candidate->combination = comb;
+			candidate->ep = ep;
 		}
 	}
 

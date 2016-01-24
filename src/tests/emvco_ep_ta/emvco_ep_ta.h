@@ -53,6 +53,11 @@ extern uint32_t transaction_sequence_counter;
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01 }, .aid_len = 7
 #define AID_A000000001000101 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x01 }, .aid_len = 8
+#define AID_A0000000010001010203040506070809				       \
+	.aid = {							       \
+		0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x01, 0x02, 0x03,    \
+		0x04, 0x05, 0x06, 0x07, 0x08, 0x09			       \
+	}, .aid_len = 16
 #define AID_A000000001000103 \
 	.aid = { 0xA0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x03 }, .aid_len = 8
 #define AID_A0000000020002 \
@@ -676,6 +681,11 @@ enum pass_criteria {
 	pc_2ed_013_00_case08 = 288,
 	pc_2ed_013_00_case09 = 289,
 	pc_2ed_013_00_case10 = 290,
+	pc_2ed_014_00_case01 = 291,
+	pc_2ed_014_00_case02 = 292,
+	pc_2ed_014_00_case03 = 293,
+	pc_2ed_014_00_case04 = 294,
+	pc_2ed_014_00_case05 = 295,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -803,6 +813,7 @@ enum ltsetting {
 	ltsetting2_19,
 	ltsetting2_20,
 	ltsetting2_21,
+	ltsetting2_22,
 	ltsetting2_24,
 	ltsetting2_25,
 	ltsetting2_40,
@@ -810,7 +821,9 @@ enum ltsetting {
 	ltsetting2_43,
 	ltsetting2_44,
 	ltsetting3_1,
+	ltsetting3_2,
 	ltsetting3_4,
+	ltsetting3_6,
 	ltsetting4_1,
 	ltsetting4_2,
 	ltsetting5_1,
