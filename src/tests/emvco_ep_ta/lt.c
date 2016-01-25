@@ -11,6 +11,21 @@
 
 #include "emvco_ep_ta.h"
 
+struct lt_app;
+
+struct lt_app_ops {
+	void (*free)  (struct lt_app *app);
+	void (*select)(struct lt_app *app, uint8_t *resp, size_t *resp_sz,
+								   uint8_t *sw);
+};
+
+struct lt_app {
+	const struct lt_app_ops *ops;
+};
+
+typedef struct lt_app *(*lt_app_factory_t)(const uint8_t *aid,
+					      size_t aid_sz, const void *parms);
+
 struct ppse_entry {
 	uint8_t			aid[17];
 	size_t			aid_len;
@@ -39,6 +54,7 @@ struct aid_fci {
 	char		     lang_pref[2];
 	uint8_t		     other[64];
 	size_t		     other_len;
+	lt_app_factory_t     lt_app_factory;
 };
 
 struct gpo_resp {
@@ -53,7 +69,7 @@ struct lt_setting {
 	size_t		  ppse_entries_num;
 	struct aid_fci	  aid_fci[8];
 	size_t		  aid_fci_num;
-	struct gpo_resp	  gpo_resp[8];
+	struct gpo_resp	  gpo_resp[3];
 	size_t		  gpo_resp_num;
 };
 
@@ -6627,6 +6643,52 @@ done:
 	return rc;
 }
 
+
+struct lt_def_app {
+	const struct lt_app_ops *ops;
+	const struct aid_fci *fci;
+};
+
+static void lt_def_app_free(struct lt_app *lt_app)
+{
+	free(lt_app);
+}
+
+static void lt_def_app_select(struct lt_app *lt_app, uint8_t *resp,
+						   size_t *resp_sz, uint8_t *sw)
+{
+	struct lt_def_app *app = (struct lt_def_app *)lt_app;
+
+	if (app->fci->bin_len) {
+		*resp_sz = app->fci->bin_len;
+		memcpy(resp, app->fci->bin, app->fci->bin_len);
+	} else {
+		ber_get_aid_fci(app->fci, resp, resp_sz);
+	}
+
+	if (memcmp(app->fci->sw, "\x00\x00", 2))
+		memcpy(sw, app->fci->sw, 2);
+	else
+		memcpy(sw, EMV_SW_9000_OK, 2);
+}
+
+static const struct lt_app_ops lt_def_app_ops = {
+	.free	= lt_def_app_free,
+	.select	= lt_def_app_select
+};
+
+struct lt_app *lt_def_app_factory(const uint8_t *aid, size_t aid_sz,
+						  const struct aid_fci *aid_fci)
+{
+	struct lt_def_app *app = NULL;
+
+	app = (struct lt_def_app *)malloc(sizeof(struct lt_def_app));
+	app->ops = &lt_def_app_ops;
+	app->fci = aid_fci;
+
+	return (struct lt_app *)app;
+}
+
 struct lt {
 	const struct emv_hal_ops *ops;
 	const struct lt_setting	 *setting;
@@ -6636,6 +6698,7 @@ struct lt {
 	int			  i_gpo_resp;
 	struct chk		 *checker;
 	log4c_category_t	 *log_cat;
+	struct lt_app		 *apps[8];
 };
 
 uint32_t lt_get_unpredictable_number(struct emv_hal *hal)
@@ -6743,25 +6806,23 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 	for (i_aid = 0; i_aid < lt->setting->aid_fci_num; i_aid++) {
 		if ((lc == lt->setting->aid_fci[i_aid].aid_len) &&
 		    !memcmp(data, lt->setting->aid_fci[i_aid].aid, lc)) {
-			if (lt->setting->aid_fci[i_aid].bin_len) {
-				*le = lt->setting->aid_fci[i_aid].bin_len;
-				memcpy(resp, lt->setting->aid_fci[i_aid].bin,
-									   *le);
-			} else {
-				rc = ber_get_aid_fci(
-					&lt->setting->aid_fci[i_aid], resp, le);
+			if (lt->apps[i_aid] == NULL) {
+				lt_app_factory_t app_factory = lt->setting->
+						  aid_fci[i_aid].lt_app_factory;
+
+				if (app_factory == NULL)
+					app_factory = (lt_app_factory_t)
+							     lt_def_app_factory;
+
+				lt->apps[i_aid] = app_factory(
+					    lt->setting->aid_fci[i_aid].aid, lc,
+						  &lt->setting->aid_fci[i_aid]);
 			}
 
-			if (rc != EMV_RC_OK)
-				goto done;
-
+			lt->apps[i_aid]->ops->select(lt->apps[i_aid], resp, le,
+									    sw);
 			lt->selected_aid = i_aid;
 
-			if (memcmp(lt->setting->aid_fci[i_aid].sw, "\x00\x00",
-									     2))
-				memcpy(sw, lt->setting->aid_fci[i_aid].sw, 2);
-			else
-				memcpy(sw, EMV_SW_9000_OK, 2);
 			goto done;
 		}
 	}
@@ -6978,8 +7039,17 @@ struct emv_hal *lt_new(enum ltsetting i_lts, struct chk *checker,
 	return (struct emv_hal *)lt;
 }
 
-void lt_free(struct emv_hal *lt)
+void lt_free(struct emv_hal *hal)
 {
-	if (lt)
+	struct lt *lt = (struct lt *)hal;
+
+	if (lt) {
+		int i_aid;
+
+		for (i_aid = 0; i_aid < ARRAY_SIZE(lt->apps); i_aid++)
+			if (lt->apps[i_aid])
+				lt->apps[i_aid]->ops->free(lt->apps[i_aid]);
+
 		free(lt);
+	}
 }
