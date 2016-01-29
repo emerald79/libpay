@@ -2981,11 +2981,20 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		break;
 
 	case pc_2ed_019_00_case02:
-	case pc_2ed_019_00_case03:
 		if (chk->state == 3) {
 			chk->state = 4;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
 								     "\x23", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ed_019_00_case03:
+		if (chk->state == 3) {
+			chk->state = 4;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x22", 1))
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 		}

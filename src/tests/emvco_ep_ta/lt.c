@@ -11,6 +11,7 @@
 
 #include "emvco_ep_ta.h"
 
+struct lt;
 struct lt_app;
 
 struct lt_app_ops {
@@ -23,7 +24,7 @@ struct lt_app {
 	const struct lt_app_ops *ops;
 };
 
-typedef struct lt_app *(*lt_app_factory_t)(const uint8_t *aid,
+typedef struct lt_app *(*lt_app_factory_t)(struct lt *lt, const uint8_t *aid,
 					      size_t aid_sz, const void *parms);
 
 struct ppse_entry {
@@ -6355,7 +6356,7 @@ static const struct lt_setting ltsetting[] = {
 				.sw = EMV_SW_6A82_FILE_NOT_FOUND
 			}
 		},
-		.aid_fci_num = 1,
+		.aid_fci_num = 2,
 		.gpo_resp = {
 			{
 				.outcome_parms = {
@@ -6484,6 +6485,9 @@ static const struct lt_setting ltsetting[] = {
 		.gpo_resp_num = 1
 	}
 };
+
+struct lt_app *lt_def_app_factory(struct lt *lt, const uint8_t *aid,
+				  size_t aid_sz, const struct aid_fci *aid_fci);
 
 static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 {
@@ -6644,56 +6648,11 @@ done:
 }
 
 
-struct lt_def_app {
-	const struct lt_app_ops *ops;
-	const struct aid_fci *fci;
-};
-
-static void lt_def_app_free(struct lt_app *lt_app)
-{
-	free(lt_app);
-}
-
-static void lt_def_app_select(struct lt_app *lt_app, uint8_t *resp,
-						   size_t *resp_sz, uint8_t *sw)
-{
-	struct lt_def_app *app = (struct lt_def_app *)lt_app;
-
-	if (app->fci->bin_len) {
-		*resp_sz = app->fci->bin_len;
-		memcpy(resp, app->fci->bin, app->fci->bin_len);
-	} else {
-		ber_get_aid_fci(app->fci, resp, resp_sz);
-	}
-
-	if (memcmp(app->fci->sw, "\x00\x00", 2))
-		memcpy(sw, app->fci->sw, 2);
-	else
-		memcpy(sw, EMV_SW_9000_OK, 2);
-}
-
-static const struct lt_app_ops lt_def_app_ops = {
-	.free	= lt_def_app_free,
-	.select	= lt_def_app_select
-};
-
-struct lt_app *lt_def_app_factory(const uint8_t *aid, size_t aid_sz,
-						  const struct aid_fci *aid_fci)
-{
-	struct lt_def_app *app = NULL;
-
-	app = (struct lt_def_app *)malloc(sizeof(struct lt_def_app));
-	app->ops = &lt_def_app_ops;
-	app->fci = aid_fci;
-
-	return (struct lt_app *)app;
-}
-
 struct lt {
 	const struct emv_hal_ops *ops;
-	const struct lt_setting	 *setting;
+	enum ltsetting		  setting;
 	int			  mode;
-	int			  collision_state;
+	int			  state;
 	int                       selected_aid;
 	int			  i_gpo_resp;
 	struct chk		 *checker;
@@ -6741,12 +6700,12 @@ int lt_wait_for_card(struct emv_hal *hal, int timeout)
 		return EMV_RC_OK;
 
 	if (lt->mode == LT_COLLISION_THEN_WITHDRAW_ONE) {
-		switch (lt->collision_state) {
+		switch (lt->state) {
 		case 0:
-			lt->collision_state = 1;
+			lt->state = 1;
 			return EMV_RC_COLLISION;
 		case 1:
-			lt->collision_state = 0;
+			lt->state = 0;
 			return EMV_RC_OK;
 		default:
 			return EMV_RC_FAIL;
@@ -6754,15 +6713,15 @@ int lt_wait_for_card(struct emv_hal *hal, int timeout)
 	}
 
 	if (lt->mode == LT_COLLISION_THEN_WITHDRAW_BOTH) {
-		switch (lt->collision_state) {
+		switch (lt->state) {
 		case 0:
-			lt->collision_state = 1;
+			lt->state = 1;
 			return EMV_RC_COLLISION;
 		case 1:
-			lt->collision_state = 2;
+			lt->state = 2;
 			return EMV_RC_CONTINUE;
 		case 2:
-			lt->collision_state = 0;
+			lt->state = 0;
 			return EMV_RC_OK;
 		default:
 			return EMV_RC_FAIL;
@@ -6784,39 +6743,42 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 
 	if ((lc == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
 	    !memcmp(data, DF_NAME_2PAY_SYS_DDF01, lc)) {
-		if (lt->setting->ppse_len) {
-			*le = lt->setting->ppse_len;
-			memcpy(resp, lt->setting->ppse, lt->setting->ppse_len);
+		const struct lt_setting *lt_setting = &ltsetting[lt->setting];
+
+		if (lt_setting->ppse_len) {
+			*le = lt_setting->ppse_len;
+			memcpy(resp, lt_setting->ppse, lt_setting->ppse_len);
 		} else {
-			rc = ber_get_ppse(lt->setting->ppse_entries,
-				       lt->setting->ppse_entries_num, resp, le);
+			rc = ber_get_ppse(lt_setting->ppse_entries,
+					lt_setting->ppse_entries_num, resp, le);
 		}
 
 		if (rc != EMV_RC_OK)
 			goto done;
 
-		if (memcmp(lt->setting->ppse_sw, "\x00\x00", 2))
-			memcpy(sw, lt->setting->ppse_sw, 2);
+		if (memcmp(ltsetting[lt->setting].ppse_sw, "\x00\x00", 2))
+			memcpy(sw, ltsetting[lt->setting].ppse_sw, 2);
 		else
 			memcpy(sw, EMV_SW_9000_OK, 2);
 
 		goto done;
 	}
 
-	for (i_aid = 0; i_aid < lt->setting->aid_fci_num; i_aid++) {
-		if ((lc == lt->setting->aid_fci[i_aid].aid_len) &&
-		    !memcmp(data, lt->setting->aid_fci[i_aid].aid, lc)) {
+	for (i_aid = 0; i_aid < ltsetting[lt->setting].aid_fci_num; i_aid++) {
+		const struct aid_fci *fci = NULL;
+
+		fci = &ltsetting[lt->setting].aid_fci[i_aid];
+		if ((lc == fci->aid_len) && !memcmp(data, fci->aid, lc)) {
 			if (lt->apps[i_aid] == NULL) {
-				lt_app_factory_t app_factory = lt->setting->
-						  aid_fci[i_aid].lt_app_factory;
+				lt_app_factory_t app_factory =
+							    fci->lt_app_factory;
 
 				if (app_factory == NULL)
 					app_factory = (lt_app_factory_t)
 							     lt_def_app_factory;
 
-				lt->apps[i_aid] = app_factory(
-					    lt->setting->aid_fci[i_aid].aid, lc,
-						  &lt->setting->aid_fci[i_aid]);
+				lt->apps[i_aid] = app_factory(lt, fci->aid, lc,
+									   fci);
 			}
 
 			lt->apps[i_aid]->ops->select(lt->apps[i_aid], resp, le,
@@ -6848,7 +6810,7 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 
-	gpo_resp = &lt->setting->gpo_resp[lt->i_gpo_resp++];
+	gpo_resp = &ltsetting[lt->setting].gpo_resp[lt->i_gpo_resp++];
 
 	rc = ber_get_gpo_resp(gpo_resp, resp, le);
 	if (rc != EMV_RC_OK) {
@@ -6865,11 +6827,12 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 		uint8_t ber_tlv[2048];
 		size_t ber_tlv_len = sizeof(ber_tlv);
 		char ber_tlv_hex[4096];
+		const struct aid_fci *aid_fci = NULL;
 
-		rc = dol_and_del_to_tlv(
-				    lt->setting->aid_fci[lt->selected_aid].pdol,
-				lt->setting->aid_fci[lt->selected_aid].pdol_len,
-								data, lc, &tlv);
+		aid_fci = &ltsetting[lt->setting].aid_fci[lt->selected_aid];
+
+		rc = dol_and_del_to_tlv(aid_fci->pdol, aid_fci->pdol_len, data,
+								      lc, &tlv);
 		if (rc != EMV_RC_OK) {
 			log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
 					"%s() dol_and_del_to_tlv failed. rc %d",
@@ -7013,13 +6976,13 @@ const struct emv_hal_ops lt_ops  = {
 	.ui_request		  = lt_ui_request
 };
 
-struct emv_hal *lt_new(enum ltsetting i_lts, struct chk *checker,
+struct emv_hal *lt_new(enum ltsetting ltsetting, struct chk *checker,
 					   const char *log4c_category, int mode)
 {
 	struct lt *lt = NULL;
 	char cat[64];
 
-	if (i_lts >= num_ltsettings)
+	if (ltsetting >= num_ltsettings)
 		return NULL;
 
 	lt = malloc(sizeof(struct lt));
@@ -7032,7 +6995,7 @@ struct emv_hal *lt_new(enum ltsetting i_lts, struct chk *checker,
 
 	snprintf(cat, sizeof(cat), "%s.lt", log4c_category);
 	lt->log_cat = log4c_category_get(cat);
-	lt->setting = &ltsetting[i_lts];
+	lt->setting = ltsetting;
 	lt->checker = checker;
 	lt->mode    = mode;
 
@@ -7052,4 +7015,66 @@ void lt_free(struct emv_hal *hal)
 
 		free(lt);
 	}
+}
+
+struct lt_def_app {
+	const struct lt_app_ops *ops;
+	struct lt *lt;
+	const struct aid_fci *fci;
+};
+
+static void lt_def_app_free(struct lt_app *lt_app)
+{
+	free(lt_app);
+}
+
+static void lt_def_app_select(struct lt_app *lt_app, uint8_t *resp,
+						   size_t *resp_sz, uint8_t *sw)
+{
+	struct lt_def_app *app = (struct lt_def_app *)lt_app;
+
+	if (app->lt->setting == ltsetting6_17) {
+		switch (app->lt->state) {
+		case 0:
+			app->fci = &ltsetting[app->lt->setting].aid_fci[1];
+			app->lt->state = 1;
+			break;
+		case 1:
+			app->fci = &ltsetting[app->lt->setting].aid_fci[0];
+			app->lt->state = 0;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (app->fci->bin_len) {
+		*resp_sz = app->fci->bin_len;
+		memcpy(resp, app->fci->bin, app->fci->bin_len);
+	} else {
+		ber_get_aid_fci(app->fci, resp, resp_sz);
+	}
+
+	if (memcmp(app->fci->sw, "\x00\x00", 2))
+		memcpy(sw, app->fci->sw, 2);
+	else
+		memcpy(sw, EMV_SW_9000_OK, 2);
+}
+
+static const struct lt_app_ops lt_def_app_ops = {
+	.free	= lt_def_app_free,
+	.select	= lt_def_app_select
+};
+
+struct lt_app *lt_def_app_factory(struct lt *lt, const uint8_t *aid,
+				   size_t aid_sz, const struct aid_fci *aid_fci)
+{
+	struct lt_def_app *app = NULL;
+
+	app = (struct lt_def_app *)malloc(sizeof(struct lt_def_app));
+	app->ops = &lt_def_app_ops;
+	app->lt = lt;
+	app->fci = aid_fci;
+
+	return (struct lt_app *)app;
 }

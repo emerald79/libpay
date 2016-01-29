@@ -3290,11 +3290,10 @@ START_TEST(test_2ED_019_00)
 								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
 
-#if 0 /* FIXME */
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting6_17, pc_2ed_019_00_case03,
 								       NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
-#endif
+
 	txn.amount_authorized = 2;
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting6_18, pc_2ed_019_00_case04,
 								       &txn, 1);
