@@ -3398,6 +3398,7 @@ static void checker_outcome(struct chk *checker,
 		break;
 
 	case pc_2ed_016_00:
+	case pc_2ed_019_01:
 		if (outcome->present.ui_request_on_outcome &&
 		    (outcome->ui_request_on_outcome.msg_id ==
 							  msg_try_another_card))

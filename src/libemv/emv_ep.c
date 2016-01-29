@@ -1389,7 +1389,15 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	 *     Combination Selection (requirement 3.3.2.6)).		      */
 	if ((ep->parms.sw[0] != 0x90) || (ep->parms.sw[1] != 0x00)) {
 		if (ep->parms.online_response_len) {
-			assert(false); /* FIXME */
+			struct emv_ui_request *ui_req = NULL;
+
+			memset(&ep->outcome, 0, sizeof(ep->outcome));
+			ep->outcome.outcome = out_end_application;
+			ep->outcome.present.ui_request_on_outcome = true;
+			ui_req = &ep->outcome.ui_request_on_outcome;
+			ui_req->msg_id = msg_try_another_card;
+			ui_req->status = sts_ready_to_read;
+			ep->state = eps_outcome_processing;
 		} else {
 			ep->candidate_list.size--;
 			if (!ep->candidate_list.size) {

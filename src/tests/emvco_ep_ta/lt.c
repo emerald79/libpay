@@ -6404,6 +6404,157 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting6.19 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				API_01,
+				KERNEL_ID_23,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				API_01,
+				PDOL_D102D2019F6604
+			},
+			{
+				.sw = EMV_SW_6A83_RECORD_NOT_FOUND
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_a,
+					.online_response_type = ort_any,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10",
+						.len = 18
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting6.20 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_01,
+				KERNEL_ID_22,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_01,
+				PDOL_D102D201
+			},
+			{
+				.sw = EMV_SW_6A82_FILE_NOT_FOUND
+			}
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_b,
+					.online_response_type = ort_emv_data,
+					.removal_timeout = 100,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10",
+						.len = 18
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting6.21 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_21,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				PDOL_D102D201
+			},
+			{
+				.sw = EMV_SW_6A83_RECORD_NOT_FOUND
+			}
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_c,
+					.online_response_type = ort_any
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting6.22 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_21,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				PDOL_D102D201
+			},
+			{
+				.sw = EMV_SW_6A83_RECORD_NOT_FOUND
+			}
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_online_request,
+					.start = start_d,
+					.online_response_type = ort_any
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting8.0 */
 	{
 		.ppse_entries = {
@@ -7041,6 +7192,22 @@ static void lt_def_app_select(struct lt_app *lt_app, uint8_t *resp,
 			break;
 		case 1:
 			app->fci = &ltsetting[app->lt->setting].aid_fci[0];
+			app->lt->state = 0;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if ((app->lt->setting >= ltsetting6_19) &&
+	    (app->lt->setting <= ltsetting6_21)) {
+		switch (app->lt->state) {
+		case 0:
+			app->fci = &ltsetting[app->lt->setting].aid_fci[0];
+			app->lt->state = 1;
+			break;
+		case 1:
+			app->fci = &ltsetting[app->lt->setting].aid_fci[1];
 			app->lt->state = 0;
 			break;
 		default:
