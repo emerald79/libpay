@@ -1640,6 +1640,51 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ed_021_00_case01:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x10\x10", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x25\x10\x10", 7)))
+				chk->state = 3;
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case pc_2ed_021_00_case02:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 8) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x10\x10\x01",
+									    8)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x25\x10\x10", 7)))
+				chk->pass_criteria_checked = true;
+			break;
+		default:
+			break;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -3021,6 +3066,16 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 	case pc_2ed_020_00_case02:
 		if (chk->state == 1)
 			chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ed_021_00_case01:
+		if (chk->state == 3) {
+			chk->state = 4;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x04", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
 		break;
 
 	default:

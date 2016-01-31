@@ -777,6 +777,8 @@ enum pass_criteria {
 	pc_2ed_019_01	     = 313,
 	pc_2ed_020_00_case01 = 314,
 	pc_2ed_020_00_case02 = 315,
+	pc_2ed_021_00_case01 = 316,
+	pc_2ed_021_00_case02 = 317,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -809,13 +811,17 @@ enum termsetting {
 	termsetting5_2	= 5,
 	termsetting5_3	= 6,
 	termsetting5_4	= 7,
-	termsetting8	= 8,
-	termsetting13	= 9,
+	termsetting6	= 8,
+	termsetting7	= 9,
+	termsetting8	= 10,
+	termsetting13	= 11,
 	num_termsettings
 };
 
 int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
 
+bool term_is_kernel_supported(enum termsetting termsetting,
+				   const void *kernel_id, size_t kernel_id_len);
 
 /*-----------------------------------------------------------------------------+
 | Lower Tester (lt)							       |

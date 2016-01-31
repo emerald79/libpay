@@ -200,7 +200,7 @@ static struct emv_kernel *get_kernel(struct emv_ep *ep,
 						  "%s('%s'): success", __func__,
 					libtlv_bin_to_hex(kernel_id, len, hex));
 	} else {
-		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
 						   "%s('%s'): failed", __func__,
 					libtlv_bin_to_hex(kernel_id, len, hex));
 	}

@@ -183,6 +183,10 @@ static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
 
 	for (i_tk = 0; i_tk < ARRAY_SIZE(fixture->tk); i_tk++) {
 
+		if (!term_is_kernel_supported(termsetting,
+			      tk_id[i_tk].kernel_id, tk_id[i_tk].kernel_id_len))
+			continue;
+
 		fixture->tk[i_tk] = tk_new(log4c_category);
 
 		if (!fixture->tk[i_tk]) {
@@ -3337,6 +3341,21 @@ START_TEST(test_2ED_020_00)
 }
 END_TEST
 
+/* 2ED.021.00 Visa Kernel 3 not allowed					      */
+START_TEST(test_2ED_021_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting6, ltsetting2_30, pc_2ed_021_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting7, ltsetting2_31, pc_2ed_021_00_case02,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
 
 Suite *emvco_ep_ta_test_suite(void)
 {
@@ -3496,6 +3515,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_019_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_019_01);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_020_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_021_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");
