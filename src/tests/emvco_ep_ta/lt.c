@@ -4900,6 +4900,52 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting2.41 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_21,
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_02,
+				KERNEL_ID_22,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				PDOL_9F2A08
+			},
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_02,
+				PDOL_9F2A08
+			}
+		},
+		.aid_fci_num = 3,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_select_next,
+					.start	 = start_c
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting2.42 */
 	{
 		.ppse_entries = {
@@ -5037,6 +5083,52 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.aid_fci_num = 4,
 		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.45 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_22,
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				API_02,
+				KERNEL_ID_25,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				PDOL_9F2A08
+			},
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				API_02,
+				PDOL_9F2A08
+			}
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_select_next,
+					.start	 = start_c
+				}
+			},
 			{
 				.outcome_parms = {
 					.outcome = out_approved
@@ -7356,15 +7448,15 @@ int lt_field_on(struct emv_hal *hal)
 	return EMV_RC_OK;
 }
 
-int lt_field_off(struct emv_hal *hal)
+int lt_field_off(struct emv_hal *hal, int hold_time)
 {
 	struct lt *lt = (struct lt *)hal;
 
 	if (lt->checker && lt->checker->ops->field_off)
-		lt->checker->ops->field_off(lt->checker);
+		lt->checker->ops->field_off(lt->checker, hold_time);
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
-						     "%s(): success", __func__);
+			  "%s(hold_time: %d ms): success", __func__, hold_time);
 	return EMV_RC_OK;
 }
 

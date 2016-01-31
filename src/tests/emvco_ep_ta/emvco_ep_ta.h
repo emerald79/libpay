@@ -454,7 +454,7 @@ struct chk_ops {
 	void (*ep_restart)(struct chk *chk);
 	void (*ep_txn_end)(struct chk *chk);
 	void (*field_on)(struct chk *chk);
-	void (*field_off)(struct chk *chk);
+	void (*field_off)(struct chk *chk, int hold_time);
 	void (*select)(struct chk *chk, const uint8_t *data, size_t len);
 	void (*gpo_data)(struct chk *chk, struct tlv *gpo_data);
 	void (*ui_request)(struct chk *chk,
@@ -807,6 +807,10 @@ enum pass_criteria {
 	pc_2ef_001_00_case10 = 333,
 	pc_2ef_001_01	     = 334,
 	pc_2ef_002_00	     = 335,
+	pc_2ef_003_00_case01 = 336,
+	pc_2ef_003_00_case02 = 337,
+	pc_2ef_003_00_case03 = 338,
+	pc_2ef_003_00_case04 = 339,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -957,9 +961,11 @@ enum ltsetting {
 	ltsetting2_30,
 	ltsetting2_31,
 	ltsetting2_40,
+	ltsetting2_41,
 	ltsetting2_42,
 	ltsetting2_43,
 	ltsetting2_44,
+	ltsetting2_45,
 	ltsetting3_1,
 	ltsetting3_2,
 	ltsetting3_3,

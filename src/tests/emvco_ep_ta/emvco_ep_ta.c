@@ -265,7 +265,7 @@ static int emvco_ep_ta_tc_perform_transaction(
 			.status = sts_idle
 		};
 
-		rc = emv_ep_field_off(fixture->ep);
+		rc = emv_ep_field_off(fixture->ep, 0);
 		if (rc != EMV_RC_OK)
 			goto done;
 
@@ -324,7 +324,7 @@ static int emvco_ep_ta_tc_perform_transaction(
 		}
 	}
 
-	rc = emv_ep_field_off(fixture->ep);
+	rc = emv_ep_field_off(fixture->ep, 0);
 	if (rc != EMV_RC_OK)
 		goto done;
 
@@ -3486,6 +3486,31 @@ START_TEST(test_2EF_002_00)
 }
 END_TEST
 
+/* 2EF.003.00 Outcome Select Next					      */
+START_TEST(test_2EF_003_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 0 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_40, pc_2ef_003_00_case01,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_40, pc_2ef_003_00_case02,
+								      NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_41, pc_2ef_003_00_case03,
+								      NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_45, pc_2ef_003_00_case04,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3657,6 +3682,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_outcome_processing, test_2EF_001_00);
 	tcase_add_test(tc_outcome_processing, test_2EF_001_01);
 	tcase_add_test(tc_outcome_processing, test_2EF_002_00);
+	tcase_add_test(tc_outcome_processing, test_2EF_003_00);
 	suite_add_tcase(suite, tc_outcome_processing);
 
 	return suite;

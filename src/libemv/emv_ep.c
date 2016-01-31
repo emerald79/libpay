@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <unistd.h>
 #include <time.h>
 #include <log4c.h>
 
@@ -665,12 +666,12 @@ int emv_ep_field_on(struct emv_ep *ep)
 	return ep->hal->ops->field_on(ep->hal);
 }
 
-int emv_ep_field_off(struct emv_ep *ep)
+int emv_ep_field_off(struct emv_ep *ep, int hold_time)
 {
 	if (!ep || !ep->hal || !ep->hal->ops || !ep->hal->ops->field_off)
 		return EMV_RC_HAL_NOT_REGISTERED;
 
-	return ep->hal->ops->field_off(ep->hal);
+	return ep->hal->ops->field_off(ep->hal, hold_time);
 }
 
 int emv_ep_ui_request(struct emv_ep *ep,
@@ -1617,6 +1618,7 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 	if (ep->outcome.start != start_na)
 		ep->restart = true;
 
+
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.5.1.1");
 	/* If the value of Outcome parameter UI Request on Outcome Present is
 	 * 'Yes', then Entry Point shall send the associated User Interface
@@ -1624,6 +1626,40 @@ int emv_ep_outcome_processing(struct emv_ep *ep)
 	if (ep->outcome.present.ui_request_on_outcome)
 		emv_ep_ui_request(ep, &ep->outcome.ui_request_on_outcome);
 
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.5.1.2");
+	/* If the Outcome parameter Field Off Request has a value other than
+	 * 'N/A', then the field shall be turned off and shall remain off for
+	 * the period indicated by the hold time.			      */
+	if (ep->outcome.present.field_off_request)
+		emv_ep_field_off(ep, ep->outcome.field_off_hold_time * 100);
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.5.1.3");
+	/* If the Outcome is Try Again, then Entry Point shall return to Start B
+	 * (Protocol Activation, section 3.2.1)				      */
+	if (ep->outcome.outcome == out_try_again) {
+		ep->state = eps_protocol_activation;
+		return EMV_RC_OK;
+	}
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.5.1.4");
+	/* If the Outcome is Select Next, then Entry Point shall remove the
+	 * selected Combination from the Candidate List and shall return to
+	 ` Start C (Step 3 of Combination Selection (requirement 3.3.2.6)).   */
+	if (ep->outcome.outcome == out_select_next)
+		return emv_ep_remove_candidate_and_return_to_start_c(ep);
+
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.5.1.4");
+	/* If the Outcome is other than Try Again or Select Next, then Entry
+	 * Point shall provide the Outcome to the reader as a Final Outcome,
+	 * together with:
+	 *   - the Outcome parameter set
+	 *   - associated data provided by the kernel
+	 *   - the ADF Name of the application that was selected (with Extended
+	 *     Selection if appended)					      */
 	ep->state = eps_done;
 	return EMV_RC_OK;
 }

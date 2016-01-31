@@ -1719,6 +1719,99 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ef_003_00_case01:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 3;
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case pc_2ef_003_00_case02:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 3;
+			break;
+		case 3:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
+				chk->state = 4;
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case pc_2ef_003_00_case03:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 3;
+			break;
+		default:
+			break;
+		}
+		break;
+
+	case pc_2ef_003_00_case04:
+		switch (chk->state) {
+		case 0:
+			if ((len == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
+			    (!memcmp(data, DF_NAME_2PAY_SYS_DDF01, len)))
+				chk->state = 1;
+			break;
+		case 1:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
+				chk->state = 2;
+			break;
+		case 2:
+			if ((len == 7) &&
+			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
+				chk->state = 3;
+			break;
+		default:
+			break;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -3226,6 +3319,36 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 		}
 		break;
 
+	case pc_2ef_003_00_case01:
+	case pc_2ef_003_00_case03:
+		if (chk->state == 3) {
+			chk->state = 4;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x22", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ef_003_00_case02:
+		if (chk->state == 4) {
+			chk->state = 5;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x22", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ef_003_00_case04:
+		if (chk->state == 3) {
+			chk->state = 4;
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x25", 1))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+
 	default:
 		break;
 	}
@@ -3339,7 +3462,7 @@ static void checker_field_on(struct chk *chk)
 	checker->field_is_on = true;
 }
 
-static void checker_field_off(struct chk *chk)
+static void checker_field_off(struct chk *chk, int hold_time)
 {
 	struct checker *checker = (struct checker *)chk;
 
@@ -3608,6 +3731,14 @@ static void checker_ui_request(struct chk *checker,
 		}
 		break;
 
+	case pc_2ef_002_00:
+		if (chk->state == 0) {
+			if (ui_request->msg_id == msg_present_card_again &&
+			    chk->field_is_on)
+				chk->state = 1;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -3669,15 +3800,6 @@ static void checker_outcome(struct chk *checker,
 		break;
 
 	case pc_2ef_001_00_case10:
-		if (chk->state == 0) {
-			chk->state = 1;
-			if (chk->ui_request.msg_id != msg_present_card_again ||
-			    !chk->field_is_on)
-				chk->pass_criteria_met = false;
-		}
-		break;
-
-	case pc_2ef_002_00:
 		if (chk->state == 0) {
 			chk->state = 1;
 			if (chk->ui_request.msg_id != msg_present_card_again ||

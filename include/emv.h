@@ -256,7 +256,7 @@ struct emv_hal_ops {
 
 	int	(*field_on)(struct emv_hal *hal);
 
-	int	(*field_off)(struct emv_hal *hal);
+	int	(*field_off)(struct emv_hal *hal, int hold_time);
 
 	int	(*wait_for_card)(struct emv_hal *hal, int timeout);
 
@@ -340,7 +340,7 @@ int emv_ep_register_hal(struct emv_ep *ep, struct emv_hal *hal);
 
 int emv_ep_field_on(struct emv_ep *ep);
 
-int emv_ep_field_off(struct emv_ep *ep);
+int emv_ep_field_off(struct emv_ep *ep, int hold_time);
 
 int emv_ep_ui_request(struct emv_ep *ep,
 				       const struct emv_ui_request *ui_request);
