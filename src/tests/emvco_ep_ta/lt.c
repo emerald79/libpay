@@ -1598,6 +1598,205 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 2
 	},
+	/* LTsetting1.40 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				KERNEL_ID_22,
+				API_01
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_01
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+					},
+					.outcome = out_declined,
+					.ui_request_on_outcome = {
+						.msg_id = msg_not_authorized,
+						.status =
+						      sts_card_read_successfully
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.41 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_21,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+					},
+					.outcome = out_try_another_interface,
+					.ui_request_on_outcome = {
+						.msg_id =
+						       msg_insert_or_swipe_card,
+						.status = sts_ready_to_read
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.42 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				API_01,
+				KERNEL_ID_24,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000040004,
+				APP_LABEL_APP4,
+				API_01
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+					},
+					.outcome = out_online_request,
+					.ui_request_on_outcome = {
+						.msg_id = msg_authorising,
+						.status =
+						      sts_card_read_successfully
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
+	/* LTsetting1.47 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				API_01,
+				KERNEL_ID_23
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000010001,
+				APP_LABEL_APP1,
+				API_01,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+						.ui_request_on_restart = true,
+					},
+					.outcome = out_online_request,
+					.start = start_d,
+					.online_response_type = ort_emv_data,
+					.data_record = {
+						.data = "\x91\x10\x01\x02\x03"
+							"\x04\x05\x06\x07\x08"
+							"\x09\x0A\x0B\x0C\x0D"
+							"\x0E\x0F\x10",
+						.len = 18
+					},
+					.ui_request_on_outcome = {
+						.msg_id = msg_authorising,
+						.status =
+						      sts_card_read_successfully
+					},
+					.ui_request_on_restart = {
+						.msg_id = msg_processing,
+						.status =
+						      sts_card_read_successfully
+					}
+				}
+			},
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 2
+	},
+	/* LTsetting1.49 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01,
+				KERNEL_ID_21,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000030003,
+				APP_LABEL_APP3,
+				API_01
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+					},
+					.outcome = out_end_application,
+					.ui_request_on_outcome = {
+						.msg_id = msg_try_another_card,
+						.status = sts_processing_error
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting1.50 */
 	{
 		.ppse =

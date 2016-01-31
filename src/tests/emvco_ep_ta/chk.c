@@ -3233,7 +3233,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 			char hex[2 * len + 1];
 
 			log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
-					"%s('%s): pass criteria check failed!",
+				       "%s('%s'): pass criteria check failed!",
 				   __func__, libtlv_bin_to_hex(bin, len, hex));
 		}
 	}
@@ -3343,6 +3343,12 @@ static void checker_ui_request(struct chk *checker,
 					const struct emv_ui_request *ui_request)
 {
 	struct checker *chk = (struct checker *)checker;
+
+	log4c_category_log(chk->log_cat, LOG4C_PRIORITY_TRACE,
+						"%s(msg_id = 0x%02x)", __func__,
+						  (unsigned)ui_request->msg_id);
+
+	memcpy(&chk->ui_request, ui_request, sizeof(*ui_request));
 
 	switch (chk->pass_criteria) {
 
@@ -3577,9 +3583,32 @@ static void checker_ui_request(struct chk *checker,
 			chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2ef_001_00_case06:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (ui_request->msg_id != msg_processing)
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ef_001_00_case10:
+		if (chk->state == 1) {
+			chk->state = 2;
+			if (ui_request->msg_id != msg_present_card_again)
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
-		memcpy(&chk->ui_request, ui_request, sizeof(*ui_request));
+		break;
 	}
+
+	if (chk->pass_criteria_met == false)
+		log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+			"%s(msg_id = 0x%02x): pass criteria not met!", __func__,
+						  (unsigned)ui_request->msg_id);
 }
 
 static void checker_outcome(struct chk *checker,
@@ -3612,6 +3641,78 @@ static void checker_outcome(struct chk *checker,
 		    (outcome->ui_request_on_outcome.msg_id ==
 							  msg_try_another_card))
 			chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ef_001_00_case06:
+		if (chk->state == 0) {
+			chk->state = 1;
+			if (chk->ui_request.msg_id != msg_authorising ||
+			    !chk->field_is_on)
+				chk->pass_criteria_met = false;
+		}
+		break;
+
+	case pc_2ef_001_00_case08:
+		if (chk->state == 0) {
+			chk->state = 1;
+			if (!chk->field_is_on)
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ef_001_00_case10:
+		if (chk->state == 0) {
+			chk->state = 1;
+			if (chk->ui_request.msg_id != msg_present_card_again ||
+			    !chk->field_is_on)
+				chk->pass_criteria_met = false;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	if (!chk->pass_criteria_met)
+		log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+				      "%s(): pass criteria not met!", __func__);
+}
+
+static void checker_ep_txn_end(struct chk *checker)
+{
+	struct checker *chk = (struct checker *)checker;
+
+	switch (chk->pass_criteria) {
+
+	case pc_2ef_001_00_case01:
+		if (chk->ui_request.msg_id != msg_approved)
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ef_001_00_case02:
+		if (chk->ui_request.msg_id != msg_not_authorized)
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ef_001_00_case03:
+		if (chk->ui_request.msg_id != msg_insert_or_swipe_card)
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ef_001_00_case04:
+		if (chk->ui_request.msg_id != msg_authorising)
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ef_001_00_case09:
+		if (chk->ui_request.msg_id != msg_try_another_card)
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
 		break;
 
 	default:
@@ -3650,6 +3751,7 @@ void checker_free(struct chk *chk)
 static const struct chk_ops checker_ops = {
 	.ep_start	   = checker_ep_start,
 	.ep_restart	   = checker_ep_restart,
+	.ep_txn_end	   = checker_ep_txn_end,
 	.field_on	   = checker_field_on,
 	.field_off	   = checker_field_off,
 	.select		   = checker_select,

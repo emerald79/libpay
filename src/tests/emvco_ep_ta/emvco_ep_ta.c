@@ -324,6 +324,8 @@ static int emvco_ep_ta_tc_perform_transaction(
 		}
 	}
 
+	chk->ops->ep_txn_end(chk);
+
 done:
 	return rc;
 }
@@ -3416,6 +3418,46 @@ START_TEST(test_2EE_002_00)
 }
 END_TEST
 
+/* 2EF.001.00 Outcome with UI Request and Field Off			      */
+START_TEST(test_2EF_001_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_1, pc_2ef_001_00_case01,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_40, pc_2ef_001_00_case02,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_41, pc_2ef_001_00_case03,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_42, pc_2ef_001_00_case04,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_47, pc_2ef_001_00_case06,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_40, pc_2ef_001_00_case08,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_49, pc_2ef_001_00_case09,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_35, pc_2ef_001_00_case10,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3584,6 +3626,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	suite_add_tcase(suite, tc_kernel_activation);
 
 	tc_outcome_processing = tcase_create("Outcome Processing");
+	tcase_add_test(tc_outcome_processing, test_2EF_001_00);
 	suite_add_tcase(suite, tc_outcome_processing);
 
 	return suite;
