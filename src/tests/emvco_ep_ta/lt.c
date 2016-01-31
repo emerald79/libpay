@@ -16,7 +16,7 @@ struct lt_app;
 
 struct lt_app_ops {
 	void (*free)  (struct lt_app *app);
-	void (*select)(struct lt_app *app, uint8_t *resp, size_t *resp_sz,
+	int  (*select)(struct lt_app *app, uint8_t *resp, size_t *resp_sz,
 								   uint8_t *sw);
 };
 
@@ -6135,6 +6135,34 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting6.9 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_01,
+				KERNEL_ID_22,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_01,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting6.10 */
 	{
 		.ppse_entries = {
@@ -7010,8 +7038,8 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 									   fci);
 			}
 
-			lt->apps[i_aid]->ops->select(lt->apps[i_aid], resp, le,
-									    sw);
+			rc = lt->apps[i_aid]->ops->select(lt->apps[i_aid], resp,
+									le, sw);
 			lt->selected_aid = i_aid;
 
 			goto done;
@@ -7162,7 +7190,7 @@ done:
 	*rapdu_sz = resp_sz;
 
 	if (rc != EMV_RC_OK) {
-		log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
+		log4c_category_log(lt->log_cat, LOG4C_PRIORITY_NOTICE,
 					  "%s(): failed. rc: %d", __func__, rc);
 	} else {
 		log4c_priority_level_t prio = LOG4C_PRIORITY_TRACE;
@@ -7171,8 +7199,8 @@ done:
 			prio = LOG4C_PRIORITY_NOTICE;
 
 		log4c_category_log(lt->log_cat, prio,
-			"%s(): success, rapdu: '%s' sw: %02hhX%02hhX", __func__,
-			libtlv_bin_to_hex(rapdu, *rapdu_sz, hex), sw[0], sw[1]);
+					 "%s(): success, rapdu: '%s'", __func__,
+				      libtlv_bin_to_hex(rapdu, *rapdu_sz, hex));
 	}
 
 	return rc;
@@ -7254,10 +7282,25 @@ static void lt_def_app_free(struct lt_app *lt_app)
 	free(lt_app);
 }
 
-static void lt_def_app_select(struct lt_app *lt_app, uint8_t *resp,
+static int lt_def_app_select(struct lt_app *lt_app, uint8_t *resp,
 						   size_t *resp_sz, uint8_t *sw)
 {
 	struct lt_def_app *app = (struct lt_def_app *)lt_app;
+	int rc = EMV_RC_OK;
+
+	if (app->lt->setting == ltsetting6_9) {
+		switch (app->lt->state) {
+		case 0:
+			rc = EMV_RC_RF_TIMEOUT;
+			app->lt->state = 1;
+			break;
+		case 1:
+			app->lt->state = 0;
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (app->lt->setting == ltsetting6_17) {
 		switch (app->lt->state) {
@@ -7301,6 +7344,8 @@ static void lt_def_app_select(struct lt_app *lt_app, uint8_t *resp,
 		memcpy(sw, app->fci->sw, 2);
 	else
 		memcpy(sw, EMV_SW_9000_OK, 2);
+
+	return rc;
 }
 
 static const struct lt_app_ops lt_def_app_ops = {

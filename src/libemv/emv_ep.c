@@ -1437,7 +1437,8 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	 * return to Start B (Protocol Activation, section 3.2.1).	      */
 	if (rc != EMV_RC_OK) {
 		ep->state = eps_protocol_activation;
-		return EMV_RC_OK;
+		rc = EMV_RC_OK;
+		goto done;
 	}
 
 
@@ -1494,7 +1495,7 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	ep->state = eps_kernel_activation;
 
 done:
-	return EMV_RC_OK;
+	return rc;
 }
 
 static void get_time_and_date(uint8_t txn_time[3], uint8_t txn_date[3])
@@ -1603,7 +1604,7 @@ done:
 		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
 						     "%s(): success", __func__);
 	else
-		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_WARN,
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
 					  "%s(): failed. rc %d.", __func__, rc);
 	return rc;
 }
