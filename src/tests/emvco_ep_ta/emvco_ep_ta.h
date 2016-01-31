@@ -398,6 +398,12 @@ extern uint32_t transaction_sequence_counter;
 /* PDOL with: ‘Amount Authorized (tag 9F02)				      */
 #define PDOL_9F0206 .pdol = { 0x9F, 0x02, 0x06 }, .pdol_len = 3
 
+/* PDOL with FCI							      */
+#define PDOL_6F81FB .pdol = { 0x6F, 0x81, 0xFB }, .pdol_len = 3
+
+/* PDOL with FCI and Select response Status Word			      */
+#define PDOL_D3026F81FB .pdol = { 0xD3, 0x02, 0x6F, 0x81, 0xFB }, .pdol_len = 5
+
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
 +-----------------------------------------------------------------------------*/
@@ -780,6 +786,8 @@ enum pass_criteria {
 	pc_2ed_021_00_case01 = 316,
 	pc_2ed_021_00_case02 = 317,
 	pc_2ed_022_00	     = 318,
+	pc_2ee_001_00_case01 = 319,
+	pc_2ee_001_00_case02 = 320,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -860,6 +868,8 @@ enum ltsetting {
 	ltsetting1_29,
 	ltsetting1_30,
 	ltsetting1_31,
+	ltsetting1_32,
+	ltsetting1_33,
 	ltsetting1_34,
 	ltsetting1_35,
 	ltsetting1_50,

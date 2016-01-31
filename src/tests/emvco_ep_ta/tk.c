@@ -116,10 +116,17 @@ static struct tlv *tlv_kernel_parms(struct tk *tk,
 							      sizeof(un), &un));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_START_POINT,
 							sizeof(start), &start));
-	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_FCI_TEMPLATE,
-						   parms->fci_len, parms->fci));
 	tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_SELECT_RESPONSE_SW,
 						 sizeof(parms->sw), parms->sw));
+	if (parms->fci_len) {
+		struct tlv *tlv_fci = NULL;
+
+		rc = tlv_parse(parms->fci, parms->fci_len, &tlv_fci);
+		if (rc != TLV_RC_OK)
+			goto done;
+
+		tlv = tlv_insert_after(tlv, tlv_fci);
+	}
 
 	rc = tlv_parse(parms->terminal_data, parms->terminal_data_len,
 								&tlv_term_data);

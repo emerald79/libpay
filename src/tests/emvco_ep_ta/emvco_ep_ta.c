@@ -3368,6 +3368,22 @@ START_TEST(test_2ED_022_00)
 }
 END_TEST
 
+/* 2EE.001.00 FCI and Status Word to kernel				      */
+START_TEST(test_2EE_001_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_32, pc_2ee_001_00_case01,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting1_33, pc_2ee_001_00_case02,
+								      NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3377,7 +3393,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	TCase *tc_kernel_activation = NULL, *tc_outcome_processing = NULL;
 
 	suite = suite_create("EMVCo Type Approval - Book A & Book B - Test "
-							"Cases - Version 2.4a");
+							"Cases - Version 2.5a");
 
 	tc_general_reqs = tcase_create("General Requirements");
 	tcase_add_test(tc_general_reqs, test_2EA_001_00);
@@ -3531,6 +3547,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");
+	tcase_add_test(tc_kernel_activation, test_2EE_001_00);
 	suite_add_tcase(suite, tc_kernel_activation);
 
 	tc_outcome_processing = tcase_create("Outcome Processing");

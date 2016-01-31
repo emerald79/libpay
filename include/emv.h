@@ -61,6 +61,7 @@
 #define EMV_ID_ADF_NAME				"\x4F"
 #define EMV_ID_APPLICATION_LABEL		"\x50"
 #define EMV_ID_LANGUAGE_PREFERENCE		"\x5F\x2D"
+#define EMV_ID_ISSUER_URL			"\x5F\x50"
 #define EMV_ID_DIRECTORY_ENTRY			"\x61"
 #define EMV_ID_FCI_TEMPLATE			"\x6F"
 #define EMV_ID_DF_NAME				"\x84"

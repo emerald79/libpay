@@ -949,7 +949,8 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 		rc = tlv_parse_length(&i_dol, dol_sz_left, &tlv_do);
 		if (rc != TLV_RC_OK) {
 			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
-				  "%s(): tlv_parse_length failed!\n", __func__);
+					"%s(): tlv_parse_length failed! rc: %d",
+								  __func__, rc);
 			goto done;
 		}
 
@@ -1067,6 +1068,7 @@ const void *dol_find_tag(const void *dol, size_t dol_sz, const void *tag)
 int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 			       const void *del, size_t del_sz, struct tlv **out)
 {
+	char hex_dol[2 * dol_sz + 1], hex_del[2 * del_sz + 1];
 	const void *i_dol = NULL, *i_del = NULL;
 	struct tlv *tlv = NULL;
 	int rc = TLV_RC_OK;
@@ -1075,6 +1077,11 @@ int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 		rc = TLV_RC_INVALID_ARG;
 		goto done;
 	}
+
+	log4c_category_log(log_cat, LOG4C_PRIORITY_TRACE,
+				  "%s(dol: '%s', del: '%s') -> start", __func__,
+					libtlv_bin_to_hex(dol, dol_sz, hex_dol),
+				       libtlv_bin_to_hex(del, del_sz, hex_del));
 
 	*out = NULL;
 

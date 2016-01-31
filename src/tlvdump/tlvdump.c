@@ -290,8 +290,8 @@ static int encode_to_text_file(int fd, struct tlv *tlv,
 {
 	do {
 		struct emv_tag_descriptor *desc = NULL;
-		uint8_t buffer[256];
-		char line[256];
+		uint8_t buffer[4096];
+		char line[4096];
 		size_t size;
 		ssize_t rc = 0;
 		int i, j, len = 0;
