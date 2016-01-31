@@ -1240,6 +1240,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		break;
 
 	case pc_2ed_009_10:
+	case pc_2ed_020_00_case02:
 		if (chk->state == 0) {
 			if ((len == 8) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x10\x10\x01",
@@ -3008,6 +3009,18 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 		}
+		break;
+
+	case pc_2ed_020_00_case01:
+		if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								     "\x01", 1))
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ed_020_00_case02:
+		if (chk->state == 1)
+			chk->pass_criteria_checked = true;
 		break;
 
 	default:

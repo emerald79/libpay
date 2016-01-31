@@ -3321,6 +3321,23 @@ START_TEST(test_2ED_019_01)
 }
 END_TEST
 
+/* 2ED.020.00 Visa Kernel 3 replaced by Kernel 1			      */
+START_TEST(test_2ED_020_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_30, pc_2ed_020_00_case01,
+								       &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_31, pc_2ed_020_00_case02,
+								       NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3478,6 +3495,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_018_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_019_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_019_01);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_020_00);
 	suite_add_tcase(suite, tc_aid_and_kernel_selection);
 
 	tc_kernel_activation = tcase_create("Kernel Activation");

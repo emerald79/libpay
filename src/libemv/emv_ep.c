@@ -1282,12 +1282,88 @@ done:
 	return rc;
 }
 
+static int visa_legacy_kernel_processing(struct emv_ep *ep)
+{
+	struct tlv *tlv_fci = NULL, *tlv_pdol = NULL;
+	uint8_t pdol[256];
+	size_t pdol_sz = sizeof(pdol);
+	int tlv_rc = TLV_RC_OK;
+	int rc = EMV_RC_OK;
+
+	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.6");
+	/* If all of the following are true:
+	 *   - the selected AID indicates Visa AID,
+	 *   - and the kernel in the selected Combination is Kernel 3,
+	 *   - and the PDOL in the FCI is absent or the PDOL in the FCI does not
+	 *     include Tag '9F66',
+	 * then:
+	 *   - If Kernel 1 is supported, then Entry Point shall change the
+	 *     Kernel ID for this AID from the initial Kernel 3 to Kernel 1.
+	 *   - If Kernel 1 is not supported, then Entry Point shall remove the
+	 *     selected Combination from the Candidate List and shall return to
+	 *     Start C (Step 3 of Combination Selection (requirement 3.3.2.6))*/
+
+	if (memcmp(ep->parms.aid, "\xA0\x00\x00\x00\x03", 5) ||
+	    (ep->parms.kernel_id_len != 1) || (ep->parms.kernel_id[0] != 0x03))
+		goto done;
+
+	tlv_rc = tlv_parse(ep->parms.fci, ep->parms.fci_len, &tlv_fci);
+	if (tlv_rc != TLV_RC_OK) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
+			 "%s(): Failed to parse FCI. rc: %d", __func__, tlv_rc);
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	tlv_pdol = tlv_find(tlv_get_child(tlv_find(tlv_get_child(tlv_find(
+						 tlv_fci, EMV_ID_FCI_TEMPLATE)),
+				EMV_ID_FCI_PROPRIETARY_TEMPLATE)), EMV_ID_PDOL);
+	if (!tlv_pdol) {
+		ep->parms.kernel_id[0] = 0x01;
+		goto done;
+	}
+
+	tlv_rc = tlv_encode_value(tlv_pdol, pdol, &pdol_sz);
+	if (tlv_rc != TLV_RC_OK) {
+		log4c_category_log(ep->log_cat, LOG4C_PRIORITY_NOTICE,
+				       "%s(): Failed to get PDOL value. rc: %d",
+							      __func__, tlv_rc);
+		rc = EMV_RC_CARD_PROTOCOL_ERROR;
+		goto done;
+	}
+
+	if (!dol_find_tag(pdol, pdol_sz,
+				      EMV_ID_TERMINAL_TRANSACTION_QUALIFIERS)) {
+		ep->parms.kernel_id[0] = 0x01;
+		goto done;
+	}
+
+done:
+	if (tlv_fci)
+		tlv_free(tlv_fci);
+	return rc;
+}
+
+static int emv_ep_remove_candidate_and_return_to_start_c(struct emv_ep *ep)
+{
+	if (!ep->candidate_list.size)
+		goto done;
+
+	ep->candidate_list.size--;
+	if (!ep->candidate_list.size) {
+		free(ep->candidate_list.candidates);
+		ep->candidate_list.candidates = NULL;
+	}
+
+	ep->state = eps_combination_selection_step3;
+done:
+	return EMV_RC_OK;
+}
+
 int emv_ep_final_combination_selection(struct emv_ep *ep)
 {
 	struct emv_ep_candidate *candidate = NULL;
 	struct emv_ep_config *config = NULL;
-	uint8_t adf[32];
-	size_t adf_len = 0;
 	int rc = EMV_RC_OK;
 
 
@@ -1314,9 +1390,12 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
 	config = &candidate->combination->config;
 
-	adf_len = candidate->adf_name_len;
-	memcpy(adf, candidate->adf_name, adf_len);
-
+	ep->parms.aid_len = candidate->adf_name_len;
+	memcpy(ep->parms.aid, candidate->adf_name, ep->parms.aid_len);
+	ep->parms.preproc_indicators = &candidate->combination->indicators;
+	ep->parms.kernel_id_len = candidate->combination->kernel_id_len;
+	memcpy(ep->parms.kernel_id, candidate->combination->kernel_id,
+						       ep->parms.kernel_id_len);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.3");
 	/* If all of the following are true:
@@ -1330,9 +1409,10 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	if (candidate->extended_selection_len &&
 					config->present.ext_selection_support &&
 					config->enabled.ext_selection_support) {
-		memcpy(&adf[adf_len], candidate->extended_selection,
+		memcpy(&ep->parms.aid[ep->parms.aid_len],
+						  candidate->extended_selection,
 					     candidate->extended_selection_len);
-		adf_len += candidate->extended_selection_len;
+		ep->parms.aid_len += candidate->extended_selection_len;
 	}
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE,
@@ -1346,8 +1426,8 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 	ep->parms.fci_len = sizeof(ep->parms.fci);
 	rc = emv_transceive_apdu(ep->hal, EMV_CMD_SELECT_CLA,
 				  EMV_CMD_SELECT_INS, EMV_CMD_SELECT_P1_BY_NAME,
-			   EMV_CMD_SELECT_P2_FIRST, adf, adf_len, ep->parms.fci,
-					      &ep->parms.fci_len, ep->parms.sw);
+		      EMV_CMD_SELECT_P2_FIRST, ep->parms.aid, ep->parms.aid_len,
+			       ep->parms.fci, &ep->parms.fci_len, ep->parms.sw);
 
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.7");
@@ -1399,32 +1479,21 @@ int emv_ep_final_combination_selection(struct emv_ep *ep)
 			ui_req->status = sts_ready_to_read;
 			ep->state = eps_outcome_processing;
 		} else {
-			ep->candidate_list.size--;
-			if (!ep->candidate_list.size) {
-				free(ep->candidate_list.candidates);
-				ep->candidate_list.candidates = NULL;
-			}
-			ep->state = eps_combination_selection_step3;
+			rc = emv_ep_remove_candidate_and_return_to_start_c(ep);
 		}
-		return EMV_RC_OK;
+
+		goto done;
 	}
 
-
-	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.3.3.6");
-	/* If all of the following are true:
-	 *   - the selected AID indicates Visa AID,
-	 *   - and the kernel in the selected Combination is Kernel 3,
-	 *   - and the PDOL in the FCI is absent or the PDOL in the FCI does not
-	 *     include Tag '9F66',
-	 * then:
-	 *   - If Kernel 1 is supported, then Entry Point shall change the
-	 *     Kernel ID for this AID from the initial Kernel 3 to Kernel 1.
-	 *   - If Kernel 1 is not supported, then Entry Point shall remove the
-	 *     selected Combination from the Candidate List and shall return to
-	 *     Start C (Step 3 of Combination Selection (requirement 3.3.2.6))*/
-	/* FIXME */
+	rc = visa_legacy_kernel_processing(ep);
+	if (rc != EMV_RC_OK) {
+		rc = emv_ep_remove_candidate_and_return_to_start_c(ep);
+		goto done;
+	}
 
 	ep->state = eps_kernel_activation;
+
+done:
 	return EMV_RC_OK;
 }
 
@@ -1450,20 +1519,11 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	uint8_t term_data[2048], app_ver_num[2], txn_seq_ctr[4];
 	uint8_t txn_date[3], txn_time[3];
 	struct emv_kernel *kernel = NULL;
-	struct emv_ep_candidate *candidate = NULL;
 	struct tlv *terminal_data = NULL;
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(ep->log_cat, LOG4C_PRIORITY_TRACE, "%s(): start",
 								      __func__);
-
-	candidate = &ep->candidate_list.candidates[ep->candidate_list.size - 1];
-	ep->parms.kernel_id_len = candidate->combination->kernel_id_len;
-	memcpy(ep->parms.kernel_id, candidate->combination->kernel_id,
-						       ep->parms.kernel_id_len);
-	ep->parms.preproc_indicators = &candidate->combination->indicators;
-	ep->parms.unpredictable_number =
-				ep->hal->ops->get_unpredictable_number(ep->hal);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.1");
 	/* Entry Point shall activate the kernel identified in the selected
@@ -1471,7 +1531,7 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 	kernel = get_kernel(ep, ep->parms.kernel_id, ep->parms.kernel_id_len,
 								   app_ver_num);
 	if (!kernel) {
-		rc = EMV_RC_NO_KERNEL;
+		rc = emv_ep_remove_candidate_and_return_to_start_c(ep);
 		goto done;
 	}
 
@@ -1511,8 +1571,7 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 					     sizeof(app_ver_num), app_ver_num));
 	tlv_insert_after(terminal_data,
 				 tlv_new(EMV_ID_APPLICATION_IDENTIFIER_TERMINAL,
-						candidate->combination->aid_len,
-						  candidate->combination->aid));
+					     ep->parms.aid_len, ep->parms.aid));
 
 	ep->parms.terminal_data_len = sizeof(term_data);
 	ep->parms.terminal_data = term_data;
@@ -1522,6 +1581,9 @@ int emv_ep_kernel_activation(struct emv_ep *ep)
 		goto done;
 
 	tlv_free(terminal_data);
+
+	ep->parms.unpredictable_number =
+				ep->hal->ops->get_unpredictable_number(ep->hal);
 
 	REQUIREMENT(EMV_CTLS_BOOK_B_V2_5, "3.4.1.2");
 	/* Entry Point shall make the Entry Point Pre-Processing Indicators (as

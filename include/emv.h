@@ -296,6 +296,8 @@ struct emv_kernel_parms {
 	enum emv_start				start;
 	const struct emv_txn		       *txn;
 	uint32_t				unpredictable_number;
+	uint8_t					aid[16];
+	size_t					aid_len;
 	uint8_t					kernel_id[8];
 	size_t					kernel_id_len;
 	uint8_t					fci[256];

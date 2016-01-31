@@ -282,6 +282,9 @@ void libtlv_get_dol_field(const void *tag, const void *in, size_t in_sz,
 
 size_t libtlv_get_tag_length(const void *tag);
 
+const void *dol_tok(const void **dol, size_t *dol_sz);
+const void *dol_find_tag(const void *dol, size_t dol_sz, const void *tag);
+
 /**
  * Convert a BCD encoded value into a 64 bit wide unsigned integer.
  */

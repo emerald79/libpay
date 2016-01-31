@@ -4336,6 +4336,84 @@ static const struct lt_setting ltsetting[] = {
 			}
 		}
 	},
+	/* LTsetting2.30 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				KERNEL_ID_3,
+				API_01,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				KERNEL_ID_TK4,
+				API_02,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A0000000031010,
+				APP_LABEL_VISA,
+				API_01,
+				PDOL_9F2A08
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				API_02,
+				PDOL_9F2A08
+			}
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
+	/* LTsetting2.31 */
+	{
+		.ppse_entries = {
+			{
+				AID_A000000003101001,
+				APP_LABEL_VISA,
+				KERNEL_ID_3,
+				API_01,
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				KERNEL_ID_TK4,
+				API_02,
+			}
+		},
+		.ppse_entries_num = 2,
+		.aid_fci = {
+			{
+				AID_A000000003101001,
+				APP_LABEL_VISA,
+				API_01
+			},
+			{
+				AID_A0000000251010,
+				APP_LABEL_AMEX,
+				API_02,
+			}
+		},
+		.aid_fci_num = 2,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.outcome = out_approved
+				}
+			}
+		}
+	},
 	/* LTsetting2.40 */
 	{
 		.ppse_entries = {
@@ -6970,9 +7048,6 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 		goto done;
 	}
 
-	if (!lc)
-		goto done;
-
 	if (lt->checker && lt->checker->ops->gpo_data) {
 		struct tlv *tlv = NULL;
 		uint8_t ber_tlv[2048];
@@ -7036,7 +7111,7 @@ int lt_transceive(struct emv_hal *hal, const void *capdu, size_t capdu_sz,
 	uint8_t *requ = (uint8_t *)capdu;
 	uint8_t resp[256];
 	uint8_t sw[2];
-	char hex[capdu_sz * 2 + 1];
+	char hex[256 * 2 + 1];
 	size_t resp_sz = sizeof(resp);
 	int i = 0;
 	int rc = EMV_RC_OK;
@@ -7096,8 +7171,8 @@ done:
 			prio = LOG4C_PRIORITY_NOTICE;
 
 		log4c_category_log(lt->log_cat, prio,
-				    "%s(): success, sw: %02hhX%02hhX", __func__,
-								  sw[0], sw[1]);
+			"%s(): success, rapdu: '%s' sw: %02hhX%02hhX", __func__,
+			libtlv_bin_to_hex(rapdu, *rapdu_sz, hex), sw[0], sw[1]);
 	}
 
 	return rc;

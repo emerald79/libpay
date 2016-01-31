@@ -394,11 +394,8 @@ static size_t tlv_get_encoded_length(const struct tlv *tlv)
 {
 	size_t size;
 
-	if (!tlv) {
-		log4c_category_log(log_cat, LOG4C_PRIORITY_ERROR,
-				"%s(tlv: %p): Invalid argument", __func__, tlv);
-		return -1;
-	}
+	if (!tlv)
+		return 0;
 
 	size = tlv_get_encoded_identifier_size(tlv);
 	size += tlv_get_encoded_length_size(tlv);
@@ -538,6 +535,9 @@ static void tlv_encode_recursive(const struct tlv *tlv, void **buffer)
 {
 	size_t tag_len = 0;
 
+	if (!tlv)
+		return;
+
 	tag_len = libtlv_copy_tag(*buffer, sizeof(tlv->tag), tlv->tag);
 	*buffer += tag_len;
 
@@ -558,7 +558,7 @@ int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size)
 {
 	size_t encoded_size = 0;
 
-	if (!tlv || !size)
+	if (!size)
 		return TLV_RC_INVALID_ARG;
 
 	encoded_size = tlv_get_encoded_length(tlv);
@@ -1008,6 +1008,62 @@ done:
 	return rc;
 }
 
+const void *dol_tok(const void **dol, size_t *dol_sz)
+{
+	const void *tok = *dol;
+	struct tlv tlv_do;
+	int rc = TLV_RC_OK;
+
+	if (*dol == NULL || *dol_sz == 0) {
+		tok = NULL;
+		goto done;
+	}
+
+	log4c_category_log(log_cat, LOG4C_PRIORITY_TRACE,
+		      "%s(dol: %p, *dol: %p, dol_sz: %p, *dol_sz: %d) -> start",
+				     __func__, dol, *dol, dol_sz, (int)*dol_sz);
+
+	rc = tlv_parse_identifier(dol, *dol_sz, &tlv_do);
+	if (rc != TLV_RC_OK) {
+		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+				   "%s(): tlv_parse_identifier failed! rc %d\n",
+								  __func__, rc);
+		tok = NULL;
+		*dol_sz = 0;
+		goto done;
+	}
+
+	rc = tlv_parse_length(dol, *dol_sz - (*dol - tok), &tlv_do);
+	if (rc != TLV_RC_OK) {
+		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
+			"%s(): tlv_parse_length failed! rc %d\n", __func__, rc);
+		tok = NULL;
+		*dol_sz = 0;
+		goto done;
+	}
+
+	*dol_sz -= (*dol - tok);
+
+done:
+	log4c_category_log(log_cat, LOG4C_PRIORITY_TRACE,
+		       "%s(dol: %p, *dol: %p, dol_sz: %p, *dol_sz: %d) <- done",
+				     __func__, dol, *dol, dol_sz, (int)*dol_sz);
+	return tok;
+}
+
+const void *dol_find_tag(const void *dol, size_t dol_sz, const void *tag)
+{
+	size_t tag_length = libtlv_get_tag_length(tag);
+	const void *tok;
+
+	for (tok = dol_tok(&dol, &dol_sz); tok; tok = dol_tok(&dol, &dol_sz))
+		if ((libtlv_get_tag_length(tok) == tag_length) &&
+		    (!memcmp(tag, tok, tag_length)))
+			break;
+
+	return tok;
+}
+
 int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 			       const void *del, size_t del_sz, struct tlv **out)
 {
@@ -1069,11 +1125,6 @@ int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 
 		if (!*out)
 			*out = tlv;
-	}
-
-	if (!tlv) {
-		rc = TLV_RC_OUT_OF_MEMORY;
-		goto done;
 	}
 
 	if ((i_del - del != del_sz) || (i_dol - dol != dol_sz)) {
