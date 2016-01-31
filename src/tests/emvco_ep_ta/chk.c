@@ -1362,6 +1362,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2ed_012_10_case01:
 	case pc_2ed_013_00_case04:
 	case pc_2ed_015_00_case01:
+	case pc_2ee_002_00_case01:
 		if (chk->state == 0) {
 			if ((len == 7) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x01\x00\x01", 7)))
@@ -1374,6 +1375,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2ed_013_00_case08:
 	case pc_2ed_014_00_case01:
 	case pc_2ed_014_00_case02:
+	case pc_2ee_002_00_case04:
 		if (chk->state == 0) {
 			if ((len == 7) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x02\x00\x02", 7)))
@@ -1388,6 +1390,8 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	case pc_2ed_013_00_case02:
 	case pc_2ed_013_00_case10:
 	case pc_2ed_015_00_case02:
+	case pc_2ee_002_00_case03:
+	case pc_2ee_002_00_case05:
 		if (chk->state == 0) {
 			if ((len == 7) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x03\x00\x03", 7)))
@@ -1397,6 +1401,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 
 	case pc_2ed_012_10_case04:
 	case pc_2ed_013_00_case05:
+	case pc_2ee_002_00_case02:
 		if (chk->state == 0) {
 			if ((len == 7) &&
 			    (!memcmp(data, "\xA0\x00\x00\x00\x04\x00\x04", 7)))
@@ -3154,6 +3159,64 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 
 			chk->pass_criteria_met = false;
 		chk->pass_criteria_checked = true;
+		break;
+
+	case pc_2ee_002_00_case01:
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								   "\x23", 1) ||
+			    !check_value_under_mask(chk, data,
+				  EMV_ID_TEST_FLAGS, "\x10\x00", "\x10\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ee_002_00_case02:
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								   "\x24", 1) ||
+			    !check_value_under_mask(chk, data,
+				  EMV_ID_TEST_FLAGS, "\xA0\x00", "\xFF\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ee_002_00_case03:
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								   "\x21", 1) ||
+			    !check_value_under_mask(chk, data,
+				  EMV_ID_TEST_FLAGS, "\x00\x00", "\xFF\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->state = 2;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ee_002_00_case04:
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								   "\x24", 1) ||
+			    !check_value_under_mask(chk, data,
+				  EMV_ID_TEST_FLAGS, "\x80\x00", "\xFF\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->state = 2;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
+	case pc_2ee_002_00_case05:
+		if (chk->state == 1) {
+			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
+								   "\x25", 1) ||
+			    !check_value_under_mask(chk, data,
+				  EMV_ID_TEST_FLAGS, "\x00\x00", "\xFF\x00", 2))
+				chk->pass_criteria_met = false;
+			chk->state = 2;
+			chk->pass_criteria_checked = true;
+		}
 		break;
 
 	default:

@@ -3384,6 +3384,38 @@ START_TEST(test_2EE_001_00)
 }
 END_TEST
 
+/* 2EE.002.00 Kernel Activation of the Selected Combination		      */
+START_TEST(test_2EE_002_00)
+{
+	struct emv_txn txn = { .type = txn_purchase };
+	int rc;
+
+	txn.amount_authorized = 1;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_1, pc_2ee_002_00_case01,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 51;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_4, pc_2ee_002_00_case02,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	rc = emvco_ep_ta_tc(termsetting3, ltsetting2_10, pc_2ee_002_00_case03,
+								      NULL, 0);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 121;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting2_10, pc_2ee_002_00_case04,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+
+	txn.amount_authorized = 2;
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_97, pc_2ee_002_00_case05,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3548,6 +3580,7 @@ Suite *emvco_ep_ta_test_suite(void)
 
 	tc_kernel_activation = tcase_create("Kernel Activation");
 	tcase_add_test(tc_kernel_activation, test_2EE_001_00);
+	tcase_add_test(tc_kernel_activation, test_2EE_002_00);
 	suite_add_tcase(suite, tc_kernel_activation);
 
 	tc_outcome_processing = tcase_create("Outcome Processing");
