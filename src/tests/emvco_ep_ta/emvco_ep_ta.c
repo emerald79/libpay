@@ -324,6 +324,10 @@ static int emvco_ep_ta_tc_perform_transaction(
 		}
 	}
 
+	rc = emv_ep_field_off(fixture->ep);
+	if (rc != EMV_RC_OK)
+		goto done;
+
 	chk->ops->ep_txn_end(chk);
 
 done:
@@ -3458,6 +3462,18 @@ START_TEST(test_2EF_001_00)
 }
 END_TEST
 
+/* 2EF.001.01 Outcome with UI Request and Field Off (2)			      */
+START_TEST(test_2EF_001_01)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting2, ltsetting1_45, pc_2ef_001_01,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3627,6 +3643,7 @@ Suite *emvco_ep_ta_test_suite(void)
 
 	tc_outcome_processing = tcase_create("Outcome Processing");
 	tcase_add_test(tc_outcome_processing, test_2EF_001_00);
+	tcase_add_test(tc_outcome_processing, test_2EF_001_01);
 	suite_add_tcase(suite, tc_outcome_processing);
 
 	return suite;

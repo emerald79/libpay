@@ -3715,6 +3715,13 @@ static void checker_ep_txn_end(struct chk *checker)
 		chk->pass_criteria_checked = true;
 		break;
 
+	case pc_2ef_001_01:
+		if (chk->ui_request.msg_id != msg_approved ||
+		    chk->field_is_on)
+			chk->pass_criteria_met = false;
+		chk->pass_criteria_checked = true;
+		break;
+
 	default:
 		break;
 	}

@@ -1706,6 +1706,46 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
+	/* LTsetting1.45 */
+	{
+		.ppse_entries = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_01,
+				KERNEL_ID_22,
+			}
+		},
+		.ppse_entries_num = 1,
+		.aid_fci = {
+			{
+				AID_A0000000020002,
+				APP_LABEL_APP2,
+				API_01,
+			}
+		},
+		.aid_fci_num = 1,
+		.gpo_resp = {
+			{
+				.outcome_parms = {
+					.present = {
+						.ui_request_on_outcome = true,
+					},
+					.outcome = out_approved,
+					.ui_request_on_outcome = {
+						.msg_id = msg_approved,
+						.status =
+						     sts_card_read_successfully,
+						.value_qualifier = val_balance,
+						.value =
+						     "\x00\x00\x00\x00\x01\x23",
+						.currency_code = ISO4217_GBP
+					}
+				}
+			}
+		},
+		.gpo_resp_num = 1
+	},
 	/* LTsetting1.47 */
 	{
 		.ppse_entries = {
