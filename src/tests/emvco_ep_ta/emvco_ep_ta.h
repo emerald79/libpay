@@ -404,6 +404,9 @@ extern uint32_t transaction_sequence_counter;
 /* PDOL with FCI and Select response Status Word			      */
 #define PDOL_D3026F81FB .pdol = { 0xD3, 0x02, 0x6F, 0x81, 0xFB }, .pdol_len = 5
 
+/* PDOL with Unpredictable Number, TTQ					      */
+#define PDOL_9F37049F6604 .pdol = "\x9F\x37\x04\x9F\x66\x04", .pdol_len = 6
+
 /*-----------------------------------------------------------------------------+
 | TTQs									       |
 +-----------------------------------------------------------------------------*/
@@ -803,6 +806,7 @@ enum pass_criteria {
 	pc_2ef_001_00_case09 = 332,
 	pc_2ef_001_00_case10 = 333,
 	pc_2ef_001_01	     = 334,
+	pc_2ef_002_00	     = 335,
 };
 
 struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
@@ -890,6 +894,7 @@ enum ltsetting {
 	ltsetting1_40,
 	ltsetting1_41,
 	ltsetting1_42,
+	ltsetting1_43,
 	ltsetting1_45,
 	ltsetting1_47,
 	ltsetting1_49,

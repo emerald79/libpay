@@ -1712,6 +1712,13 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 		}
 		break;
 
+	case pc_2ef_002_00:
+		if (chk->state == 1) {
+			chk->state = 2;
+			chk->pass_criteria_checked = true;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -3662,6 +3669,15 @@ static void checker_outcome(struct chk *checker,
 		break;
 
 	case pc_2ef_001_00_case10:
+		if (chk->state == 0) {
+			chk->state = 1;
+			if (chk->ui_request.msg_id != msg_present_card_again ||
+			    !chk->field_is_on)
+				chk->pass_criteria_met = false;
+		}
+		break;
+
+	case pc_2ef_002_00:
 		if (chk->state == 0) {
 			chk->state = 1;
 			if (chk->ui_request.msg_id != msg_present_card_again ||

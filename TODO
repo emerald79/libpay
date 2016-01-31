@@ -1,6 +1,9 @@
 TODOs:
 - Compile out logging at level trace and below when not building in debug mode.
-- Tag information (format, template, size, etc.) for all EMV and proprietary tags.
+- Tag information (format, template, size, etc.) for all EMV and proprietary
+  tags.
 - Memory Leaks (Reference counting in TLV node objects?)
 - Supported Currency Codes
 - Generic LT state machine in checker (or move LT state into LT ??)
+- LTsetting 1.32 does have a PDOL of 6FFB, should be 6F81FB. Is this a bug in
+  the test spec or is special handling for ICC TLV length fields required?

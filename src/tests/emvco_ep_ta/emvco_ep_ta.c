@@ -3474,6 +3474,18 @@ START_TEST(test_2EF_001_01)
 }
 END_TEST
 
+/* 2EF.002.00 Outcome Try Again						      */
+START_TEST(test_2EF_002_00)
+{
+	struct emv_txn txn = { .type = txn_purchase, .amount_authorized = 2 };
+	int rc;
+
+	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_43, pc_2ef_002_00,
+								      &txn, 1);
+	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
 Suite *emvco_ep_ta_test_suite(void)
 {
 	Suite *suite = NULL;
@@ -3644,6 +3656,7 @@ Suite *emvco_ep_ta_test_suite(void)
 	tc_outcome_processing = tcase_create("Outcome Processing");
 	tcase_add_test(tc_outcome_processing, test_2EF_001_00);
 	tcase_add_test(tc_outcome_processing, test_2EF_001_01);
+	tcase_add_test(tc_outcome_processing, test_2EF_002_00);
 	suite_add_tcase(suite, tc_outcome_processing);
 
 	return suite;
