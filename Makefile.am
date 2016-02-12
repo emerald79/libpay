@@ -3,6 +3,9 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = src include
 
+@DX_RULES@
+
+
 if ENABLE_GCOV
 
 gcov-reset:
@@ -21,8 +24,14 @@ gcov:
 clean-local:
 	@make gcov-reset
 	@find . -name "*.gcno" -exec rm {} \;
+	@rm -rf doc
 
 check:
 	@make gcov
+
+else
+
+clean-local:
+	@rm -rf doc
 
 endif
