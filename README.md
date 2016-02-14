@@ -1,18 +1,16 @@
 # LibEMV - The Toolkit for Smart Payment Applications
 
-[TOC]
-
 ## LibEMV Configuration
 
-### Data Dictionary for a LibEMV Configuration File
+### LibEMV Configuration -- Data Dictionary
 
-Name                 | Description                                           | Source   | Format | Template   | Tag        | Length
+Name                 | Description                                           | Source   | Format | Template   | Tag        | Length 
 -------------------- | ----------------------------------------------------- | -------- | ------ | ---------- | ---------- | ------
 Configuration        | Configuration of Entry Point and Level 2 Kernels      | Terminal | var.   | --         | 'FF81E371' | var.
-Set of Combinations  | Set of Combinations of AID and Kernel                 | Terminal | var.   | 'FF81E371' | 'FF82E371' | var.
-Transaction Types    | Transaction Types applying to the Set of Combinations | Terminal | b      | 'FF82E371' | 'DF84E371' | 1 - 4
+Set of Combinations  | Set of Combinations of AID and Kernel ID              | Terminal | var.   | 'FF81E371' | 'FF82E371' | var.
+Transaction Types    | Transaction Types the Set of Combinations apply to    | Terminal | b      | 'FF82E371' | 'DF84E371' | 1 - 4
 
-### Structure of a LibEMV Configuration File
+### LibEMV Configuration -- Structure
 
 Tag        | Name          | --                  | --                | Mandatory or Optional
 ---------- | ------------- | ------------------- | ----------------- | ---------------------
