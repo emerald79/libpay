@@ -5,6 +5,8 @@ SUBDIRS = src include
 
 @DX_RULES@
 
+README: README.md
+	markdown $< | html2text -style pretty -nobs | sed -e 's:&gt;:>:g' > $@
 
 if ENABLE_GCOV
 
@@ -24,7 +26,7 @@ gcov:
 clean-local:
 	@make gcov-reset
 	@find . -name "*.gcno" -exec rm {} \;
-	@rm -rf doc
+	@rm -rf doxygen-doc
 
 check:
 	@make gcov
@@ -32,6 +34,6 @@ check:
 else
 
 clean-local:
-	@rm -rf doc
+	@rm -rf doxygen-doc
 
 endif
