@@ -1,12 +1,12 @@
-# LibEMV - The Toolkit for Smart Payment Applications
+# LibPAY - The Toolkit for Smart Payment Applications
 
-## LibEMV Configuration
+## LibPAY Configuration
 
-### LibEMV Configuration -- Data Dictionary
+### LibPAY Configuration -- Data Dictionary
 
 Name                                  | Description                                           | Format   | Template               | Tag        | Length
 ------------------------------------- | ----------------------------------------------------- | -------- | ---------------------- | ---------- | ------
-LibEMV Configuration                  | Configuration of Entry Point and Level 2 Kernels      | complex  | --                     | 'FF81E371' | var.
+LibPAY Configuration                  | Configuration of Entry Point and Level 2 Kernels      | complex  | --                     | 'FF81E371' | var.
 Set of Combinations                   | Set of Combinations of AID and Kernel ID              | complex  | 'FF81E371'             | 'FF82E371' | var.
 Transaction Types                     | Transaction Types the Set of Combinations apply to    | complex  | 'FF82E371'             | 'FF83E371' | var.
 Transaction Type                      | Type of Transaction (ISO 8583:1987)                   | n 2      | 'FF83E371', 'FF8FE371' | '9C'       | 1
@@ -33,11 +33,11 @@ Point-Of-Service (POS) Entry Mode     | First two digits of ISO 8353:1987 POS En
 Additional Terminal Capabilities      | Data Input and Output Capabilities of the Terminal    | b        | 'FF92E371'             | '9F40'     | 5
 Merchant Name and Location            | Indicates the Name and Location of the Merchant       | ans      | 'FF92E371'             | '9F4E'     | var.
 
-### LibEMV Configuration -- Structure
+### LibPAY Configuration -- Structure
 
 Tag        | Name                 | --                  | --                                   | --               | Mandatory or Optional
 ---------- | -------------------- | ------------------- | ------------------------------------ | ---------------- | ---------------------
-'FF81E371' | LibEMV Configuration | --                  | --                                   | --               | M
+'FF81E371' | LibPAY Configuration | --                  | --                                   | --               | M
 --         | 'FF82E371'           | Set of Combinations | --                                   | --               | M
 --         | --                   | 'FF83E371'          | Transaction Types                    | --               | M
 --         | --                   |                     | '9C'                                 | Transaction Type | M

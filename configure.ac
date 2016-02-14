@@ -1,10 +1,10 @@
-AC_INIT(libemv, 0.1)
+AC_INIT(libpay, 0.1)
 AC_CANONICAL_TARGET
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 LT_INIT
 DX_PS_FEATURE(OFF)
-DX_INIT_DOXYGEN(LibEMV, doc/Doxyfile, doc/manual)
+DX_INIT_DOXYGEN(LibPAY, doc/Doxyfile, doc/manual)
 
 AC_PROG_CC
 
