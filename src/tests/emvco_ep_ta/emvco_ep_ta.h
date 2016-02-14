@@ -1,6 +1,7 @@
 /*
- * libemv - Support Library for EMV TLV handling.
- * Copyright (C) 2015 Michael Jung <mijung@gmx.net>, All rights reserved.
+ * LibPAY - The Toolkit for Smart Payment Applications
+ *
+ * Copyright (C) 2015, 2016  Michael Jung <mijung@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,10 +17,11 @@
  * License along with this library.
  */
 
-#ifndef __EMVCO_EP_TA_H__
-#define __EMVCO_EP_TA_H__
+#ifndef __LIBPAY__EMVCO_EP_TA_H__
+#define __LIBPAY__EMVCO_EP_TA_H__
 
-#include <emv.h>
+#include <libpay/tlv.h>
+#include <libpay/emv.h>
 
 /*-----------------------------------------------------------------------------+
 | Global Data								       |
@@ -1133,4 +1135,4 @@ void ui_req_to_gpo_ui_req(const struct emv_ui_request *ui_req,
 					    struct ui_req_gpo_resp *gpo_ui_req);
 
 
-#endif						    /* ndef __EMVCO_EP_TA_H__ */
+#endif					    /* ndef __LIBPAY__EMVCO_EP_TA_H__ */

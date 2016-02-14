@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2015 Michael Jung <mijung@gmx.net>, All rights reserved.
+ * LibPAY - The Toolkit for Smart Payment Applications
+ *
+ * Copyright (C) 2015, 2016  Michael Jung <mijung@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,8 +17,8 @@
  * License along with this library.
  */
 
-#ifndef __LIBEMV_CORE_H__
-#define __LIBEMV_CORE_H__
+#ifndef __LIBPAY_CORE_H__
+#define __LIBPAY_CORE_H__
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
@@ -25,4 +27,4 @@
 #define TLV_TAG_P_C_MASK    0x20u
 #define TLV_TAG_NUMBER_MASK 0x1Fu
 
-#endif						    /* ndef __LIBEMV_CORE_H__ */
+#endif						    /* ndef __LIBPAY_CORE_H__ */

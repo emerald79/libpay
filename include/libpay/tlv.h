@@ -1,6 +1,7 @@
 /*
- * libtlv - Support Library for EMV TLV handling.
- * Copyright (C) 2015 Michael Jung <mijung@gmx.net>, All rights reserved.
+ * LibPAY - The Toolkit for Smart Payment Applications
+ *
+ * Copyright (C) 2015, 2016  Michael Jung <mijung@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,8 +22,8 @@
  * TLV Parser Library
  */
 
-#ifndef __TLV_H__
-#define __TLV_H__
+#ifndef __LIBPAY__TLV_H__
+#define __LIBPAY__TLV_H__
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -330,4 +331,4 @@ enum tlv_fmt libtlv_id_to_fmt(const void *id);
 
 void libtlv_init(const char *log4c_category);
 
-#endif /* ndef __TLV_H__ */
+#endif						    /* ndef __LIBPAY__TLV_H__ */

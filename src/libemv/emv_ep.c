@@ -1,6 +1,7 @@
 /*
- * libemv - Support Library containing EMVCo L2 Kernels.
- * Copyright (C) 2015 Michael Jung <mijung@gmx.net>, All rights reserved.
+ * LibPAY - The Toolkit for Smart Payment Applications
+ *
+ * Copyright (C) 2015, 2016  Michael Jung <mijung@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,8 +24,8 @@
 #include <time.h>
 #include <log4c.h>
 
-#include <emv.h>
-#include <tlv.h>
+#include <libpay/emv.h>
+#include <libpay/tlv.h>
 
 #define REQUIREMENT(book, id)
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(*(x)))

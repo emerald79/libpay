@@ -1,3 +1,3 @@
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
-noinst_HEADERS = libemv_core.h
+noinst_HEADERS = libpay_core.h

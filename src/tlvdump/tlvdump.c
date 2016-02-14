@@ -1,6 +1,7 @@
 /*
- * libtlv - Support Library for EMV TLV handling.
- * Copyright (C) 2015 Michael Jung <mijung@gmx.net>, All rights reserved.
+ * LibPAY - The Toolkit for Smart Payment Applications
+ *
+ * Copyright (C) 2015, 2016  Michael Jung <mijung@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,8 +29,8 @@
 #include <json-c/json.h>
 #include <log4c.h>
 
-#include <tlv.h>
-#include <emv.h>
+#include <libpay/tlv.h>
+#include <libpay/emv.h>
 
 const char *argp_program_version = "tlvdump 0.1";
 const char *argp_program_bug_address = "mijung@gmx.net";

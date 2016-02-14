@@ -1,6 +1,7 @@
 /*
- * libemv - Support Library containing EMVCo L2 Kernels
- * Copyright (C) 2015 Michael Jung <mijung@gmx.net>, All rights reserved.
+ * LibPAY - The Toolkit for Smart Payment Applications
+ *
+ * Copyright (C) 2015, 2016  Michael Jung <mijung@gmx.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,13 +17,14 @@
  * License along with this library.
  */
 
-#ifndef __EMV_H__
-#define __EMV_H__
+#ifndef __LIBPAY__EMV_H__
+#define __LIBPAY__EMV_H__
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <tlv.h>
+
+#include <libpay/tlv.h>
 
 #define EMV_RC_OK				0
 #define EMV_RC_FAIL				1
@@ -405,4 +407,4 @@ int emv_tag_parse_descriptors(const char *json_string,
 
 const struct tlv_id_to_fmt *libemv_get_id_fmts(void);
 
-#endif							    /* ndef __EMV_H__ */
+#endif						    /* ndef __LIBPAY__EMV_H__ */
