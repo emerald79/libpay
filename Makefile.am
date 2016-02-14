@@ -3,6 +3,8 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = src doc include
 
+dist_data_DATA = README.md
+
 README: README.md
 	pandoc --from markdown_github --to html --standalone $< | html2text -style pretty -nobs | sed -e 's:&gt;:>:g' > $@
 
