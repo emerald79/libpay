@@ -51,14 +51,14 @@ PROJECT_BRIEF          =
 # and the maximum width should not exceed 200 pixels. Doxygen will copy the logo
 # to the output directory.
 
-PROJECT_LOGO           = logo.png
+PROJECT_LOGO           = doc/logo.png
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = doxygen-doc
+OUTPUT_DIRECTORY       = doc/manual
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -1608,7 +1608,7 @@ EXTRA_PACKAGES         =
 # PROJECT_NAME), or the project number (see PROJECT_NUMBER).
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_HEADER           =
+LATEX_HEADER           = doc/manual-header.tex
 
 # The LATEX_FOOTER tag can be used to specify a personal LaTeX footer for the
 # generated LaTeX document. The footer should contain everything after the last
@@ -1617,7 +1617,7 @@ LATEX_HEADER           =
 # Note: Only use a user-defined footer if you know what you are doing!
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_FOOTER           =
+LATEX_FOOTER           = doc/manual-footer.tex
 
 # The LATEX_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the LATEX_OUTPUT output

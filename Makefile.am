@@ -1,12 +1,12 @@
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src include
-
-@DX_RULES@
+SUBDIRS = src doc include
 
 README: README.md
 	pandoc --from markdown_github --to html --standalone $< | html2text -style pretty -nobs -width 120 | sed -e 's:&gt;:>:g' > $@
+
+@DX_RULES@
 
 if ENABLE_GCOV
 
@@ -26,14 +26,8 @@ gcov:
 clean-local:
 	@make gcov-reset
 	@find . -name "*.gcno" -exec rm {} \;
-	@rm -rf doxygen-doc
 
 check:
 	@make gcov
-
-else
-
-clean-local:
-	@rm -rf doxygen-doc
 
 endif

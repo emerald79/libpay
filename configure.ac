@@ -3,7 +3,7 @@ AC_CANONICAL_TARGET
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
 LT_INIT
-DX_INIT_DOXYGEN(LibEMV, Doxyfile, doxygen-doc)
+DX_INIT_DOXYGEN(LibEMV, doc/Doxyfile, doc/manual)
 
 AC_PROG_CC
 
@@ -11,6 +11,7 @@ AC_SYS_LARGEFILE
 
 AC_CONFIG_FILES([
 	Makefile
+	doc/Makefile
 	include/Makefile
 	src/Makefile
 	src/include/Makefile
