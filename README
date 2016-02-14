@@ -11,17 +11,207 @@ LibEMV Configuration
 LibEMV Configuration -- Data Dictionary
 
 
-Name                Description                                        Source   Format Template   Tag        Length
-Configuration       Configuration of Entry Point and Level 2 Kernels   Terminal var.   --         'FF81E371' var.
-Set of Combinations Set of Combinations of AID and Kernel ID           Terminal var.   'FF81E371' 'FF82E371' var.
-Transaction Types   Transaction Types the Set of Combinations apply to Terminal b      'FF82E371' 'DF84E371' 1 - 4
+Name            Description     Source   Format   Template    Tag        Length
+                Configuration
+LibEMV          of Entry Point  Terminal complex  --          'FF81E371' var.
+Configuration   and Level 2
+                Kernels
+                Set of
+Set of          Combinations of Terminal complex  'FF81E371'  'FF82E371' var.
+Combinations    AID and Kernel
+                ID
+                Transaction
+Transaction     Types the Set   Terminal complex  'FF82E371'  'FF83E371' var.
+Types           of Combinations
+                apply to
+Transaction     Type of                           'FF83E371',
+Type            Transaction     Terminal n 2      'FF8FE371'  '9C'       1
+                (ISO 8583:1987)
+                A Combination
+Combination     of an           Terminal complex  'FF82E371'  'FF84E371' var.
+                Application ID
+                and a Kernel ID
+                Identifies the
+AID -- Terminal Application     Terminal b        'FF84E371'  '9F06'     5 - 16
+                (ISO-IEC 7816-
+                5)
+                Uniquely
+                identifies a
+Kernel ID       Kernel          Terminal b        'FF84E371'  'FF86E371' 3 - 8
+                installed in
+                the Reader
+Status Check    Flag: Reader is
+Support         able to perform Terminal b        'FF82E371'  'DF87E371' 1
+                a Status Check
+                Flag:
+Zero Amount     Transaction
+Allowed         with a zero     Terminal b        'FF82E371'  'DF88E371' 1
+                amount is
+                permitted
+Reader          Limit for
+Contactless     contactless     Terminal n 12     'FF82E371'  'DF8AE371' 6
+Transaction     transactions
+Limit
+Reader          Floor limit for
+Contactless     contactless     Terminal n 12     'FF82E371'  'DF8BE371' 6
+Floor Limit     transactions
+Terminal Floor  Floor limit for Terminal n 12     'FF82E371'  'DF8CE371' 6
+Limit           transactions
+                Limit above
+Reader CVM      which
+Required Limit  Cardholder      Terminal n 12     'FF82E371'  'DF8DE371' 6
+                Verification is
+                required
+Terminal        Reader
+Transaction     capabilities,   Terminal b 32     'FF82E371'  '9F66'     4
+Qualifiers      requirements
+(TTQ)           and preferences
+                If present,
+Autorun         enables and     Terminal complex  'FF81E371'  'FF8FE371' var.
+                configures
+                Autorun mode
+Amount,         Authorised
+Authorised      Amount of the   Terminal n 12     'FF8FF371'  '9F02'     6
+                Transaction
+                Information
+Terminal        about Merchant, Terminal complex  'FF81E371'  'FF92E371' var.
+Settings        Acquirer and
+                Terminal
+                Uniquely
+Acquirer        identifies      Terminal n 6 - 11 'FF92E371'  '9F01'     6
+Identifier      acquirer within
+                payment system
+                Type of
+Merchant        Business (ISO   Terminal n 4      'FF92E371'  '9F15'     2
+Category Code   8583:1987
+                Business Code)
+                Uniquely
+Merchant        identifiers
+Identifier      Merchant if     Terminal ans 15   'FF92E371'  '9F16'     15
+                Acquirer is
+                given
+                Country of
+Terminal        Location of     Terminal n 3      'FF92E371'  '9F1A'     2
+Country Code    Terminal (ISO
+                3166)
+Terminal        Unique Location
+Identification  of Terminal at  Terminal an 8     'FF92E371'  '9F1C'     8
+                Merchant
+                Environment,
+Terminal Type   Capabilities    Terminal n 2      'FF92E371'  '9F35'     1
+                and Operational
+                Control
+Point-Of-       First two
+Service (POS)   digits of ISO   Terminal n 2      'FF92E371'  '9F39'     1
+Entry Mode      8353:1987 POS
+                Entry Mode
+Additional      Data Input and
+Terminal        Output          Terminal b        'FF92E371'  '9F40'     5
+Capabilities    Capabilities of
+                the Terminal
+                Indicates the
+Merchant Name   Name and        Terminal ans      'FF92E371'  '9F4E'     var.
+and Location    Location of the
+                Merchant
 
 
 LibEMV Configuration -- Structure
 
 
-Tag        Name          --                  --                Mandatory or Optional
-'FF81E371' Configuration --                  --                M
---         'FF82E371'    Set of Combinations --                M
---         --            'DF83E371'          Transaction Types M
+Tag        Name          --           --             --          Mandatory or
+                                                                 Optional
+'FF81E371' LibEMV        --           --             --          M
+           Configuration
+--         'FF82E371'    Set of       --             --          M
+                         Combinations
+--         --            'FF83E371'   Transaction    --          M
+                                      Types
+--         --                         '9C'           Transaction M
+                                                     Type
+--         --                         '9C'           Transaction O
+                                                     Type
+--         --            'FF84E371'   Combination    --          M
+--         --            --           '9F06'         AID -       M
+                                                     - Terminal
+--         --            --           'DF86E371'     Kernel ID   M
+--         --            'FF84E371'   Combination    --          O
+--         --            --           '9F06'         AID         M
+--         --            --           'DF86E371'     Kernel ID   M
+--         --            'DF87E371'   Status Check   --          O
+                                      Support
+--         --            'DF88E371'   Zero Amount    --          O
+                                      Allowed
+                                      Extended
+--         --            'DF89E371'   Selection      --          O
+                                      Support
+                                      Reader
+--         --            'DF8AE371'   Contactless    --          O
+                                      Transaction
+                                      Limit
+                                      Reader
+--         --            'DF8BE371'   Contactless    --          O
+                                      Floor Limit
+--         --            'DF8CE371'   Terminal Floor --          O
+                                      Limit
+--         --            'DF8DE371'   Reader CVM     --          O
+                                      Required Limit
+                                      Terminal
+--         --            '9F66'       Transaction    --          O
+                                      Qualifiers
+--         'FF82E371'    Set of       --             --          O
+                         Combinations
+--         --            'FF83E371'   Transaction    --          M
+                                      Types
+--         --                         '9C'           Transaction M
+                                                     Type
+--         --            'FF84E371'   Combination    --          M
+--         --            --           'DF85E371'     AID         M
+--         --            --           'DF86E371'     Kernel ID   M
+--         --            'DF87E371'   Status Check   --          O
+                                      Supported
+--         --            'DF88E371'   Zero Amount    --          O
+                                      Allowed
+                                      Extended
+--         --            'DF89E371'   Selection      --          O
+                                      Supported
+                                      Reader
+--         --            'DF8AE371'   Contactless    --          O
+                                      Transaction
+                                      Limit
+                                      Reader
+--         --            'DF8BE371'   Contactless    --          O
+                                      Floor Limit
+--         --            'DF8CE371'   Terminal Floor --          O
+                                      Limit
+--         --            'DF8DE371'   Reader CVM     --          O
+                                      Required Limit
+                                      Terminal
+--         --            '9F66'       Transaction    --          O
+                                      Qualifiers
+--         'FF8FE371'    Autorun      --             --          O
+--         --            'DF90E371'   Transaction    --          M
+                                      Type
+--         --            '9F02'       Amount,        --          M
+                                      Authorised
+--         'FF92E371'    Terminal     --             --          M
+                         Settings
+--         --            '9F01'       Acquirer       --          M
+                                      Identifier
+--         --            '9F15'       Merchant       --          M
+                                      Category Code
+--         --            '9F16'       Merchant       --          M
+                                      Identifier
+--         --            '9F1A'       Terminal       --          M
+                                      Country Code
+--         --            '9F1C'       Terminal       --          M
+                                      Identification
+--         --            '9F35'       Terminal Type  --          M
+                                      Point-Of-
+--         --            '9F39'       Service (POS)  --          M
+                                      Entry Mode
+                                      Additional
+--         --            '9F40'       Terminal       --          M
+                                      Capabilities
+--         --            '9F4E'       Merchant Name  --          M
+                                      and Location
 

@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = src doc include
 
 README: README.md
-	pandoc --from markdown_github --to html --standalone $< | html2text -style pretty -nobs -width 120 | sed -e 's:&gt;:>:g' > $@
+	pandoc --from markdown_github --to html --standalone $< | html2text -style pretty -nobs | sed -e 's:&gt;:>:g' > $@
 
 @DX_RULES@
 
