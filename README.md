@@ -1,5 +1,27 @@
 # LibPAY - The Toolkit for Smart Payment Applications
 
+  LibPAY provides a toolkit meant to support the implementation of Linux(R)
+based payment solutions.  It is currently focused on support for the EMV(R)
+Contactless specifications, but might be extended to support contact based
+solutions as well as non EMV(R) payment systems in the future.
+
+
+## Disclaimer
+
+  LibPAY is work in progress and it is still in its early stages of development.
+All APIs have to be considered unstable and will be changed without prior
+notice.
+
+  While LibPAY attempts to comply to the EMV(R) Contactless specifications, it
+has not been certified in any way.  Thus, LibPAY does not claim to be compliant
+with any payment system specifications whatsoever.
+
+  To the best of my knowledge LibPAY does not violate the EMVCo Terms of Use.
+However, I am not a lawyer.  Should it turn out that LibPAY actually does
+violate rights of EMVCo or any other third party, this will void all usage
+rights on LibPAY.
+
+
 ## LibPAY Configuration
 
 ### LibPAY Configuration -- Data Dictionary
