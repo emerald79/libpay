@@ -6,7 +6,7 @@ SUBDIRS = src include
 @DX_RULES@
 
 README: README.md
-	pandoc --from markdown_github --to html --standalone $< | html2text -style pretty -nobs | sed -e 's:&gt;:>:g' > $@
+	pandoc --from markdown_github --to html --standalone $< | html2text -style pretty -nobs -width 120 | sed -e 's:&gt;:>:g' > $@
 
 if ENABLE_GCOV
 

@@ -11,24 +11,16 @@ LibEMV Configuration
 LibEMV Configuration -- Data Dictionary
 
 
-Name          Description       Source   Format Template   Tag        Length
-              Configuration of
-Configuration Entry Point and   Terminal var.   --         'FF81E371' var.
-              Level 2 Kernels
-Set of        Set of
-Combinations  Combinations of   Terminal var.   'FF81E371' 'FF82E371' var.
-              AID and Kernel ID
-              Transaction Types
-Transaction   the Set of        Terminal b      'FF82E371' 'DF84E371' 1 - 4
-Types         Combinations
-              apply to
+Name                Description                                        Source   Format Template   Tag        Length
+Configuration       Configuration of Entry Point and Level 2 Kernels   Terminal var.   --         'FF81E371' var.
+Set of Combinations Set of Combinations of AID and Kernel ID           Terminal var.   'FF81E371' 'FF82E371' var.
+Transaction Types   Transaction Types the Set of Combinations apply to Terminal b      'FF82E371' 'DF84E371' 1 - 4
 
 
 LibEMV Configuration -- Structure
 
 
-Tag        Name          --                  --                Mandatory or
-                                                               Optional
+Tag        Name          --                  --                Mandatory or Optional
 'FF81E371' Configuration --                  --                M
 --         'FF82E371'    Set of Combinations --                M
 --         --            'DF83E371'          Transaction Types M
