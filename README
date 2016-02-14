@@ -4,16 +4,42 @@
 
 LibEMV - The Toolkit for Smart Payment Applications
 
+[TOC]
 
-Name          Description         Source   Format Template   Tag        Length
+LibEMV Configuration
+
+
+Data Dictionary for a LibEMV Configuration File
+
+
+Structure of a LibEMV Configuration File
+
+
+LibEMV Configuration
+
+
+Data Dictionary for a LibEMV Configuration File
+
+
+Name          Description       Source   Format Template   Tag        Length
               Configuration of
-Configuration Entry Point and     Terminal var.   --         'FF81E371' var.
+Configuration Entry Point and   Terminal var.   --         'FF81E371' var.
               Level 2 Kernels
-Set of        Set of Combinations Terminal var.   'FF81E371' 'FF82E371' var.
-Combinations  of AID and Kernel
+Set of        Set of
+Combinations  Combinations of   Terminal var.   'FF81E371' 'FF82E371' var.
+              AID and Kernel
+              Transaction Types
+Transaction   applying to the   Terminal b      'FF82E371' 'DF84E371' 1 - 4
+Types         Set of
+              Combinations
 
 
-'FF81E371' Configuration -                   -                 M
--          'FF82E371'    Set of Combinations -                 M
--          -             'DF83E371'          Transaction Types M
+Structure of a LibEMV Configuration File
+
+
+Tag        Name          --                  --                Mandatory or
+                                                               Optional
+'FF81E371' Configuration --                  --                M
+--         'FF82E371'    Set of Combinations --                M
+--         --            'DF83E371'          Transaction Types M
 
