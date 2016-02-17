@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TLV Editor</title>
+</head>
+<body>
+</body>
+
+<script>
+var connection = new WebSocket('ws://localhost:7681', ['jsonrpc']);
+connection.onopen = function() {
+	connection.send('{"jsonrpc": "2.0", "method": "substract", "params": [42, 23], "id": 1}');
+};
+connection.onerror = function(error) {
+	console.log('Error: ' + error);
+};
+connection.onmessage = function(event) {
+	console.log(event.data);
+};
+</script>
+
+</html>
