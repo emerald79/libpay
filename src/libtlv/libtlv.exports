@@ -10,6 +10,7 @@ tlv_encode_value
 tlv_is_constructed
 tlv_get_depth
 tlv_get_next
+tlv_get_prev
 tlv_get_parent
 tlv_get_child
 tlv_iterate

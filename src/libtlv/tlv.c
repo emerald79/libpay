@@ -996,6 +996,8 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 			libtlv_get_dol_field(tlv_do.tag, value, length,
 					 &out_data[out_data_sz], tlv_do.length);
 			out_data_sz += tlv_do.length;
+
+			free(value);
 		} else {
 			libtlv_get_dol_field(tlv_do.tag, tlv_de->value,
 					 tlv_de->length, &out_data[out_data_sz],

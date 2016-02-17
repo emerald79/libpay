@@ -7280,11 +7280,9 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 {
 	struct tlv *tlv_ppse_entry = NULL, *tlv = NULL;
 
-	tlv_ppse_entry = tlv_new(EMV_ID_DIRECTORY_ENTRY, 0, NULL);
-
 	if (ent->aid_len)
-		tlv = tlv_insert_below(tlv_ppse_entry,
-			      tlv_new(EMV_ID_ADF_NAME, ent->aid_len, ent->aid));
+		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_ADF_NAME,
+						       ent->aid_len, ent->aid));
 
 	if (ent->app_label_len)
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_APPLICATION_LABEL,
@@ -7302,6 +7300,12 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 	if (ent->ext_select_len)
 		tlv = tlv_insert_after(tlv, tlv_new(EMV_ID_EXTENDED_SELECTION,
 					 ent->ext_select_len, ent->ext_select));
+
+	while (tlv_get_prev(tlv))
+		tlv = tlv_get_prev(tlv);
+
+	tlv_ppse_entry = tlv_new(EMV_ID_DIRECTORY_ENTRY, 0, NULL);
+	tlv_insert_below(tlv_ppse_entry, tlv);
 
 	return tlv_ppse_entry;
 }

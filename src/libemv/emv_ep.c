@@ -890,7 +890,7 @@ static uint8_t rid_to_kernel_id(const void *rid)
 	};
 	int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(rid); i++)
+	for (i = 0; i < ARRAY_SIZE(rids); i++)
 		if (!memcmp(rids[i], rid, sizeof(rids[i])))
 			return (uint8_t)(i + 2);
 
@@ -1212,6 +1212,8 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	 * To process the Directory Entries, Entry Point shall begin with the
 	 * first Directory Entry of the FCI and process sequentially for each
 	 * Directory Entry in the FCI as described in bullet A thru E below.  */
+	if (ep->candidate_list.candidates)
+		free(ep->candidate_list.candidates);
 	ep->candidate_list.size = 0;
 	ep->candidate_list.candidates = (struct emv_ep_candidate *)
 				 calloc(combination_set->size * num_dir_entries,
