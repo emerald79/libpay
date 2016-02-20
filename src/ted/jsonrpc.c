@@ -47,6 +47,9 @@ static struct json_object *jsonrpc_error_response(int jsonrpc_rc,
 	char msg[32];
 
 	switch (jsonrpc_rc) {
+	case JSONRPC_RC_INVALID_REQUEST:
+		strncpy(msg, "Invalid request", sizeof(msg));
+		break;
 	case JSONRPC_RC_INVALID_PARAMS:
 		strncpy(msg, "Invalid params", sizeof(msg));
 		break;

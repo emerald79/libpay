@@ -24,6 +24,17 @@
 #include <json-c/json.h>
 
 /*-----------------------------------------------------------------------------+
+| TED command line argument parsing					       |
++-----------------------------------------------------------------------------*/
+
+struct ted_args {
+	int port;
+	char *iface;
+};
+
+int ted_parse_args(int argc, char **argv, struct ted_args *ted_args);
+
+/*-----------------------------------------------------------------------------+
 | HTTP libwebsockets protocol implementation				       |
 +-----------------------------------------------------------------------------*/
 

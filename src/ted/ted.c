@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <errno.h>
 #include <signal.h>
 
 int ted_srv_method_substract(json_object *params, json_object **result)
@@ -86,12 +88,23 @@ static void sigint_handler(int sig)
 	lws_cancel_service(ted_srv.lws_context);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+	struct ted_args args;
 	struct lws_context_creation_info info;
 
+	memset(&args, 0, sizeof(args));
+	args.port = 7681;
+
+	if (ted_parse_args(argc, argv, &args)) {
+		fprintf(stderr, "Failed to parse command line arguments: %s\n",
+							       strerror(errno));
+		return EXIT_FAILURE;
+	}
+
 	memset(&info, 0, sizeof(info));
-	info.port = 7681;
+	info.port = args.port;
+	info.iface = args.iface;
 	info.protocols = ted_srv.protocols;
 	info.gid = -1;
 	info.uid = -1;
