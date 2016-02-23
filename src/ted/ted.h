@@ -27,9 +27,17 @@
 | TED command line argument parsing					       |
 +-----------------------------------------------------------------------------*/
 
+enum ted_file_format {
+	ted_hex = 0,
+	ted_binary,
+	ted_num_file_formats
+};
+
 struct ted_args {
-	int port;
-	char *iface;
+	char			*input;
+	enum ted_file_format	 input_format;
+	int			 port;
+	char			*iface;
 };
 
 int ted_parse_args(int argc, char **argv, struct ted_args *ted_args);

@@ -19,22 +19,36 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <argp.h>
 
 #include "ted.h"
 
 const char *argp_program_version = "ted " PACKAGE_VERSION;
 const char *argp_program_bug_address = "mijung@gmx.net";
-static const char doc[] = "TED - The TLV Editor";
+static const char doc[] = "TED - TLV Editor";
 static const char args_doc[] = "";
 
 static struct argp_option options[] = {
-	{ "port",	'p',	"<tcpip-port>", 0,
-					     "TCP/IP port TED shall serve on" },
-	{ "iface",	'i',	"<interface>",	   0,
-			 "Network interface TED shall serve on (e.g. 'eth0')" },
+	{ "port",	  'p',	"<tcpip-port>",	0,
+			"TCP/IP port TED shall serve on"		      },
+	{ "iface",	  'c',	"<interface>",	0,
+			"Network interface TED shall serve on (e.g. 'eth0')"  },
+	{ "input-format", 'f',  "<format>",	0,
+			"'hex' or 'binary'. Default: 'hex'"		      },
+	{ "input",	  'i',	"<filename>",	0,
+			"Input from <filename> instead of standard input"     },
 	{ 0 }
 };
+
+static enum ted_file_format str2ff(const char *string)
+{
+	if (!strcmp("hex", string))
+		return ted_hex;
+	if (!strcmp("binary", string))
+		return ted_binary;
+	return ted_num_file_formats;
+}
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
@@ -44,15 +58,27 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 	switch (key) {
 
 	case 'i':
+		if (access(arg, R_OK))
+			argp_failure(state, EXIT_FAILURE, errno,
+					       "Invalid input file: '%s'", arg);
+		args->input = arg;
+		break;
+
+	case 'f':
+		args->input_format = str2ff(arg);
+		if (args->input_format == ted_num_file_formats)
+			argp_error(state, "Invalid input file format: '%s'",
+									   arg);
+		break;
+
+	case 'c':
 		args->iface = arg;
 		break;
 
 	case 'p':
 		long_int = strtol(arg, NULL, 0);
-		if (long_int < 1 || long_int > UINT16_MAX) {
-			fprintf(stderr, "Invalid port number: '%s'\n", arg);
-			argp_usage(state);
-		}
+		if (long_int < 1 || long_int > UINT16_MAX)
+			argp_error(state, "Invalid TCP/IP port: '%s'", arg);
 		args->port = (int)long_int;
 		break;
 
