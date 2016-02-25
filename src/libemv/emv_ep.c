@@ -264,17 +264,17 @@ static const char *combination_string(struct emv_ep_combination *combination)
 	char tmp[64];
 	size_t i = 0;
 
-	strncpy(str, "AID: '", sizeof(str));
+	strcpy(str, "AID: '");
 	for (i = 0; i < combination->aid_len; i++) {
-		snprintf(tmp, sizeof(tmp), "%02hhX", combination->aid[i]);
-		strncat(str, tmp, sizeof(str));
+		sprintf(tmp, "%02hhX", combination->aid[i]);
+		strcat(str, tmp);
 	}
-	strncat(str, "', Kernel ID: '", sizeof(str));
+	strcat(str, "', Kernel ID: '");
 	for (i = 0; i < combination->kernel_id_len; i++) {
-		snprintf(tmp, sizeof(tmp), "%02hhX", combination->kernel_id[i]);
-		strncat(str, tmp, sizeof(str));
+		sprintf(tmp, "%02hhX", combination->kernel_id[i]);
+		strcat(str, tmp);
 	}
-	strncat(str, "'", sizeof(str));
+	strcat(str, "'");
 
 	return (const char *)str;
 }

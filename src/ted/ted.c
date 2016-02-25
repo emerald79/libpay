@@ -60,6 +60,8 @@ struct ted_srv {
 	const struct lws_protocols *protocols;
 	struct lws_context	   *lws_context;
 	bool			    stop_requested;
+
+	struct tlv		   *tlv;
 };
 
 static const struct lws_protocols ted_srv_protocols[] = {
@@ -79,7 +81,8 @@ static const struct lws_protocols ted_srv_protocols[] = {
 static struct ted_srv ted_srv = {
 	.lws_context	= NULL,
 	.protocols	= ted_srv_protocols,
-	.stop_requested	= false
+	.stop_requested	= false,
+	.tlv		= NULL
 };
 
 static void sigint_handler(int sig)
@@ -88,7 +91,7 @@ static void sigint_handler(int sig)
 	lws_cancel_service(ted_srv.lws_context);
 }
 
-int main(int argc, char **argv)
+int ted_srv_init(int argc, char **argv)
 {
 	struct ted_args args;
 	struct lws_context_creation_info info;
@@ -99,7 +102,7 @@ int main(int argc, char **argv)
 	if (ted_parse_args(argc, argv, &args)) {
 		fprintf(stderr, "Failed to parse command line arguments: %s\n",
 							       strerror(errno));
-		return EXIT_FAILURE;
+		return -1;
 	}
 
 	memset(&info, 0, sizeof(info));
@@ -112,15 +115,36 @@ int main(int argc, char **argv)
 	ted_srv.lws_context = lws_create_context(&info);
 	if (!ted_srv.lws_context) {
 		fprintf(stderr, "%s(): lws_create_context failed!\n", __func__);
-		return EXIT_FAILURE;
+		return -1;
 	}
+
+	ted_srv.tlv = ted_parse_input(&args);
 
 	signal(SIGINT, sigint_handler);
 
+	return 0;
+}
+
+void ted_srv_term(void)
+{
+	tlv_free(ted_srv.tlv);
+	lws_context_destroy(ted_srv.lws_context);
+}
+
+void ted_srv_serve(void)
+{
 	while (!ted_srv.stop_requested)
 		lws_service(ted_srv.lws_context, 100);
+}
 
-	lws_context_destroy(ted_srv.lws_context);
+int main(int argc, char **argv)
+{
+	if (ted_srv_init(argc, argv))
+		return EXIT_FAILURE;
+
+	ted_srv_serve();
+
+	ted_srv_term();
 
 	return EXIT_SUCCESS;
 }

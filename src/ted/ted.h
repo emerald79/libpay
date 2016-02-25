@@ -22,6 +22,7 @@
 
 #include <libwebsockets.h>
 #include <json-c/json.h>
+#include <libpay/tlv.h>
 
 /*-----------------------------------------------------------------------------+
 | TED command line argument parsing					       |
@@ -41,6 +42,8 @@ struct ted_args {
 };
 
 int ted_parse_args(int argc, char **argv, struct ted_args *ted_args);
+
+struct tlv *ted_parse_input(struct ted_args *args);
 
 /*-----------------------------------------------------------------------------+
 | HTTP libwebsockets protocol implementation				       |
