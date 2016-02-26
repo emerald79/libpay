@@ -579,7 +579,7 @@ int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size)
 	return TLV_RC_OK;
 }
 
-int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size)
+int tlv_encode_identifier(const struct tlv *tlv, void *buffer, size_t *size)
 {
 	size_t encoded_size = 0;
 
@@ -642,7 +642,7 @@ int tlv_encode_length(const struct tlv *tlv, void *buffer, size_t *size)
 	return TLV_RC_OK;
 }
 
-int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size)
+int tlv_encode_value(const struct tlv *tlv, void *buffer, size_t *size)
 {
 	if (!tlv || !size)
 		return TLV_RC_INVALID_ARG;

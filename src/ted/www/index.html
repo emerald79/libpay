@@ -44,7 +44,7 @@
 <script>
 var connection = new WebSocket('ws://localhost:7681', ['jsonrpc']);
 connection.onopen = function() {
-	connection.send('{"jsonrpc": "2.0", "method": "substract", "params": [42, 23], "id": 1}');
+	connection.send('{"jsonrpc": "2.0", "method": "get_doc", "id": 1}');
 };
 connection.onerror = function(error) {
 	console.log('Error: ' + error);

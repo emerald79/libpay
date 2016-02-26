@@ -233,12 +233,13 @@ static int read_file(int fd, uint8_t **contents, size_t *len)
 	return TLV_RC_OK;
 }
 
-struct tlv *ted_parse_input(struct ted_args *args)
+struct json_object *ted_parse_input(struct ted_args *args)
 {
 	uint8_t *input = NULL;
 	size_t input_sz;
 	int fd = -1, rc;
-	struct tlv *result = NULL;
+	struct tlv *tlv_result = NULL;
+	struct json_object *result = NULL;
 
 	if (args->input) {
 		fd = open(args->input, O_RDONLY);
@@ -274,13 +275,18 @@ struct tlv *ted_parse_input(struct ted_args *args)
 		input_sz = temp_sz;
 	}
 
-	rc = tlv_parse(input, input_sz, &result);
+	rc = tlv_parse(input, input_sz, &tlv_result);
 	if (rc != TLV_RC_OK) {
 		fprintf(stderr, "%s() tlv_parse failed. rc %d\n", __func__, rc);
 		goto done;
 	}
 
+	result = tlv_to_json(tlv_result);
+
 done:
+	if (tlv_result)
+		tlv_free(tlv_result);
+
 	if (input)
 		free(input);
 

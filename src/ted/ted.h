@@ -43,7 +43,13 @@ struct ted_args {
 
 int ted_parse_args(int argc, char **argv, struct ted_args *ted_args);
 
-struct tlv *ted_parse_input(struct ted_args *args);
+struct json_object *ted_parse_input(struct ted_args *args);
+
+/*-----------------------------------------------------------------------------+
+| Conversion between TLV and JSON					       |
++-----------------------------------------------------------------------------*/
+
+struct json_object *tlv_to_json(const struct tlv *tlv);
 
 /*-----------------------------------------------------------------------------+
 | HTTP libwebsockets protocol implementation				       |

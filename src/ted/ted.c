@@ -26,45 +26,35 @@
 #include <errno.h>
 #include <signal.h>
 
-int ted_srv_method_substract(json_object *params, json_object **result)
+struct ted {
+	const struct lws_protocols *protocols;
+	struct lws_context	   *lws_context;
+	bool			    stop_requested;
+	struct json_object	   *doc;
+};
+
+static struct ted ted;
+
+int ted_method_get_doc(json_object *params, json_object **result)
 {
-	int minuend = 0, subtrahend = 0;
-
-	*result = NULL;
-
-	if ((!params) ||
-	    (json_object_get_type(params) != json_type_array) ||
-	    (json_object_array_length(params) != 2) ||
-	    (json_object_get_type(json_object_array_get_idx(params, 0)) !=
-							       json_type_int) ||
-	    (json_object_get_type(json_object_array_get_idx(params, 1)) !=
-								 json_type_int))
+	if (params)
 		return JSONRPC_RC_INVALID_PARAMS;
 
-	minuend = json_object_get_int(json_object_array_get_idx(params, 0));
-	subtrahend = json_object_get_int(json_object_array_get_idx(params, 1));
+	json_object_get(ted.doc);
+	*result = ted.doc;
 
-	*result = json_object_new_int(minuend - subtrahend);
 	return JSONRPC_RC_OK;
 }
 
-struct jsonrpc_method ted_srv_methods[] = {
+struct jsonrpc_method ted_methods[] = {
 	{
-		.name = "substract",
-		.stub = ted_srv_method_substract
+		.name = "get_doc",
+		.stub = ted_method_get_doc
 	},
 	{ NULL }
 };
 
-struct ted_srv {
-	const struct lws_protocols *protocols;
-	struct lws_context	   *lws_context;
-	bool			    stop_requested;
-
-	struct tlv		   *tlv;
-};
-
-static const struct lws_protocols ted_srv_protocols[] = {
+static const struct lws_protocols ted_protocols[] = {
 	{
 		.name			= "http",
 		.callback		= callback_http,
@@ -73,25 +63,25 @@ static const struct lws_protocols ted_srv_protocols[] = {
 		.name			= "jsonrpc",
 		.callback		= callback_jsonrpc,
 		.per_session_data_size	= sizeof(struct jsonrpc_session),
-		.user			= ted_srv_methods
+		.user			= ted_methods
 	},
 	{ NULL }
 };
 
-static struct ted_srv ted_srv = {
+static struct ted ted = {
 	.lws_context	= NULL,
-	.protocols	= ted_srv_protocols,
+	.protocols	= ted_protocols,
 	.stop_requested	= false,
-	.tlv		= NULL
+	.doc		= NULL
 };
 
 static void sigint_handler(int sig)
 {
-	ted_srv.stop_requested = true;
-	lws_cancel_service(ted_srv.lws_context);
+	ted.stop_requested = true;
+	lws_cancel_service(ted.lws_context);
 }
 
-int ted_srv_init(int argc, char **argv)
+int ted_init(int argc, char **argv)
 {
 	struct ted_args args;
 	struct lws_context_creation_info info;
@@ -108,43 +98,44 @@ int ted_srv_init(int argc, char **argv)
 	memset(&info, 0, sizeof(info));
 	info.port = args.port;
 	info.iface = args.iface;
-	info.protocols = ted_srv.protocols;
+	info.protocols = ted.protocols;
 	info.gid = -1;
 	info.uid = -1;
 
-	ted_srv.lws_context = lws_create_context(&info);
-	if (!ted_srv.lws_context) {
+	ted.lws_context = lws_create_context(&info);
+	if (!ted.lws_context) {
 		fprintf(stderr, "%s(): lws_create_context failed!\n", __func__);
 		return -1;
 	}
 
-	ted_srv.tlv = ted_parse_input(&args);
+	ted.doc = ted_parse_input(&args);
 
 	signal(SIGINT, sigint_handler);
 
 	return 0;
 }
 
-void ted_srv_term(void)
+void ted_term(void)
 {
-	tlv_free(ted_srv.tlv);
-	lws_context_destroy(ted_srv.lws_context);
+	if (ted.doc)
+		json_object_put(ted.doc);
+	lws_context_destroy(ted.lws_context);
 }
 
-void ted_srv_serve(void)
+void ted_serve(void)
 {
-	while (!ted_srv.stop_requested)
-		lws_service(ted_srv.lws_context, 100);
+	while (!ted.stop_requested)
+		lws_service(ted.lws_context, 100);
 }
 
 int main(int argc, char **argv)
 {
-	if (ted_srv_init(argc, argv))
+	if (ted_init(argc, argv))
 		return EXIT_FAILURE;
 
-	ted_srv_serve();
+	ted_serve();
 
-	ted_srv_term();
+	ted_term();
 
 	return EXIT_SUCCESS;
 }

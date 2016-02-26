@@ -105,7 +105,7 @@ void tlv_free(struct tlv *tlv);
  *
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
-int tlv_encode_identifier(struct tlv *tlv, void *buffer, size_t *size);
+int tlv_encode_identifier(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
  * Returns the DER encoded length octets of the TLV node.
@@ -136,7 +136,7 @@ int tlv_encode_length(const struct tlv *tlv, void *buffer, size_t *size);
  *
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
-int tlv_encode_value(struct tlv *tlv, void *buffer, size_t *size);
+int tlv_encode_value(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
  * Returns whether a TLV node is constructed or primitive.
