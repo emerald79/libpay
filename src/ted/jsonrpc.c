@@ -160,8 +160,8 @@ static int jsonrpc_session_receive(struct jsonrpc_session *session, void *in,
 
 	jsonrpc_call(session, request, &response);
 
-	reply_len = LWS_PRE + strlen(json_object_get_string(response)) + 1;
-	reply = (unsigned char *)calloc(1, reply_len);
+	reply_len = LWS_PRE + strlen(json_object_get_string(response));
+	reply = (unsigned char *)calloc(1, reply_len + 1);
 	strcpy((char *)(&reply[LWS_PRE]), json_object_get_string(response));
 	lws_write(session->wsi, &reply[LWS_PRE], reply_len - LWS_PRE,
 								LWS_WRITE_TEXT);
