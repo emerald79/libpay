@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqtree/1.3.0/tree.jquery.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqtree/1.3.0/jqtree.css">
 </head>
 <body>
 </body>
@@ -41,7 +43,117 @@
 
     </div><!-- /.container -->
 
+    <div id="tree1">
+    </div>
+
 <script>
+
+function toHex(b) {
+	var hex= [ '0', '1', '2', '3', '4', '5', '6', '7',
+		   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ];
+
+	return hex[Math.floor(b / 16)] + hex[b % 16];
+}
+
+function tlvParseValueLen(tlv) {
+	var LONG_FORM = 0x80;
+	var valueLen = 0;
+
+	if ((tlv[0] & LONG_FORM) !== LONG_FORM)
+		return { len: 1, value: tlv[0] };
+
+	for (var i = 0; i < tlv[0] % 128; i++) {
+		valueLen *= 256;
+		valueLen += tlv[i + 1];
+	}
+
+	return { len: (tlv[0] % 128) + 1, value: valueLen };
+}
+
+function tlvParseSubtree(tlv) {
+	var TAG_NUMBER = 0x1f;
+	var TAG_CONSTRUCTED = 0x20;
+	var TAG_CONTINUE = 0x80;
+	var tag = {};
+	var value = {};
+	var valueLen = 0;
+	var result = {};
+
+	tag.value = toHex(tlv[0]);
+	tag.len = 1;
+
+	if ((tlv[0] & TAG_NUMBER) === TAG_NUMBER)
+		do
+			tag.value += toHex(tlv[tag.len++]);
+		while ((tlv[tag.len] & TAG_CONTINUE) === TAG_CONTINUE)
+
+	valueLen = tlvParseValueLen(tlv.slice(tag.len));
+	value.len = valueLen.value;
+
+	if (value.len > 0) {
+		var valueField = tlv.slice(tag.len + valueLen.len,
+					   tag.len + valueLen.len + value.len);
+
+		if ((tlv[0] & TAG_CONSTRUCTED) === TAG_CONSTRUCTED)
+			value.value = tlvParse(valueField);
+		else
+			value.value = valueField.reduce(
+				function(prev, cur, idx, arr) {
+					return prev + toHex(cur);
+				}, "");
+	}
+
+	return { len: tag.len + valueLen.len + value.len,
+		 value: { tag: tag.value, value: value.value } };
+}
+
+function tlvParse(tlv) {
+	var result = [];
+	var offset = 0;
+
+	while (offset < tlv.length) {
+		var subtree = tlvParseSubtree(tlv.slice(offset));
+
+		result.push(subtree.value);
+		offset += subtree.len;
+	}
+
+	return result;
+}
+
+function tlvParseHex(hex) {
+	var tlv = [];
+
+	for (var i = 0; i < hex.length / 2; i++)
+		tlv[i] = parseInt(hex.substr(i * 2, 2), 16);
+
+	return tlvParse(tlv);
+}
+
+function tlvToJqTree(tlv) {
+	var data = [];
+
+	tlv.forEach(
+		function(cur, idx, arr) {
+			var node = {};
+			var label = cur.tag;
+
+			node.label = cur.tag;
+
+			if ($.isArray(cur.value))
+				node.children = tlvToJqTree(cur.value);
+
+			if (typeof(cur.value) === 'string')
+				node.value = cur.value;
+
+			this.push(node);
+		},
+		data
+	);
+
+	return data;
+}
+
 var connection = new WebSocket('ws://localhost:7681', ['jsonrpc']);
 connection.onopen = function() {
 	connection.send('{"jsonrpc": "2.0", "method": "get_doc", "id": 1}');
@@ -51,6 +163,15 @@ connection.onerror = function(error) {
 };
 connection.onmessage = function(event) {
 	console.log(event.data);
+	$('#tree1').tree({
+		data: tlvToJqTree(tlvParseHex($.parseJSON(event.data).result)),
+		dragAndDrop : true,
+		onCreateLi : function(node, $li) {
+			if ('value' in node)
+				$li.find('.jqtree-title').after(
+						'<span class="value"> ' + node.value + '</span');
+		}
+	});
 };
 </script>
 

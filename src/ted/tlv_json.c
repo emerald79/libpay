@@ -20,104 +20,38 @@
 #include <libpay/tlv.h>
 #include "ted.h"
 
-static struct json_object *tlv_tree_to_json(const struct tlv *tlv)
-{
-	uint8_t tag[TLV_MAX_TAG_LENGTH] = { 0 }, *value = NULL;
-	char hex_tag[TLV_MAX_TAG_LENGTH * 2 + 1], *hex_value = NULL;
-	size_t tag_len = sizeof(tag), value_len = 0;
-	struct json_object *result = NULL, *json_tag = NULL, *json_value = NULL;
-	int rc = TLV_RC_OK;
-
-	if (!tlv)
-		goto done;
-
-	rc = tlv_encode_identifier(tlv, tag, &tag_len);
-	if (rc != TLV_RC_OK)
-		goto done;
-
-	json_tag = json_object_new_string(
-				      libtlv_bin_to_hex(tag, tag_len, hex_tag));
-	if (!json_tag)
-		goto done;
-
-	if (tlv_is_constructed(tlv)) {
-		struct tlv *tlv_child = tlv_get_child(tlv);
-
-		if (tlv_child)
-			json_value = tlv_to_json(tlv_child);
-	} else {
-		rc = tlv_encode_value(tlv, NULL, &value_len);
-		if (rc != TLV_RC_OK)
-			goto done;
-
-		value = (uint8_t *)malloc(value_len);
-		if (!value)
-			goto done;
-
-		rc = tlv_encode_value(tlv, value, &value_len);
-		if (rc != TLV_RC_OK)
-			goto done;
-
-		hex_value = (char *)malloc(value_len * 2 + 1);
-		if (!hex_value)
-			goto done;
-
-		json_value = json_object_new_string(
-				libtlv_bin_to_hex(value, value_len, hex_value));
-	}
-
-	result = json_object_new_object();
-	if (!result)
-		goto done;
-
-	json_object_object_add(result, "tag", json_tag);
-
-	if (json_value)
-		json_object_object_add(result, "value", json_value);
-
-done:
-	if (hex_value)
-		free(hex_value);
-
-	if (value)
-		free(value);
-
-	if (!result) {
-		if (json_tag)
-			json_object_put(json_tag);
-
-		if (json_value)
-			json_object_put(json_value);
-	}
-
-	return result;
-}
-
 struct json_object *tlv_to_json(const struct tlv *tlv)
 {
 	struct json_object *result = NULL;
-	int idx = 0;
+	char *hex = NULL;
+	void *enc = NULL;
+	size_t enc_sz = 0;
+	int rc = TLV_RC_OK;
 
-	if (!tlv)
+	rc = tlv_encode(tlv, NULL, &enc_sz);
+	if (rc != TLV_RC_OK)
 		goto done;
 
-	result = json_object_new_array();
-	if (!result)
+	enc = malloc(enc_sz);
+	if (!enc)
 		goto done;
 
-	do {
-		struct json_object *json_tree = tlv_tree_to_json(tlv);
+	rc = tlv_encode(tlv, enc, &enc_sz);
+	if (rc != TLV_RC_OK)
+		goto done;
 
-		if (!json_tree) {
-			json_object_put(result);
-			result = NULL;
-			goto done;
-		}
+	hex = malloc(enc_sz * 2 + 1);
+	if (!hex)
+		goto done;
 
-		json_object_array_put_idx(result, idx++, json_tree);
-		tlv = tlv_get_next(tlv);
-	} while (tlv);
+	result = json_object_new_string(libtlv_bin_to_hex(enc, enc_sz, hex));
 
 done:
+	if (hex)
+		free(hex);
+
+	if (enc)
+		free(enc);
+
 	return result;
 }
