@@ -43,7 +43,29 @@
 
     </div><!-- /.container -->
 
-    <div id="tree1">
+    <div class="container">
+            <div class="input-group">
+                <span class="input-group-addon" id="basic-addon1">Tag</span>
+                <input type="text" class="form-control" id="input-tag" disabled>
+            </div>
+
+            <div class="input-group">
+                <span class="input-group-addon" id="basic-addon1">Value</span>
+                <input type="text" class="form-control" id="input-value" disabled>
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Format: b <span class="caret"></span></button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li><a href="#">an</a></li>
+                            <li><a href="#">ans</a></li>
+                            <li><a href="#">b</a></li>
+                            <li><a href="#">cn</a></li>
+                            <li><a href="#">n</a></li>
+                        </ul>
+                    </div>
+            </div>
+
+        <div id="tlv-tree">
+        </div>
     </div>
 
 <script>
@@ -136,9 +158,9 @@ function tlvToJqTree(tlv) {
 	tlv.forEach(
 		function(cur, idx, arr) {
 			var node = {};
-			var label = cur.tag;
 
 			node.label = cur.tag;
+			node.tag = cur.tag;
 
 			if ($.isArray(cur.value))
 				node.children = tlvToJqTree(cur.value);
@@ -162,14 +184,43 @@ connection.onerror = function(error) {
 	console.log('Error: ' + error);
 };
 connection.onmessage = function(event) {
-	console.log(event.data);
-	$('#tree1').tree({
+	var tlv = $('#tlv-tree');
+
+	tlv.tree({
 		data: tlvToJqTree(tlvParseHex($.parseJSON(event.data).result)),
 		dragAndDrop : true,
 		onCreateLi : function(node, $li) {
+			var title = $li.find('.jqtree-title');
 			if ('value' in node)
-				$li.find('.jqtree-title').after(
-						'<span class="value"> ' + node.value + '</span');
+				title.after('<span class="value"> ' + node.value + '</span>');
+		},
+		onCanMoveTo : function(moved, target, position) {
+			if (position == 'inside') {
+				var TAG_CONSTRUCTED = 0x20;
+				var b0 = parseInt(target.name.slice(0, 2), 16);
+				return ((b0 & TAG_CONSTRUCTED) == TAG_CONSTRUCTED);
+			} else {
+				return true;
+			}
+		}
+	});
+
+	tlv.bind('tree.select', function(event) {
+		if (event.node) {
+			$('#input-tag').prop('disabled', false);
+			$('#input-tag').val(event.node.name);
+			if (event.node.value) {
+				$('#input-value').prop('disabled', false);
+				$('#input-value').val(event.node.value);
+			} else {
+				$('#input-value').val('');
+				$('#input-value').prop('disabled', true);
+			}
+		} else {
+			$('#input-tag').val('');
+			$('#input-tag').prop('disabled', true);
+			$('#input-value').val('');
+			$('#input-value').prop('disabled', true);
 		}
 	});
 };
