@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="css/bootstrap-theme.css">
 <script src="js/bootstrap.js"></script>
 <script src="js/tree.jquery.js"></script>
+<script src="js/tlv.js"></script>
 <link rel="stylesheet" href="css/jqtree.css">
 </head>
 <body>
@@ -140,160 +141,78 @@
 
 <script>
 
-function toHex(b) {
-	var hex= [ '0', '1', '2', '3', '4', '5', '6', '7',
-		   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ];
+jQuery(function() {
+	var connection = new WebSocket('ws://localhost:7681', ['jsonrpc']);
 
-	return hex[Math.floor(b / 16)] + hex[b % 16];
-}
+	function toHex(b) {
+		var hex= [ '0', '1', '2', '3', '4', '5', '6', '7',
+			   '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ];
 
-function tlvParseValueLen(tlv) {
-	var LONG_FORM = 0x80;
-	var valueLen = 0;
-
-	if ((tlv[0] & LONG_FORM) !== LONG_FORM)
-		return { len: 1, value: tlv[0] };
-
-	for (var i = 0; i < tlv[0] % 128; i++) {
-		valueLen *= 256;
-		valueLen += tlv[i + 1];
+		return hex[Math.floor(b / 16)] + hex[b % 16];
 	}
 
-	return { len: (tlv[0] % 128) + 1, value: valueLen };
-}
+	function hexToBin(hex) {
+		var bin = [];
 
-function tlvParseSubtree(tlv) {
-	var TAG_NUMBER = 0x1f;
-	var TAG_CONSTRUCTED = 0x20;
-	var TAG_CONTINUE = 0x80;
-	var tag = {};
-	var value = {};
-	var valueLen = 0;
-	var result = {};
+		for (var i = 0; i < hex.length / 2; i++)
+			bin[i] = parseInt(hex.substr(i * 2, 2), 16);
 
-	tag.value = toHex(tlv[0]);
-	tag.len = 1;
-
-	if ((tlv[0] & TAG_NUMBER) === TAG_NUMBER)
-		do
-			tag.value += toHex(tlv[tag.len++]);
-		while ((tlv[tag.len] & TAG_CONTINUE) === TAG_CONTINUE)
-
-	valueLen = tlvParseValueLen(tlv.slice(tag.len));
-	value.len = valueLen.value;
-
-	if (value.len > 0) {
-		var valueField = tlv.slice(tag.len + valueLen.len,
-					   tag.len + valueLen.len + value.len);
-
-		if ((tlv[0] & TAG_CONSTRUCTED) === TAG_CONSTRUCTED)
-			value.value = tlvParse(valueField);
-		else
-			value.value = valueField.reduce(
-				function(prev, cur, idx, arr) {
-					return prev + toHex(cur);
-				}, "");
+		return bin;
 	}
 
-	return { len: tag.len + valueLen.len + value.len,
-		 value: { tag: tag.value, value: value.value } };
-}
-
-function tlvParse(tlv) {
-	var result = [];
-	var offset = 0;
-
-	while (offset < tlv.length) {
-		var subtree = tlvParseSubtree(tlv.slice(offset));
-
-		result.push(subtree.value);
-		offset += subtree.len;
+	function binToHex(bin) {
+		return bin.reduce(function(prev, cur, idx, arr) { return prev + toHex(cur); }, "");
 	}
 
-	return result;
-}
+	connection.onopen = function() {
+		connection.send('{"jsonrpc": "2.0", "method": "get_doc", "id": 1}');
+	};
 
-function tlvParseHex(hex) {
-	var tlv = [];
+	connection.onerror = function(error) {
+		console.log('Error: ' + error);
+	};
 
-	for (var i = 0; i < hex.length / 2; i++)
-		tlv[i] = parseInt(hex.substr(i * 2, 2), 16);
+	connection.onmessage = function(event) {
+		var tlv = $('#tlv-tree');
+		var tlvNode = new TLVNode(hexToBin($.parseJSON(event.data).result));
 
-	return tlvParse(tlv);
-}
-
-function tlvToJqTree(tlv) {
-	var data = [];
-
-	tlv.forEach(
-		function(cur, idx, arr) {
-			var node = {};
-
-			node.label = cur.tag;
-			node.tag = cur.tag;
-
-			if ($.isArray(cur.value))
-				node.children = tlvToJqTree(cur.value);
-
-			if (typeof(cur.value) === 'string') {
-				node.value = cur.value;
-				node.label += " " + cur.value;
+		tlv.tree({
+			data: [ tlvNode ],
+			dragAndDrop : true,
+			onCreateLi : function(node, $li) {
+				var title = $li.find('.jqtree-title');
+			},
+			onCanMoveTo : function(moved, target, position) {
+				if (position == 'inside') {
+					var TAG_CONSTRUCTED = 0x20;
+					var b0 = parseInt(target.name.slice(0, 2), 16);
+					return ((b0 & TAG_CONSTRUCTED) == TAG_CONSTRUCTED);
+				} else {
+					return true;
+				}
 			}
+		});
 
-			this.push(node);
-		},
-		data
-	);
-
-	return data;
-}
-
-var connection = new WebSocket('ws://localhost:7681', ['jsonrpc']);
-connection.onopen = function() {
-	connection.send('{"jsonrpc": "2.0", "method": "get_doc", "id": 1}');
-};
-connection.onerror = function(error) {
-	console.log('Error: ' + error);
-};
-connection.onmessage = function(event) {
-	var tlv = $('#tlv-tree');
-
-	tlv.tree({
-		data: tlvToJqTree(tlvParseHex($.parseJSON(event.data).result)),
-		dragAndDrop : true,
-		onCreateLi : function(node, $li) {
-			var title = $li.find('.jqtree-title');
-		},
-		onCanMoveTo : function(moved, target, position) {
-			if (position == 'inside') {
-				var TAG_CONSTRUCTED = 0x20;
-				var b0 = parseInt(target.name.slice(0, 2), 16);
-				return ((b0 & TAG_CONSTRUCTED) == TAG_CONSTRUCTED);
+		tlv.bind('tree.select', function(event) {
+			if (event.node) {
+				$('#input-tag').prop('disabled', false);
+				$('#input-tag').val(binToHex(event.node.tag.binary));
+				if (event.node.value) {
+					$('#input-value').prop('disabled', false);
+					$('#input-value').val(binToHex(event.node.value));
+				} else {
+					$('#input-value').val('');
+					$('#input-value').prop('disabled', true);
+				}
 			} else {
-				return true;
-			}
-		}
-	});
-
-	tlv.bind('tree.select', function(event) {
-		if (event.node) {
-			$('#input-tag').prop('disabled', false);
-			$('#input-tag').val(event.node.tag);
-			if (event.node.value) {
-				$('#input-value').prop('disabled', false);
-				$('#input-value').val(event.node.value);
-			} else {
+				$('#input-tag').val('');
+				$('#input-tag').prop('disabled', true);
 				$('#input-value').val('');
 				$('#input-value').prop('disabled', true);
 			}
-		} else {
-			$('#input-tag').val('');
-			$('#input-tag').prop('disabled', true);
-			$('#input-value').val('');
-			$('#input-value').prop('disabled', true);
-		}
-	});
-};
+		});
+	}
+});
 </script>
 
 </html>
