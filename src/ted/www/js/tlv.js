@@ -70,7 +70,7 @@ TLVTag = (function() {
 		if ((der[0] & TLVTag.NUMBER_MASK) === TLVTag.NUMBER_MASK) {
 			do {
 				this[this.length] = der[this.length];
-			} while (der[this.length++] & TLVTag.CONTINUE == TLVTag.CONTINUE);
+			} while ((der[this.length++] & TLVTag.CONTINUE) === TLVTag.CONTINUE);
 		}
 	}
 
@@ -105,8 +105,12 @@ TLVTag = (function() {
 })();
 
 TLVNode = (function() {
-	function TLVNode(binary) {
-		this.binary = binary;
+	function TLVNode(input) {
+		if (jQuery.isArray(input)) {
+			this.binary = input;
+		} else if (input instanceof Object) {
+			this.jqTreeData = input;
+		}
 	}
 
 	function toHex(b) {
@@ -124,7 +128,7 @@ TLVNode = (function() {
 		var len, valueSlice, idxValueStart, idxValueEnd;
 
 		if (binaryDer === undefined)
-			return undefined;
+			return;
 
 		this.tag = new TLVTag(binaryDer);
 		this.label = binToHex(this.tag.binary);
@@ -173,6 +177,44 @@ TLVNode = (function() {
 		return result;
 	}
 
+	function getJqTreeData() {
+		var result = {};
+
+		result.tag = this.tag.binary;
+		result.label = binToHex(result.tag);
+
+		if (this.value) {
+			result.value = this.value;
+			result.label += " " + binToHex(result.value);
+		}
+
+		if (this.children)
+			result.children = this.children.map(function(cur) { return cur.jqTreeData; });
+
+		return result;
+	}
+
+	function setJqTreeData(data) {
+		delete this.value;
+		delete this.children;
+
+		this.tag = new TLVTag(data.tag);
+
+		if (data.value)
+			this.value = data.value;
+
+		if (data.children)
+			this.children = data.children.map(function(cur) { return new TLVNode(cur); });
+	}
+
+	function setHex(hex) {
+		this.binary = TLVDocument.hexToBin(hex);
+	}
+
+	function getHex() {
+		return TLVDocument.binToHex(this.binary);
+	}
+
 	function getLength() {
 		var valueLength = 0;
 
@@ -195,12 +237,145 @@ TLVNode = (function() {
 			enumerable: true,
 			configurable: true
 		},
+		hex: {
+			set: setHex,
+			get: getHex,
+			enumerable: true,
+			configurable: true
+		},
 		length: {
 			get: getLength,
+			enumerable: true,
+			configurable: true
+		},
+		jqTreeData: {
+			get: getJqTreeData,
+			set: setJqTreeData,
 			enumerable: true,
 			configurable: true
 		}
 	});
 
 	return TLVNode;
+})();
+
+TLVDocument = (function() {
+	function TLVDocument(raw) {
+		if (jQuery.isArray(raw)) {
+			this.binary = raw;
+		} else {
+			this.hex = raw;
+		}
+	}
+
+	function setBinary(binary) {
+		var idxValueBegin = 0;
+
+		this.children = [];
+
+		if (!binary)
+			return;
+
+		while (idxValueBegin < binary.length) {
+			var node = new TLVNode(binary.slice(idxValueBegin));
+
+			idxValueBegin += node.length;
+			this.children.push(node);
+		}
+	}
+
+	function getBinary() {
+		return this.children.reduce(function(prev, cur) { return prev.concat(cur.binary) }, []);
+	}
+
+	function setHex(hex) {
+		this.binary = hexToBin(hex);
+	}
+
+	function getHex() {
+		return binToHex(this.binary);
+	}
+
+	function getLength() {
+		return this.children.reduce(function(prev, cur) { return prev + cur.length; }, 0);
+	}
+
+	function getJqTreeData() {
+		return this.children.map(function(cur) { return cur.jqTreeData; });
+	}
+
+	function setJqTreeData(data) {
+		this.children = data.children.map(function(cur) {
+			var node = new TLVNode();
+
+			node.tag = new TLVTag(cur.tag);
+
+			if (cur.value)
+				node.value = cur.value;
+
+			if (cur.children) {
+				node.children = cur.children.map(function(cur) {
+					var node = new TLVNode();
+					node.jqTreeData = cur;
+					return node;
+				});
+			}
+
+			return node;
+		});
+	}
+
+	TLVDocument.prototype.constructor = TLVDocument;
+
+	Object.defineProperties(TLVDocument.prototype, {
+		binary: {
+			set: setBinary,
+			get: getBinary,
+			enumerable: true,
+			configurable: true
+		},
+		hex: {
+			set: setHex,
+			get: getHex,
+			enumerable: true,
+			configurable: true
+		},
+		length: {
+			get: getLength,
+			enumerable: true,
+			configurable: true
+		},
+		jqTreeData: {
+			get: getJqTreeData,
+			set: setJqTreeData,
+			enumerable: true,
+			configurable: true
+		}
+	});
+
+	function hexToBin(hex) {
+		var binary = [];
+
+		if (!hex)
+			return binary;
+
+		for (var i = 0; i < hex.length / 2; i++)
+			binary[i] = parseInt(hex.substr(i * 2, 2), 16);
+
+		return binary;
+	}
+
+	function binToHex(binary) {
+		return binary.reduce(function(prev, cur) {
+			var hexdigit = [ '0', '1', '2', '3', '4', '5', '6', '7',
+			         	 '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ];
+
+			return prev + hexdigit[Math.floor(cur / 16)] + hexdigit[cur % 16];
+		}, "");
+	}
+
+	TLVDocument.hexToBin = hexToBin;
+	TLVDocument.binToHex = binToHex;
+
+	return TLVDocument;
 })();

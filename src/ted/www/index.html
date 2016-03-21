@@ -84,11 +84,11 @@
             <div class="btn-toolbar" role="toolbar">
               <div class="btn-group pull-right" role="toolbar">
                 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#edit-tlv-node"><span class="glyphicon glyphicon-plus"></span></button>
-                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#edit-tlv-node"><span class="glyphicon glyphicon-remove"></span></button>
-                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#edit-tlv-node"><span class="glyphicon glyphicon-pencil"></span></button>
+                <button type="button" class="btn btn-default" id="delete-node" disabled><span class="glyphicon glyphicon-remove"></span></button>
+                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#edit-tlv-node" id="edit-node" disabled><span class="glyphicon glyphicon-pencil"></span></button>
               </div>
               <div class="btn-group pull-right" role="group">
-                <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-floppy-save"></span></button>
+                <button type="button" class="btn btn-default" id="save-tlv"><span class="glyphicon glyphicon-floppy-save"></span></button>
                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open"></span> Tree <span class="caret"></span></button>
                 <ul class="dropdown-menu dropdown-menu-right">
                   <li><a href="#">Raw</a></li>
@@ -151,15 +151,6 @@ jQuery(function() {
 		return hex[Math.floor(b / 16)] + hex[b % 16];
 	}
 
-	function hexToBin(hex) {
-		var bin = [];
-
-		for (var i = 0; i < hex.length / 2; i++)
-			bin[i] = parseInt(hex.substr(i * 2, 2), 16);
-
-		return bin;
-	}
-
 	function binToHex(bin) {
 		return bin.reduce(function(prev, cur, idx, arr) { return prev + toHex(cur); }, "");
 	}
@@ -174,10 +165,12 @@ jQuery(function() {
 
 	connection.onmessage = function(event) {
 		var tlv = $('#tlv-tree');
-		var tlvNode = new TLVNode(hexToBin($.parseJSON(event.data).result));
+		var tlvDoc = new TLVDocument($.parseJSON(event.data).result);
+
+		console.log(tlvDoc.jqTreeData);
 
 		tlv.tree({
-			data: [ tlvNode ],
+			data: tlvDoc.jqTreeData,
 			dragAndDrop : true,
 			onCreateLi : function(node, $li) {
 				var title = $li.find('.jqtree-title');
@@ -193,24 +186,44 @@ jQuery(function() {
 			}
 		});
 
-		tlv.bind('tree.select', function(event) {
-			if (event.node) {
-				$('#input-tag').prop('disabled', false);
-				$('#input-tag').val(binToHex(event.node.tag.binary));
-				if (event.node.value) {
-					$('#input-value').prop('disabled', false);
-					$('#input-value').val(binToHex(event.node.value));
-				} else {
-					$('#input-value').val('');
-					$('#input-value').prop('disabled', true);
-				}
+		function updateButtonStates() {
+			var selectedNode = tlv.tree('getSelectedNode');
+
+			if (!selectedNode) {
+				$('#delete-node').prop('disabled', true);
+				$('#edit-node').prop('disabled', true);
 			} else {
-				$('#input-tag').val('');
-				$('#input-tag').prop('disabled', true);
-				$('#input-value').val('');
-				$('#input-value').prop('disabled', true);
+				$('#delete-node').prop('disabled', false);
+				$('#edit-node').prop('disabled', false);
+				$('#input-tag').val(TLVDocument.binToHex(selectedNode.tag));
+				if (selectedNode.value) {
+					$('#input-value').prop('disabled', false);
+					$('#input-value').val(TLVDocument.binToHex(selectedNode.value));
+				} else {
+					$('#input-value').prop('disabled', true);
+					$('#input-value').val('');
+				}
 			}
+		}
+
+		tlv.bind('tree.select', function(event) {
+			updateButtonStates();
 		});
+
+		$('#delete-node').click(function(event) {
+			tlv.tree('removeNode', tlv.tree('getSelectedNode'));
+			updateButtonStates();
+		});
+
+		$('#save-tlv').click(function(event) {
+			var tlvdoc = new TLVDocument();
+
+			tlvdoc.jqTreeData = tlv.tree('getTree');
+
+			console.log(tlvdoc.hex);
+		});
+
+		updateButtonStates();
 	}
 });
 </script>
