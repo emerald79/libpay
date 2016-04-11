@@ -9,10 +9,13 @@
 <script src="js/bootstrap.js"></script>
 <script src="js/tree.jquery.js"></script>
 <script src="js/tlv.js"></script>
+<script src="js/FileSaver.min.js"></script>
 <link rel="stylesheet" href="css/jqtree.css">
 </head>
 <body>
 </body>
+
+<input type="file" id="ted-selected-file" style="display:none">
 
 <!-- Add/Edit TLV Node Dialog -->
 <div id="edit-tlv-node" class="modal fade" role="dialog">
@@ -72,28 +75,29 @@
     <div class="col-md-8">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title">Document</h3>
+          <h3 class="panel-title" id="ted-file-name">Document</h3>
         </div>
 
         <div class="panel-body">
-          <div id="tlv-tree">
-          </div>
+          <div id="tlv-tree" class="well"></div>
+          <pre id="tlv-raw" style="white-space: pre-wrap" class="well"></pre>
         </div>
 
         <div class="panel-footer">
             <div class="btn-toolbar" role="toolbar">
               <div class="btn-group pull-right" role="toolbar">
-                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#edit-tlv-node"><span class="glyphicon glyphicon-plus"></span></button>
+                <button type="button" class="btn btn-default" id="add-node" data-toggle="modal" data-target="#edit-tlv-node"><span class="glyphicon glyphicon-plus"></span></button>
                 <button type="button" class="btn btn-default" id="delete-node" disabled><span class="glyphicon glyphicon-remove"></span></button>
                 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#edit-tlv-node" id="edit-node" disabled><span class="glyphicon glyphicon-pencil"></span></button>
               </div>
               <div class="btn-group pull-right" role="group">
-                <button type="button" class="btn btn-default" id="save-tlv"><span class="glyphicon glyphicon-floppy-save"></span></button>
-                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open"></span> Tree <span class="caret"></span></button>
-                <ul class="dropdown-menu dropdown-menu-right">
+                <button type="button" class="btn btn-default" id="new-tlv"><span class="glyphicon glyphicon-file"></span></button>
+                <button type="button" class="btn btn-default" id="load-tlv"><span class="glyphicon glyphicon-open"></span></button>
+                <button type="button" class="btn btn-default" id="save-tlv"><span class="glyphicon glyphicon-save"></span></button>
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open"></span><span id="current-ted-view-mode"> Tree </span><span class="caret"></span></button>
+                <ul class="dropdown-menu dropdown-menu-right" id="ted-view-mode">
                   <li><a href="#">Raw</a></li>
                   <li><a href="#">Tree</a></li>
-                  <li><a href="#">Interpreted</a></li>
                 </ul>
               </div>
 	    </div>
@@ -167,8 +171,6 @@ jQuery(function() {
 		var tlv = $('#tlv-tree');
 		var tlvDoc = new TLVDocument($.parseJSON(event.data).result);
 
-		console.log(tlvDoc.jqTreeData);
-
 		tlv.tree({
 			data: tlvDoc.jqTreeData,
 			dragAndDrop : true,
@@ -189,6 +191,8 @@ jQuery(function() {
 		function updateButtonStates() {
 			var selectedNode = tlv.tree('getSelectedNode');
 
+			$('#add-node').prop('disabled', false);
+
 			if (!selectedNode) {
 				$('#delete-node').prop('disabled', true);
 				$('#edit-node').prop('disabled', true);
@@ -204,6 +208,12 @@ jQuery(function() {
 					$('#input-value').val('');
 				}
 			}
+
+			if ($('#current-ted-view-mode').text().trim() == 'Raw') {
+				$('#add-node').prop('disabled', true);
+				$('#delete-node').prop('disabled', true);
+				$('#edit-node').prop('disabled', true);
+			}
 		}
 
 		tlv.bind('tree.select', function(event) {
@@ -217,12 +227,60 @@ jQuery(function() {
 
 		$('#save-tlv').click(function(event) {
 			var tlvdoc = new TLVDocument();
+			var blob;
 
 			tlvdoc.jqTreeData = tlv.tree('getTree');
+			console.log(tlvdoc.hex);
+			blob = new Blob([tlvdoc.hex], { type: "text/plain;charset=utf-8" });
+			saveAs(blob, $('#ted-file-name').text());
 
 			console.log(tlvdoc.hex);
 		});
 
+		$('#ted-selected-file').change(function(event) {
+			var reader = new FileReader();
+			var selectedFile = event.target.files[0];
+
+			reader.readAsText(selectedFile);
+			reader.onload = function() {
+				var tlvdoc = new TLVDocument(reader.result);
+				tlv.tree('loadData', tlvdoc.jqTreeData);
+				$('#tlv-raw').text(function(n, cur) { return tlvdoc.hex });
+				$('#ted-file-name').text(function(n, cur) { return selectedFile.name });
+			};
+			reader.onerror = function(e) {
+				console.log("Error", e);
+			};
+		});
+
+		$('#load-tlv').click(function(event) {
+			$('#ted-selected-file').click();
+		});
+
+		$('#ted-view-mode a').click(function(event) {
+			var selectedViewMode = $(event.target).text();
+			var tlvdoc = new TLVDocument();
+
+			tlvdoc.jqTreeData = tlv.tree('getTree');
+
+			$('#current-ted-view-mode').text(function(n, cur) { return ' ' + selectedViewMode + ' '; });
+
+			switch (selectedViewMode) {
+			case 'Raw':
+				$('#tlv-raw').text(function(n, cur) { return tlvdoc.hex });
+				$('#tlv-raw').show();
+				$('#tlv-tree').hide();
+				break;
+			case 'Tree':
+				$('#tlv-raw').hide();
+				$('#tlv-tree').show();
+				break;
+			}
+
+			updateButtonStates();
+		});
+
+		$('#tlv-raw').hide();
 		updateButtonStates();
 	}
 });
