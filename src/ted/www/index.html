@@ -259,14 +259,14 @@ jQuery(function() {
 
 		$('#ted-view-mode a').click(function(event) {
 			var selectedViewMode = $(event.target).text();
-			var tlvdoc = new TLVDocument();
-
-			tlvdoc.jqTreeData = tlv.tree('getTree');
+			var tlvdoc;
 
 			$('#current-ted-view-mode').text(function(n, cur) { return ' ' + selectedViewMode + ' '; });
 
 			switch (selectedViewMode) {
 			case 'Raw':
+				tlvdoc = new TLVDocument();
+				tlvdoc.jqTreeData = tlv.tree('getTree');
 				$('#tlv-raw').text(function(n, cur) { return tlvdoc.hex });
 				$('#tlv-raw').show();
 				$('#tlv-tree').hide();
