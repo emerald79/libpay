@@ -300,12 +300,12 @@ int tlv_parse(const void *buffer, size_t length, struct tlv **tlv)
 	const void *start = buffer;
 	int rc = TLV_RC_OK;
 
+	tlv_parse_error_info.rc = TLV_RC_OK;
+
 	if (!length) {
 		*tlv = NULL;
 		goto done;
 	}
-
-	tlv_parse_error_info.rc = TLV_RC_OK;
 
 	rc = tlv_parse_recursive(&buffer, length, tlv, NULL, NULL, false);
 done:

@@ -39,7 +39,7 @@ static struct argp_option options[] = {
 	{ "input-format", 'f',  "<format>",	0,
 			"'hex' or 'binary'. Default: 'hex'"		      },
 	{ "input",	  'i',	"<filename>",	0,
-			"Input from <filename> instead of standard input"     },
+			"Input from <filename>"				      },
 	{ 0 }
 };
 
@@ -128,12 +128,14 @@ static int hex_to_binary(const uint8_t *hex, size_t hex_len, uint8_t **binary,
 	size_t buffer_len = 256, i_hex = 0, nibbles = 0;
 	bool comment = false;
 
-	assert(hex);
 	assert(binary);
 	assert(binary_len);
 
 	*binary = NULL;
 	*binary_len = 0;
+
+	if (!hex || !hex_len)
+		goto done;
 
 	result = malloc(buffer_len);
 	if (!result)
@@ -180,6 +182,7 @@ static int hex_to_binary(const uint8_t *hex, size_t hex_len, uint8_t **binary,
 		return TLV_RC_INVALID_ARG;
 	}
 
+done:
 	*binary = result;
 	*binary_len = nibbles / 2;
 	return TLV_RC_OK;
@@ -236,7 +239,7 @@ static int read_file(int fd, uint8_t **contents, size_t *len)
 struct json_object *ted_parse_input(struct ted_args *args)
 {
 	uint8_t *input = NULL;
-	size_t input_sz;
+	size_t input_sz = 0;
 	int fd = -1, rc;
 	struct tlv *tlv_result = NULL;
 	struct json_object *result = NULL;
@@ -248,15 +251,13 @@ struct json_object *ted_parse_input(struct ted_args *args)
 							       strerror(errno));
 			goto done;
 		}
-	} else {
-		fd = STDIN_FILENO;
-	}
 
-	rc = read_file(fd, &input, &input_sz);
-	if (rc != TLV_RC_OK) {
-		fprintf(stderr, "read_file('%s') failed. rc %d.\n", args->input,
-									    rc);
-		goto done;
+		rc = read_file(fd, &input, &input_sz);
+		if (rc != TLV_RC_OK) {
+			fprintf(stderr, "read_file('%s') failed. rc %d.\n",
+							       args->input, rc);
+			goto done;
+		}
 	}
 
 	if (args->input_format == ted_hex) {
@@ -270,7 +271,8 @@ struct json_object *ted_parse_input(struct ted_args *args)
 			goto done;
 		}
 
-		free(input);
+		if (input)
+			free(input);
 		input = temp;
 		input_sz = temp_sz;
 	}
