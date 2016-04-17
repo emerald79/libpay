@@ -154,61 +154,67 @@ static bool check_terminal_data(struct checker *chk, struct tlv *data)
 
 	if (!check_value(chk, data, EMV_ID_ACQUIRER_IDENTIFIER,
 			      ACQUIRER_IDENTIFIER, sizeof(ACQUIRER_IDENTIFIER)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_ADDITIONAL_TERMINAL_CAPABILITIES,
 					       ADDITIONAL_TERMINAL_CAPABILITIES,
 				      sizeof(ADDITIONAL_TERMINAL_CAPABILITIES)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_MERCHANT_CATEGORY_CODE,
 			MERCHANT_CATEGORY_CODE, sizeof(MERCHANT_CATEGORY_CODE)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_MERCHANT_IDENTIFIER,
 			      MERCHANT_IDENTIFIER, strlen(MERCHANT_IDENTIFIER)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_MERCHANT_NAME_AND_LOCATION,
 		MERCHANT_NAME_AND_LOCATION, strlen(MERCHANT_NAME_AND_LOCATION)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_POS_ENTRY_MODE, &pos_entry_mode,
 							sizeof(pos_entry_mode)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_TERMINAL_CAPABILITIES,
 			 TERMINAL_CAPABILITIES,  sizeof(TERMINAL_CAPABILITIES)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_TERMINAL_COUNTRY_CODE,
 			 TERMINAL_COUNTRY_CODE,  sizeof(TERMINAL_COUNTRY_CODE)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_TERMINAL_IDENTIFICATION,
 		     TERMINAL_IDENTIFICATION,  sizeof(TERMINAL_IDENTIFICATION)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_TERMINAL_TYPE, &terminal_type,
 							 sizeof(terminal_type)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_APPLICATION_VERSION_NUMBER_TERM,
 					      app_ver_num, sizeof(app_ver_num)))
-		return false;
+		goto check_failed;
 
 	if (!check_value(chk, data, EMV_ID_INTERFACE_DEVICE_SERIAL_NUMBER,
 					     INTERFACE_DEVICE_SERIAL_NUMBER, 8))
-		return false;
+		goto check_failed;
 
 	/* FIXME: TSI (tag '9B') not checked for now.			      */
 
 	return true;
+
+check_failed:
+	log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE, "%s(): failed!",
+								      __func__);
+	return false;
 }
 
 static bool check_txn_date_and_time(struct checker *chk, struct tlv *data)
 {
 	uint8_t txn_time[3], txn_date[3];
+	char str_time_txn[32], str_time_now[32];
 	size_t txn_time_sz = sizeof(txn_time), txn_date_sz = sizeof(txn_date);
 	struct tm tm_txn;
 	time_t time_txn, time_now = time(NULL);
@@ -216,11 +222,11 @@ static bool check_txn_date_and_time(struct checker *chk, struct tlv *data)
 
 	if (!get_value(data, EMV_ID_TRANSACTION_TIME, txn_time, &txn_time_sz) ||
 	    txn_time_sz != sizeof(txn_time))
-		return false;
+		goto check_failed;
 
 	if (!get_value(data, EMV_ID_TRANSACTION_DATE, txn_date, &txn_date_sz) ||
 	    txn_date_sz != sizeof(txn_date))
-		return false;
+		goto check_failed;
 
 	libtlv_bcd_to_u64(&txn_time[2], 1, &sec);
 	libtlv_bcd_to_u64(&txn_time[1], 1, &min);
@@ -230,21 +236,29 @@ static bool check_txn_date_and_time(struct checker *chk, struct tlv *data)
 	libtlv_bcd_to_u64(&txn_date[0], 1, &year);
 
 	memset(&tm_txn, 0, sizeof(tm_txn));
-	tm_txn.tm_sec  = (int)sec;
-	tm_txn.tm_min  = (int)min;
-	tm_txn.tm_hour = (int)hour;
-	tm_txn.tm_mday = (int)mday;
-	tm_txn.tm_mon  = (int)mon - 1;
-	tm_txn.tm_year = (int)year + 100;
+	tm_txn.tm_sec	= (int)sec;
+	tm_txn.tm_min	= (int)min;
+	tm_txn.tm_hour	= (int)hour;
+	tm_txn.tm_mday	= (int)mday;
+	tm_txn.tm_mon	= (int)mon - 1;
+	tm_txn.tm_year	= (int)year + 100;
+	tm_txn.tm_isdst	= -1;		/* Determine whether DST is in effect */
 	time_txn = mktime(&tm_txn);
 
 	if (time_now - time_txn > 3)
-		return false;
+		goto check_failed;
 
 	if (time_now - time_txn < 0)
-		return false;
+		goto check_failed;
 
 	return true;
+
+check_failed:
+	log4c_category_log(chk->log_cat, LOG4C_PRIORITY_NOTICE,
+			  "%s(): failed! transaction time: %snow: %s", __func__,
+					       ctime_r(&time_txn, str_time_txn),
+					      ctime_r(&time_now, str_time_now));
+	return false;
 }
 
 static void store_unpredictable_number(struct checker *chk, struct tlv *data)
