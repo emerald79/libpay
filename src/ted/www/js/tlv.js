@@ -359,7 +359,7 @@ TLVDocument = (function() {
 		if (!hex)
 			return binary;
 
-		for (var i = 0; i < hex.length / 2; i++)
+		for (var i = 0; i < Math.floor(hex.length / 2); i++)
 			binary[i] = parseInt(hex.substr(i * 2, 2), 16);
 
 		return binary;
