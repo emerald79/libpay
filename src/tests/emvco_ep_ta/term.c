@@ -1101,7 +1101,7 @@ struct emv_ep_terminal_data terminal_data = {
 	.merchant_name_and_location	  = MERCHANT_NAME_AND_LOCATION
 };
 
-struct termset termsettings[num_termsettings] = {
+struct emv_ep_terminal_settings termsettings[num_termsettings] = {
 	{
 		.combination_sets	= termset1,
 		.num_combination_sets	= ARRAY_SIZE(termset1),
@@ -1202,7 +1202,7 @@ struct termset termsettings[num_termsettings] = {
 bool term_is_kernel_supported(enum termsetting termsetting,
 				    const void *kernel_id, size_t kernel_id_len)
 {
-	struct termset *settings = NULL;
+	struct emv_ep_terminal_settings *settings = NULL;
 	int i;
 
 	if ((termsetting >= num_termsettings) || !kernel_id || !kernel_id_len)
@@ -1227,7 +1227,8 @@ bool term_is_kernel_supported(enum termsetting termsetting,
 	return false;
 }
 
-const struct termset *term_get_setting(enum termsetting termsetting)
+const struct emv_ep_terminal_settings *term_get_setting(
+						   enum termsetting termsetting)
 {
 	if (termsetting >= num_termsettings)
 		return NULL;

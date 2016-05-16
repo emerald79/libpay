@@ -148,7 +148,7 @@ struct emv_ep_terminal_data {
 	const char *merchant_name_and_location;
 };
 
-struct termset {
+struct emv_ep_terminal_settings {
 	struct emv_ep_terminal_data	*terminal_data;
 	struct emv_ep_autorun		 autorun;
 	struct emv_ep_combination	*combination_sets;
@@ -174,7 +174,8 @@ typedef int (*emv_ep_wrapper_register_kernel_t)(struct emv_ep_wrapper *wrapper,
 typedef int (*emv_ep_wrapper_setup_t)(struct emv_ep_wrapper *wrapper,
 				      struct emv_hal *lt,
 				      struct emv_chk *chk,
-				      const struct termset *termsetting);
+				      const struct emv_ep_terminal_settings
+							    *terminal_settings);
 
 typedef int (*emv_ep_wrapper_activate_t)(struct emv_ep_wrapper *wrapper,
 					 const struct emv_txn *txn);

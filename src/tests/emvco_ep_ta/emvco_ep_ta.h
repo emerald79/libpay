@@ -826,7 +826,8 @@ enum termsetting {
 	num_termsettings
 };
 
-const struct termset *term_get_setting(enum termsetting termsetting);
+const struct emv_ep_terminal_settings *term_get_setting(
+						  enum termsetting termsetting);
 
 bool term_is_kernel_supported(enum termsetting termsetting,
 				   const void *kernel_id, size_t kernel_id_len);

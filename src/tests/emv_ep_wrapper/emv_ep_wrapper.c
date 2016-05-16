@@ -259,8 +259,8 @@ static struct tlv *get_terminal_data(struct emv_ep_terminal_data *data)
 	return term_data;
 };
 
-static int get_termsetting(const struct termset *settings, void *buffer,
-								   size_t *size)
+static int get_termsetting(const struct emv_ep_terminal_settings *settings,
+						     void *buffer, size_t *size)
 {
 	struct tlv *tlv = NULL, *tail = NULL;
 	int i = 0, rc = TLV_RC_OK;
@@ -309,7 +309,8 @@ struct libemv_ep_wrapper {
 };
 
 static int libemv_ep_wrapper_setup(struct libemv_ep_wrapper *self,
-	 struct emv_hal *lt, struct emv_chk *chk, const struct termset *termset)
+					struct emv_hal *lt, struct emv_chk *chk,
+				 const struct emv_ep_terminal_settings *termset)
 {
 	uint8_t cfg[8192];
 	size_t cfg_sz = sizeof(cfg);
