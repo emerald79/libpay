@@ -22,6 +22,7 @@
 
 #include <libpay/tlv.h>
 #include <libpay/emv.h>
+#include <libpay/test.h>
 
 /*-----------------------------------------------------------------------------+
 | Global Data								       |
@@ -448,29 +449,6 @@ extern uint32_t transaction_sequence_counter;
 /*-----------------------------------------------------------------------------+
 | Test Checker (chk)							       |
 +-----------------------------------------------------------------------------*/
-
-struct chk;
-
-struct chk_ops {
-	void (*ep_start)(struct chk *chk);
-	void (*ep_restart)(struct chk *chk);
-	void (*ep_txn_end)(struct chk *chk);
-	void (*field_on)(struct chk *chk);
-	void (*field_off)(struct chk *chk, int hold_time);
-	void (*select)(struct chk *chk, const uint8_t *data, size_t len);
-	void (*gpo_data)(struct chk *chk, struct tlv *gpo_data);
-	void (*ui_request)(struct chk *chk,
-				       const struct emv_ui_request *ui_request);
-	void (*outcome)(struct chk *chk,
-				       const struct emv_outcome_parms *outcome);
-	bool (*pass_criteria_met)(struct chk *chk);
-	void (*free)(struct chk *chk);
-};
-
-struct chk {
-	const struct chk_ops *ops;
-};
-
 
 enum pass_criteria {
 	pc_2ea_001_00_case01 =	 0,

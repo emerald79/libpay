@@ -26,40 +26,6 @@
 
 #include "emvco_ep_ta.h"
 
-struct emv_ep_config_flags {
-	bool	status_check_support:1;
-	bool	zero_amount_allowed:1;
-	bool	reader_ctls_txn_limit:1;
-	bool	reader_ctls_floor_limit:1;
-	bool	terminal_floor_limit:1;
-	bool	reader_cvm_reqd_limit:1;
-	bool	ttq:1;
-	bool	ext_selection_support:1;
-};
-
-struct emv_ep_config {
-	struct emv_ep_config_flags present;
-	struct emv_ep_config_flags enabled;
-	uint64_t		   reader_ctls_txn_limit;
-	uint64_t		   reader_ctls_floor_limit;
-	uint64_t		   terminal_floor_limit;
-	uint64_t		   reader_cvm_reqd_limit;
-	uint8_t			   ttq[4];
-};
-
-struct emv_ep_aid_kernel {
-	uint8_t aid[16];
-	size_t  aid_len;
-	uint8_t kernel_id[8];
-	size_t  kernel_id_len;
-};
-
-struct emv_ep_combination {
-	enum emv_txn_type txn_types[4];
-	struct emv_ep_aid_kernel combinations[63];
-	struct emv_ep_config config;
-};
-
 struct emv_ep_combination termset1[] = {
 	{
 		.txn_types = {

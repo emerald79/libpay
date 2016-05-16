@@ -146,7 +146,6 @@ static int jsonrpc_session_receive(struct jsonrpc_session *session, void *in,
 	struct json_object *request = NULL, *response = NULL;
 	unsigned char *reply = NULL;
 	size_t reply_len = 0;
-	int rc = 0;
 
 	request = json_tokener_parse_ex(tok, (const char *)in, (int)len);
 	if (!request) {
