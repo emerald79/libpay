@@ -308,10 +308,9 @@ struct libemv_ep_wrapper {
 	struct chk		*chk;
 };
 
-static int libemv_ep_wrapper_setup(struct emv_ep_wrapper *wrap,
+static int libemv_ep_wrapper_setup(struct libemv_ep_wrapper *self,
 	     struct emv_hal *lt, struct chk *chk, const struct termset *termset)
 {
-	struct libemv_ep_wrapper *self = (struct libemv_ep_wrapper *)wrap;
 	uint8_t cfg[8192];
 	size_t cfg_sz = sizeof(cfg);
 	int rc = EMV_RC_OK;
@@ -335,21 +334,17 @@ done:
 	return rc;
 }
 
-static int libemv_ep_wrapper_register_kernel(struct emv_ep_wrapper *wrap,
+static int libemv_ep_wrapper_register_kernel(struct libemv_ep_wrapper *self,
 			    struct emv_kernel *kernel, const uint8_t *kernel_id,
 			     size_t kernel_id_len, const uint8_t app_ver_num[2])
 {
-	struct libemv_ep_wrapper *self = (struct libemv_ep_wrapper *)wrap;
-
 	return emv_ep_register_kernel(self->ep, kernel, kernel_id,
 						    kernel_id_len, app_ver_num);
 }
 
-static int libemv_ep_wrapper_activate(struct emv_ep_wrapper *wrap,
+static int libemv_ep_wrapper_activate(struct libemv_ep_wrapper *self,
 						      const struct emv_txn *txn)
 {
-	struct libemv_ep_wrapper *self = (struct libemv_ep_wrapper *)wrap;
-
 	const struct emv_autorun *autorun = emv_ep_get_autorun(self->ep);
 	enum emv_start start_at = autorun->enabled ? start_b : start_a;
 	struct emv_outcome_parms outcome;
@@ -463,10 +458,8 @@ done:
 	return rc;
 }
 
-static void libemv_ep_wrapper_free(struct emv_ep_wrapper *wrap)
+static void libemv_ep_wrapper_free(struct libemv_ep_wrapper *self)
 {
-	struct libemv_ep_wrapper *self = (struct libemv_ep_wrapper *)wrap;
-
 	if (self->ep)
 		emv_ep_free(self->ep);
 
@@ -475,10 +468,12 @@ static void libemv_ep_wrapper_free(struct emv_ep_wrapper *wrap)
 }
 
 static const struct emv_ep_wrapper_ops libemv_ep_wrapper_ops = {
-	.register_kernel = libemv_ep_wrapper_register_kernel,
-	.setup		 = libemv_ep_wrapper_setup,
-	.activate	 = libemv_ep_wrapper_activate,
-	.free		 = libemv_ep_wrapper_free
+	.register_kernel = (emv_ep_wrapper_register_kernel_t)
+					      libemv_ep_wrapper_register_kernel,
+	.setup		 = (emv_ep_wrapper_setup_t)libemv_ep_wrapper_setup,
+	.activate	 = (emv_ep_wrapper_activate_t)
+						     libemv_ep_wrapper_activate,
+	.free		 = (emv_ep_wrapper_free_t)libemv_ep_wrapper_free
 };
 
 struct emv_ep_wrapper *new_emv_ep_wrapper(void)
@@ -491,7 +486,7 @@ struct emv_ep_wrapper *new_emv_ep_wrapper(void)
 
 	self->ep = emv_ep_new(log4c_category);
 	if (!self->ep) {
-		libemv_ep_wrapper_free((struct emv_ep_wrapper *)self);
+		emv_ep_wrapper_free(self);
 		return NULL;
 	}
 

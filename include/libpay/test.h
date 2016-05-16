@@ -124,22 +124,28 @@ struct termset {
 
 struct emv_ep_wrapper;
 
+typedef int (*emv_ep_wrapper_register_kernel_t)(struct emv_ep_wrapper *wrapper,
+						struct emv_kernel *kernel,
+						const uint8_t *kernel_id,
+						size_t kernel_id_len,
+						const uint8_t app_ver_num[2]);
+
+typedef int (*emv_ep_wrapper_setup_t)(struct emv_ep_wrapper *wrapper,
+				      struct emv_hal *lt,
+				      struct chk *chk,
+				      const struct termset *termsetting);
+
+typedef int (*emv_ep_wrapper_activate_t)(struct emv_ep_wrapper *wrapper,
+					 const struct emv_txn *txn);
+
+typedef int (*emv_ep_wrapper_free_t)(struct emv_ep_wrapper *wrapper);
+
+
 struct emv_ep_wrapper_ops {
-	int  (*register_kernel)	(struct emv_ep_wrapper *wrapper,
-				 struct emv_kernel *kernel,
-				 const uint8_t *kernel_id,
-				 size_t kernel_id_len,
-				 const uint8_t app_ver_num[2]);
-
-	int  (*setup)		(struct emv_ep_wrapper *wrapper,
-				 struct emv_hal *lt,
-				 struct chk *chk,
-				 const struct termset *termsetting);
-
-	int  (*activate)	(struct emv_ep_wrapper *wrapper,
-				 const struct emv_txn *txn);
-
-	void (*free)		(struct emv_ep_wrapper *wrapper);
+	emv_ep_wrapper_register_kernel_t register_kernel;
+	emv_ep_wrapper_setup_t		 setup;
+	emv_ep_wrapper_activate_t	 activate;
+	emv_ep_wrapper_free_t		 free;
 };
 
 struct emv_ep_wrapper {
