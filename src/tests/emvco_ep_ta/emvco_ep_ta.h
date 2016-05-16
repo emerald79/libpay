@@ -24,11 +24,6 @@
 #include <libpay/emv.h>
 #include <libpay/test.h>
 
-/*-----------------------------------------------------------------------------+
-| Global Data								       |
-+-----------------------------------------------------------------------------*/
-
-extern uint32_t transaction_sequence_counter;
 
 /*-----------------------------------------------------------------------------+
 | Helper Macros                                                                |
@@ -803,7 +798,7 @@ struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 #define ACQUIRER_IDENTIFIER		((const uint8_t [])		       \
 					 { 0x00, 0x01, 0x23, 0x45, 0x67, 0x89 })
 #define MERCHANT_CATEGORY_CODE		((const uint8_t []){ 0x30, 0x08 })
-#define MERCHANT_IDENTIFIER		"Lufthansa AG   "
+#define MERCHANT_IDENTIFIER		"ACME, Inc.	"
 #define TERMINAL_COUNTRY_CODE		((const uint8_t []){ 0x02, 0x76 })
 #define TERMINAL_IDENTIFICATION		"COUNTER3"
 #define TERMINAL_CAPABILITIES		((const uint8_t []){ 0xDE, 0xAD, 0x22 })
@@ -811,7 +806,8 @@ struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 #define POS_ENTRY_MODE			0x05
 #define ADDITIONAL_TERMINAL_CAPABILITIES ((const uint8_t [])		       \
 					       { 0x02, 0x00, 0x00, 0x00, 0x00 })
-#define MERCHANT_NAME_AND_LOCATION	"Lufthansa - Rhein-Main Airport"
+#define MERCHANT_NAME_AND_LOCATION	"ACME Rocket-Powered Products, Inc., " \
+						     "Fairfield, New Jersey, US"
 #define INTERFACE_DEVICE_SERIAL_NUMBER  "0000FE16"
 
 enum termsetting {
@@ -1084,13 +1080,6 @@ struct outcome_gpo_resp {
 	uint16_t removal_timeout;
 } __attribute__((packed));
 
-void gpo_outcome_to_outcome(const struct outcome_gpo_resp *gpo_outcome,
-					     struct emv_outcome_parms *outcome);
-
-void outcome_to_gpo_outcome(const struct emv_outcome_parms *outcome,
-					  struct outcome_gpo_resp *gpo_outcome);
-
-
 /*-----------------------------------------------------------------------------+
 | UI Request data as provided by Lower Tester to Test Kernel in		       |
 | EMV_ID_UI_REQ_ON_OUTCOME and EMV_ID_UI_REQ_ON_RESTART type TLV nodes.	       |
@@ -1105,12 +1094,5 @@ struct ui_req_gpo_resp {
 	uint8_t	 value[6];
 	uint8_t	 currency_code[2];
 } __attribute__((packed));
-
-void gpo_ui_req_to_ui_req(const struct ui_req_gpo_resp *gpo_ui_req,
-						 struct emv_ui_request *ui_req);
-
-void ui_req_to_gpo_ui_req(const struct emv_ui_request *ui_req,
-					    struct ui_req_gpo_resp *gpo_ui_req);
-
 
 #endif					    /* ndef __LIBPAY__EMVCO_EP_TA_H__ */

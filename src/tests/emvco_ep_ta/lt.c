@@ -7310,6 +7310,35 @@ static struct tlv *tlv_get_ppse_entry(const struct ppse_entry *ent)
 	return tlv_ppse_entry;
 }
 
+static void outcome_to_gpo_outcome(const struct emv_outcome_parms *in,
+						   struct outcome_gpo_resp *out)
+{
+	memset(out, 0, sizeof(*out));
+	out->outcome		= (uint8_t)in->outcome;
+	out->start		= (uint8_t)in->start;
+	out->online_resp	= (uint8_t)in->online_response_type;
+	out->cvm		= (uint8_t)in->cvm;
+	out->alt_iface_pref	= (uint8_t)in->alternate_interface_pref;
+	out->receipt		= (uint8_t)in->receipt;
+	out->field_off_request	= in->present.field_off_request ?
+			     htons((uint16_t)in->field_off_hold_time) : 0xffffu;
+	out->removal_timeout	= htons((uint16_t)in->removal_timeout);
+}
+
+static void ui_req_to_gpo_ui_req(const struct emv_ui_request *in,
+						    struct ui_req_gpo_resp *out)
+{
+	memset(out, 0, sizeof(*out));
+	out->msg_id	= (uint8_t)in->msg_id;
+	out->status     = (uint8_t)in->status;
+	out->hold_time  = htons(in->hold_time);
+	out->value_qual = (uint8_t)in->value_qualifier;
+	memcpy(out->lang_pref, in->lang_pref, sizeof(in->lang_pref));
+	memcpy(out->value, in->value, sizeof(in->value));
+	memcpy(out->currency_code, in->currency_code,
+						     sizeof(in->currency_code));
+}
+
 static int ber_get_gpo_resp(const struct gpo_resp *resp, void *ber,
 								 size_t *ber_sz)
 {

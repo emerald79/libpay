@@ -308,10 +308,6 @@ struct libemv_ep_wrapper {
 	struct chk		*chk;
 };
 
-static void libemv_ep_wrapper_teardown(struct emv_ep_wrapper *wrap)
-{
-}
-
 static int libemv_ep_wrapper_setup(struct emv_ep_wrapper *wrap,
 	     struct emv_hal *lt, struct chk *chk, const struct termset *termset)
 {
@@ -336,9 +332,6 @@ static int libemv_ep_wrapper_setup(struct emv_ep_wrapper *wrap,
 	self->chk = chk;
 
 done:
-	if (EMV_RC_OK != rc)
-		libemv_ep_wrapper_teardown(wrap);
-
 	return rc;
 }
 
@@ -474,8 +467,6 @@ static void libemv_ep_wrapper_free(struct emv_ep_wrapper *wrap)
 {
 	struct libemv_ep_wrapper *self = (struct libemv_ep_wrapper *)wrap;
 
-	libemv_ep_wrapper_teardown(wrap);
-
 	if (self->ep)
 		emv_ep_free(self->ep);
 
@@ -487,7 +478,6 @@ static const struct emv_ep_wrapper_ops libemv_ep_wrapper_ops = {
 	.register_kernel = libemv_ep_wrapper_register_kernel,
 	.setup		 = libemv_ep_wrapper_setup,
 	.activate	 = libemv_ep_wrapper_activate,
-	.teardown	 = libemv_ep_wrapper_teardown,
 	.free		 = libemv_ep_wrapper_free
 };
 

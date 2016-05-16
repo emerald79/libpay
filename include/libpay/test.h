@@ -139,8 +139,6 @@ struct emv_ep_wrapper_ops {
 	int  (*activate)	(struct emv_ep_wrapper *wrapper,
 				 const struct emv_txn *txn);
 
-	void (*teardown)	(struct emv_ep_wrapper *wrapper);
-
 	void (*free)		(struct emv_ep_wrapper *wrapper);
 };
 
@@ -161,10 +159,6 @@ struct emv_ep_wrapper {
 #define emv_ep_wrapper_activate(WRAPPER, TXN)				       \
 	(((struct emv_ep_wrapper *)(WRAPPER))->ops->activate(		       \
 				     (struct emv_ep_wrapper *)(WRAPPER), (TXN)))
-
-#define emv_ep_wrapper_teardown(WRAPPER)				       \
-	(((struct emv_ep_wrapper *)(WRAPPER))->ops->teardown(		       \
-					    (struct emv_ep_wrapper *)(WRAPPER)))
 
 #define emv_ep_wrapper_free(WRAPPER)					       \
 	(((struct emv_ep_wrapper *)(WRAPPER))->ops->free(		       \
