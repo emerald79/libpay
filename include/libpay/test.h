@@ -137,7 +137,7 @@ struct emv_ep_wrapper_ops {
 				 const struct termset *termsetting);
 
 	int  (*activate)	(struct emv_ep_wrapper *wrapper,
-				 struct emv_txn *txn);
+				 const struct emv_txn *txn);
 
 	void (*teardown)	(struct emv_ep_wrapper *wrapper);
 
@@ -148,11 +148,28 @@ struct emv_ep_wrapper {
 	const struct emv_ep_wrapper_ops *ops;
 };
 
-extern struct emv_ep_wrapper *new_emv_ep_wrapper(void);
+#define emv_ep_wrapper_register_kernel(WRAPPER, KERNEL, KERNEL_ID,	       \
+						    KERNEL_ID_LEN, APP_VER_NUM)\
+	(((struct emv_ep_wrapper *)(WRAPPER))->ops->register_kernel(	       \
+				  (struct emv_ep_wrapper *)(WRAPPER), (KERNEL),\
+				   (KERNEL_ID), (KERNEL_ID_LEN), (APP_VER_NUM)))
 
-static inline void emv_ep_wrapper_free(struct emv_ep_wrapper *wrapper)
-{
-	wrapper->ops->free(wrapper);
-}
+#define emv_ep_wrapper_setup(WRAPPER, LT, CHK, TERMSETTING)		       \
+	(((struct emv_ep_wrapper *)(WRAPPER))->ops->setup(		       \
+		(struct emv_ep_wrapper *)(WRAPPER), (LT), (CHK), (TERMSETTING)))
+
+#define emv_ep_wrapper_activate(WRAPPER, TXN)				       \
+	(((struct emv_ep_wrapper *)(WRAPPER))->ops->activate(		       \
+				     (struct emv_ep_wrapper *)(WRAPPER), (TXN)))
+
+#define emv_ep_wrapper_teardown(WRAPPER)				       \
+	(((struct emv_ep_wrapper *)(WRAPPER))->ops->teardown(		       \
+					    (struct emv_ep_wrapper *)(WRAPPER)))
+
+#define emv_ep_wrapper_free(WRAPPER)					       \
+	(((struct emv_ep_wrapper *)(WRAPPER))->ops->free(		       \
+					    (struct emv_ep_wrapper *)(WRAPPER)))
+
+extern struct emv_ep_wrapper *new_emv_ep_wrapper(void);
 
 #endif						   /* ndef __LIBPAY__TEST_H__ */

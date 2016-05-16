@@ -830,7 +830,7 @@ enum termsetting {
 	num_termsettings
 };
 
-int term_get_setting(enum termsetting termsetting, void *buffer, size_t *size);
+const struct termset *term_get_setting(enum termsetting termsetting);
 
 bool term_is_kernel_supported(enum termsetting termsetting,
 				   const void *kernel_id, size_t kernel_id_len);

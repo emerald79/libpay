@@ -29,7 +29,7 @@ static const char log4c_category[] = "libemv_ep_wrapper";
 static uint32_t transaction_sequence_counter;
 
 /*-----------------------------------------------------------------------------+
-| Helpers								       |
+| Helpers to convert Termsettings to the corresponding Entry Point Configs     |
 +-----------------------------------------------------------------------------*/
 
 static uint8_t get_txn_type(enum emv_txn_type txn_type)
@@ -290,39 +290,11 @@ static int get_termsetting(const struct termset *settings, void *buffer,
 	}
 
 	rc = tlv_encode(tlv, buffer, size);
-#if 0
-	if (rc == TLV_RC_OK) {
-		char hex[2 * *size + 1];
 
-		printf("CONFIG: '%s'\n", libtlv_bin_to_hex(buffer, *size, hex));
-	}
-#endif
 done:
 	tlv_free(tlv);
 
 	return rc;
-}
-
-bool termset_is_kernel_supported(struct termset *settings,
-				    const void *kernel_id, size_t kernel_id_len)
-{
-	int i;
-
-	for (i = 0; i < settings->num_combination_sets; i++) {
-		struct emv_ep_aid_kernel *aid_kernel;
-
-		for (aid_kernel = settings->combination_sets[i].combinations;
-		     aid_kernel->aid_len;
-		     aid_kernel++) {
-
-			if ((kernel_id_len == aid_kernel->kernel_id_len) &&
-			    (!memcmp(kernel_id, aid_kernel->kernel_id,
-								kernel_id_len)))
-				return true;
-		}
-	}
-
-	return false;
 }
 
 /*-----------------------------------------------------------------------------+
@@ -381,16 +353,16 @@ static int libemv_ep_wrapper_register_kernel(struct emv_ep_wrapper *wrap,
 }
 
 static int libemv_ep_wrapper_activate(struct emv_ep_wrapper *wrap,
-							    struct emv_txn *txn)
+						      const struct emv_txn *txn)
 {
 	struct libemv_ep_wrapper *self = (struct libemv_ep_wrapper *)wrap;
 
-	bool autorun = emv_ep_get_autorun(self->ep)->enabled;
-	enum emv_start start_at = autorun ? start_b : start_a;
+	const struct emv_autorun *autorun = emv_ep_get_autorun(self->ep);
+	enum emv_start start_at = autorun->enabled ? start_b : start_a;
 	struct emv_outcome_parms outcome;
 	int rc = EMV_RC_OK;
 
-	if (autorun) {
+	if (autorun->enabled) {
 		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.6"); */
 		/* If the value of the POS System configuration parameter
 		 * Autorun is 'Yes', then the reader shall do all of the
@@ -414,6 +386,8 @@ static int libemv_ep_wrapper_activate(struct emv_ep_wrapper *wrap,
 		rc = emv_ep_ui_request(self->ep, &present_card);
 		if (rc != EMV_RC_OK)
 			goto done;
+
+		txn = &autorun->txn;
 	} else {
 		/* REQUIREMENT(EMV_CTLS_BOOK_A_V2_5, "8.1.1.5"); */
 		/* If the value of the POS System configuration parameter
@@ -452,13 +426,6 @@ static int libemv_ep_wrapper_activate(struct emv_ep_wrapper *wrap,
 		goto done;
 
 	self->chk->ops->outcome(self->chk, &outcome);
-#if 0
-	if (outcome.data_record.len) {
-		char hex[outcome.data_record.len * 2 + 1];
-		printf("DATA RECORD: '%s'\n", libtlv_bin_to_hex(
-		       outcome.data_record.data, outcome.data_record.len, hex));
-	}
-#endif
 
 	if (outcome.start != start_na) {
 		if ((outcome.online_response_type != ort_na) &&
