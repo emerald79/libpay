@@ -24,6 +24,7 @@ AC_CONFIG_FILES([
 	src/ted/Makefile
 	src/tlvdump/Makefile
 	src/tests/Makefile
+	src/tests/emv_ep_wrapper/Makefile
 	src/tests/libtlv_test/Makefile
 	src/tests/emvco_ep_ta/Makefile
 ])

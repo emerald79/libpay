@@ -1088,32 +1088,6 @@ struct emv_ep_combination termset13[] = {
 	}
 };
 
-struct emv_ep_autorun {
-	bool		  enabled;
-	enum emv_txn_type txn_type;
-	uint64_t	  amount_authorized;
-};
-
-struct emv_ep_terminal_data {
-	uint8_t	    acquirer_identifier[6];
-	uint8_t	    merchant_category_code[2];
-	char	    merchant_identifier[15];
-	uint8_t	    terminal_country_code[2];
-	char	    terminal_identification[8];
-	uint8_t	    terminal_type;
-	uint8_t	    pos_entry_mode;
-	uint8_t	    terminal_capabilities[3];
-	uint8_t	    additional_terminal_capabilities[5];
-	const char *merchant_name_and_location;
-};
-
-struct termset {
-	struct emv_ep_terminal_data	*terminal_data;
-	struct emv_ep_autorun		 autorun;
-	struct emv_ep_combination	*combination_sets;
-	size_t				 num_combination_sets;
-};
-
 struct emv_ep_terminal_data terminal_data = {
 	.acquirer_identifier		  = ACQUIRER_IDENTIFIER,
 	.merchant_category_code		  = MERCHANT_CATEGORY_CODE,

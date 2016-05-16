@@ -90,10 +90,32 @@ struct emv_ep_combination {
 	struct emv_ep_config config;
 };
 
-struct emv_ep_termsetting {
-	struct emv_ep_combination *setting;
-	size_t num;
+struct emv_ep_autorun {
+	bool		  enabled;
+	enum emv_txn_type txn_type;
+	uint64_t	  amount_authorized;
 };
+
+struct emv_ep_terminal_data {
+	uint8_t	    acquirer_identifier[6];
+	uint8_t	    merchant_category_code[2];
+	char	    merchant_identifier[15];
+	uint8_t	    terminal_country_code[2];
+	char	    terminal_identification[8];
+	uint8_t	    terminal_type;
+	uint8_t	    pos_entry_mode;
+	uint8_t	    terminal_capabilities[3];
+	uint8_t	    additional_terminal_capabilities[5];
+	const char *merchant_name_and_location;
+};
+
+struct termset {
+	struct emv_ep_terminal_data	*terminal_data;
+	struct emv_ep_autorun		 autorun;
+	struct emv_ep_combination	*combination_sets;
+	size_t				 num_combination_sets;
+};
+
 
 /*-----------------------------------------------------------------------------+
 | Interface for wrappers around entry point implementations, which are to be   |
@@ -103,25 +125,27 @@ struct emv_ep_termsetting {
 struct emv_ep_wrapper;
 
 struct emv_ep_wrapper_ops {
-	int  (*setup)	 (struct emv_ep_wrapper *wrapper,
-			  struct emv_hal *lt,
-			  struct emv_kernel *tk,
-			  struct chk *chk,
-			  const struct emv_ep_termsetting *termsetting);
+	int  (*register_kernel)	(struct emv_ep_wrapper *wrapper,
+				 struct emv_kernel *kernel,
+				 const uint8_t *kernel_id,
+				 size_t kernel_id_len,
+				 const uint8_t app_ver_num[2]);
 
-	int  (*activate) (struct emv_ep_wrapper *wrapper,
-			  struct emv_txn *txn,
-			  const void *online_response,
-			  size_t len,
-			  struct emv_outcome_parms *outcome);
+	int  (*setup)		(struct emv_ep_wrapper *wrapper,
+				 struct emv_hal *lt,
+				 struct chk *chk,
+				 const struct termset *termsetting);
 
-	void (*teardown) (struct emv_ep_wrapper *wrapper);
+	int  (*activate)	(struct emv_ep_wrapper *wrapper,
+				 struct emv_txn *txn);
 
-	void (*free)	 (struct emv_ep_wrapper *wrapper);
+	void (*teardown)	(struct emv_ep_wrapper *wrapper);
+
+	void (*free)		(struct emv_ep_wrapper *wrapper);
 };
 
 struct emv_ep_wrapper {
-	struct emv_ep_wrapper_ops *ops;
+	const struct emv_ep_wrapper_ops *ops;
 };
 
 extern struct emv_ep_wrapper *new_emv_ep_wrapper(void);
