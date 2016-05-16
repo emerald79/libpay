@@ -476,7 +476,7 @@ static const struct emv_ep_wrapper_ops libemv_ep_wrapper_ops = {
 	.free		 = (emv_ep_wrapper_free_t)libemv_ep_wrapper_free
 };
 
-struct emv_ep_wrapper *new_emv_ep_wrapper(void)
+struct emv_ep_wrapper *emv_ep_wrapper_new(void)
 {
 	struct libemv_ep_wrapper *self = NULL;
 

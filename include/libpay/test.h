@@ -163,6 +163,8 @@ struct termset {
 
 struct emv_ep_wrapper;
 
+typedef struct emv_ep_wrapper *(*emv_ep_wrapper_new_t)(void);
+
 typedef int (*emv_ep_wrapper_register_kernel_t)(struct emv_ep_wrapper *wrapper,
 						struct emv_kernel *kernel,
 						const uint8_t *kernel_id,
@@ -208,7 +210,5 @@ struct emv_ep_wrapper {
 #define emv_ep_wrapper_free(WRAPPER)					       \
 	(((struct emv_ep_wrapper *)(WRAPPER))->ops->free(		       \
 					    (struct emv_ep_wrapper *)(WRAPPER)))
-
-extern struct emv_ep_wrapper *new_emv_ep_wrapper(void);
 
 #endif						   /* ndef __LIBPAY__TEST_H__ */

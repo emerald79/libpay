@@ -23,15 +23,18 @@
 #include <check.h>
 #include <log4c.h>
 #include <arpa/inet.h>
+#include <dlfcn.h>
 
 #include "emvco_ep_ta.h"
 
 static const char log4c_category[] = "emvco_ep_ta";
-static log4c_category_t *log_cat;
+
 static const struct tlv_id_to_fmt id_fmts[] = {
 	{ .id = EMV_ID_TEST_FLAGS, .fmt = fmt_b },
 	{ .id = NULL				}
 };
+
+static emv_ep_wrapper_new_t emv_ep_wrapper_new;
 
 struct emvco_ep_ta_tc_fixture {
 	struct emv_ep_wrapper	*ep;
@@ -89,7 +92,7 @@ static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
 	memset(fixture, 0, sizeof(*fixture));
 	fixture->chk = chk;
 
-	fixture->ep = new_emv_ep_wrapper();
+	fixture->ep = emv_ep_wrapper_new();
 	if (!fixture->ep) {
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;
@@ -3475,15 +3478,30 @@ int main(int argc, char **argv)
 {
 	Suite *suite;
 	SRunner *srunner;
+	void *plugin;
 	int failed;
 
-	if (log4c_init()) {
-		fprintf(stderr, "log4c_init() failed!\n");
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s ENTRY_POINT_PLUGIN\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
-	log_cat = log4c_category_get(log4c_category);
+	plugin = dlopen(argv[1], RTLD_NOW);
+	if (!plugin) {
+		fprintf(stderr, "dlopen(%s) failed: %s\n", argv[1], dlerror());
+		return EXIT_FAILURE;
+	}
 
+	emv_ep_wrapper_new = (emv_ep_wrapper_new_t)dlsym(plugin,
+							  "emv_ep_wrapper_new");
+	if (!emv_ep_wrapper_new) {
+		fprintf(stderr, "dlsym(%s, emv_ep_wrapper_new) failed: %s\n",
+							    argv[1], dlerror());
+		dlclose(plugin);
+		return EXIT_FAILURE;
+	}
+
+	log4c_init();
 	libtlv_init(log4c_category);
 	libtlv_register_fmts(id_fmts);
 	libtlv_register_fmts(libemv_get_id_fmts());
@@ -3497,6 +3515,7 @@ int main(int argc, char **argv)
 
 	libtlv_free_fmts();
 	log4c_fini();
+	dlclose(plugin);
 
 	return failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
