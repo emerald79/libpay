@@ -304,12 +304,12 @@ done:
 struct libemv_ep_wrapper {
 	struct emv_ep_wrapper	 base;
 	struct emv_ep		*ep;
+	struct emv_chk		*chk;
 	struct emv_hal		*lt;
-	struct chk		*chk;
 };
 
 static int libemv_ep_wrapper_setup(struct libemv_ep_wrapper *self,
-	     struct emv_hal *lt, struct chk *chk, const struct termset *termset)
+	 struct emv_hal *lt, struct emv_chk *chk, const struct termset *termset)
 {
 	uint8_t cfg[8192];
 	size_t cfg_sz = sizeof(cfg);
@@ -405,7 +405,7 @@ static int libemv_ep_wrapper_activate(struct libemv_ep_wrapper *self,
 			goto done;
 	}
 
-	self->chk->ops->ep_start(self->chk);
+	emv_chk_start(self->chk);
 
 	rc = emv_ep_activate(self->ep, start_at, txn,
 					++transaction_sequence_counter, NULL, 0,
@@ -413,7 +413,7 @@ static int libemv_ep_wrapper_activate(struct libemv_ep_wrapper *self,
 	if (rc != EMV_RC_OK)
 		goto done;
 
-	self->chk->ops->outcome(self->chk, &outcome);
+	emv_chk_outcome(self->chk, &outcome);
 
 	if (outcome.start != start_na) {
 		if ((outcome.online_response_type != ort_na) &&
@@ -435,7 +435,7 @@ static int libemv_ep_wrapper_activate(struct libemv_ep_wrapper *self,
 		if ((outcome.online_response_type != ort_emv_data) ||
 		    (outcome.data_record.len)) {
 
-			self->chk->ops->ep_restart(self->chk);
+			emv_chk_restart(self->chk);
 
 			rc = emv_ep_activate(self->ep, outcome.start, txn,
 						   transaction_sequence_counter,
@@ -444,7 +444,7 @@ static int libemv_ep_wrapper_activate(struct libemv_ep_wrapper *self,
 			if (rc != EMV_RC_OK)
 				goto done;
 
-			self->chk->ops->outcome(self->chk, &outcome);
+			emv_chk_outcome(self->chk, &outcome);
 		}
 	}
 
@@ -452,7 +452,7 @@ static int libemv_ep_wrapper_activate(struct libemv_ep_wrapper *self,
 	if (rc != EMV_RC_OK)
 		goto done;
 
-	self->chk->ops->ep_txn_end(self->chk);
+	emv_chk_txn_end(self->chk);
 
 done:
 	return rc;

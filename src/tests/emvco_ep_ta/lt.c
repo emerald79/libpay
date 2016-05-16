@@ -7475,7 +7475,7 @@ struct lt {
 	int			  state;
 	int                       selected_aid;
 	int			  i_gpo_resp;
-	struct chk		 *checker;
+	struct emv_chk		 *checker;
 	log4c_category_t	 *log_cat;
 	struct lt_app		 *apps[8];
 };
@@ -7489,8 +7489,7 @@ int lt_field_on(struct emv_hal *hal)
 {
 	struct lt *lt = (struct lt *)hal;
 
-	if (lt->checker && lt->checker->ops->field_on)
-		lt->checker->ops->field_on(lt->checker);
+	emv_chk_field_on(lt->checker);
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 						     "%s(): success", __func__);
@@ -7501,8 +7500,7 @@ int lt_field_off(struct emv_hal *hal, int hold_time)
 {
 	struct lt *lt = (struct lt *)hal;
 
-	if (lt->checker && lt->checker->ops->field_off)
-		lt->checker->ops->field_off(lt->checker, hold_time);
+	emv_chk_field_off(lt->checker, hold_time);
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 			  "%s(hold_time: %d ms): success", __func__, hold_time);
@@ -7558,8 +7556,7 @@ static int lt_select_application(struct lt *lt, uint8_t p1, uint8_t p2,
 	size_t i_aid;
 	int rc = EMV_RC_OK;
 
-	if (lt->checker && lt->checker->ops->select)
-		lt->checker->ops->select(lt->checker, data, lc);
+	emv_chk_select(lt->checker, data, lc);
 
 	if ((lc == strlen(DF_NAME_2PAY_SYS_DDF01)) &&
 	    !memcmp(data, DF_NAME_2PAY_SYS_DDF01, lc)) {
@@ -7623,6 +7620,11 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 	const struct gpo_resp *gpo_resp = NULL;
 	int rc = EMV_RC_OK;
 	char hex[lc * 2 + 1];
+	struct tlv *tlv = NULL;
+	uint8_t ber_tlv[2048];
+	size_t ber_tlv_len = sizeof(ber_tlv);
+	char ber_tlv_hex[4096];
+	const struct aid_fci *aid_fci = NULL;
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 						"%s(PDOL data: '%s')", __func__,
@@ -7639,39 +7641,31 @@ static int lt_get_processing_options(struct lt *lt, uint8_t p1, uint8_t p2,
 		goto done;
 	}
 
-	if (lt->checker && lt->checker->ops->gpo_data) {
-		struct tlv *tlv = NULL;
-		uint8_t ber_tlv[2048];
-		size_t ber_tlv_len = sizeof(ber_tlv);
-		char ber_tlv_hex[4096];
-		const struct aid_fci *aid_fci = NULL;
 
-		aid_fci = &ltsetting[lt->setting].aid_fci[lt->selected_aid];
+	aid_fci = &ltsetting[lt->setting].aid_fci[lt->selected_aid];
 
-		rc = dol_and_del_to_tlv(aid_fci->pdol, aid_fci->pdol_len, data,
-								      lc, &tlv);
-		if (rc != EMV_RC_OK) {
-			log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
-					"%s() dol_and_del_to_tlv failed. rc %d",
-								  __func__, rc);
-			goto done;
-		}
+	rc = dol_and_del_to_tlv(aid_fci->pdol, aid_fci->pdol_len, data, lc,
+									  &tlv);
+	if (rc != EMV_RC_OK) {
+		log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
+			 "%s() dol_and_del_to_tlv failed. rc %d", __func__, rc);
+		goto done;
+	}
 
-		rc = tlv_encode(tlv, ber_tlv, &ber_tlv_len);
-		if (rc != TLV_RC_OK) {
-			log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
+	rc = tlv_encode(tlv, ber_tlv, &ber_tlv_len);
+	if (rc != TLV_RC_OK) {
+		log4c_category_log(lt->log_cat, LOG4C_PRIORITY_ERROR,
 				 "%s() tlv_encode failed. rc %d", __func__, rc);
-				goto done;
-		}
+		goto done;
+	}
 
-		log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
+	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE,
 					"%s(): TLV(PDOL, DEL) = '%s'", __func__,
 			  libtlv_bin_to_hex(ber_tlv, ber_tlv_len, ber_tlv_hex));
 
-		lt->checker->ops->gpo_data(lt->checker, tlv);
+	emv_chk_gpo_data(lt->checker, tlv);
 
-		tlv_free(tlv);
-	}
+	tlv_free(tlv);
 
 done:
 	return rc;
@@ -7773,8 +7767,7 @@ void lt_ui_request(struct emv_hal *hal, const struct emv_ui_request *ui_request)
 {
 	struct lt *lt = (struct lt *)hal;
 
-	if (lt->checker && lt->checker->ops->ui_request)
-		lt->checker->ops->ui_request(lt->checker, ui_request);
+	emv_chk_ui_request(lt->checker, ui_request);
 }
 
 void lt_get_interface_device_serial_number(struct emv_hal *hal, char sn[8])
@@ -7793,7 +7786,7 @@ const struct emv_hal_ops lt_ops  = {
 	.ui_request		  = lt_ui_request
 };
 
-struct emv_hal *lt_new(enum ltsetting ltsetting, struct chk *checker,
+struct emv_hal *lt_new(enum ltsetting ltsetting, struct emv_chk *checker,
 					   const char *log4c_category, int mode)
 {
 	struct lt *lt = NULL;

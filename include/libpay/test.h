@@ -30,27 +30,66 @@
 | Entry Point Test Pass Criteria Checker Interface			       |
 +-----------------------------------------------------------------------------*/
 
-struct chk;
+struct emv_chk;
 
-struct chk_ops {
-	void (*ep_start)(struct chk *chk);
-	void (*ep_restart)(struct chk *chk);
-	void (*ep_txn_end)(struct chk *chk);
-	void (*field_on)(struct chk *chk);
-	void (*field_off)(struct chk *chk, int hold_time);
-	void (*select)(struct chk *chk, const uint8_t *data, size_t len);
-	void (*gpo_data)(struct chk *chk, struct tlv *gpo_data);
-	void (*ui_request)(struct chk *chk,
+struct emv_chk_ops {
+	void (*start)		 (struct emv_chk *chk);
+	void (*restart)		 (struct emv_chk *chk);
+	void (*txn_end)		 (struct emv_chk *chk);
+	void (*field_on)	 (struct emv_chk *chk);
+	void (*field_off)	 (struct emv_chk *chk, int hold_time);
+	void (*select)		 (struct emv_chk *chk, const uint8_t *data,
+								    size_t len);
+	void (*gpo_data)	 (struct emv_chk *chk, struct tlv *gpo_data);
+	void (*ui_request)	 (struct emv_chk *chk,
 				       const struct emv_ui_request *ui_request);
-	void (*outcome)(struct chk *chk,
+	void (*outcome)		 (struct emv_chk *chk,
 				       const struct emv_outcome_parms *outcome);
-	bool (*pass_criteria_met)(struct chk *chk);
-	void (*free)(struct chk *chk);
+	bool (*pass_criteria_met)(struct emv_chk *chk);
+	void (*free)		 (struct emv_chk *chk);
 };
 
-struct chk {
-	const struct chk_ops *ops;
+struct emv_chk {
+	const struct emv_chk_ops *ops;
 };
+
+#define emv_chk_start(CHK)						       \
+		(((struct emv_chk *)(CHK))->ops->start((struct emv_chk *)(CHK)))
+
+#define emv_chk_restart(CHK)						       \
+	      (((struct emv_chk *)(CHK))->ops->restart((struct emv_chk *)(CHK)))
+
+#define emv_chk_txn_end(CHK)						       \
+	      (((struct emv_chk *)(CHK))->ops->txn_end((struct emv_chk *)(CHK)))
+
+#define emv_chk_field_on(CHK)						       \
+	     (((struct emv_chk *)(CHK))->ops->field_on((struct emv_chk *)(CHK)))
+
+#define emv_chk_field_off(CHK, HOLDTIME)				       \
+	    (((struct emv_chk *)(CHK))->ops->field_off((struct emv_chk *)(CHK),\
+								    (HOLDTIME)))
+
+#define emv_chk_select(CHK, DATA, LEN)					       \
+	    (((struct emv_chk *)(CHK))->ops->select((struct emv_chk *)(CHK),\
+								 (DATA), (LEN)))
+#define emv_chk_gpo_data(CHK, DATA)					       \
+	    (((struct emv_chk *)(CHK))->ops->gpo_data((struct emv_chk *)(CHK),\
+									(DATA)))
+
+#define emv_chk_ui_request(CHK, UI_REQ)					       \
+	    (((struct emv_chk *)(CHK))->ops->ui_request(		       \
+					     (struct emv_chk *)(CHK), (UI_REQ)))
+
+#define emv_chk_outcome(CHK, OUTCOME)					       \
+	      (((struct emv_chk *)(CHK))->ops->outcome((struct emv_chk *)(CHK),\
+								     (OUTCOME)))
+
+#define emv_chk_pass_criteria_met(CHK)					       \
+			    (((struct emv_chk *)(CHK))->ops->pass_criteria_met(\
+						       (struct emv_chk *)(CHK)))
+
+#define emv_chk_free(CHK)						       \
+		 (((struct emv_chk *)(CHK))->ops->free((struct emv_chk *)(CHK)))
 
 /*-----------------------------------------------------------------------------+
 | Terminal Settings (aka Entry Point Configuration)			       |
@@ -132,7 +171,7 @@ typedef int (*emv_ep_wrapper_register_kernel_t)(struct emv_ep_wrapper *wrapper,
 
 typedef int (*emv_ep_wrapper_setup_t)(struct emv_ep_wrapper *wrapper,
 				      struct emv_hal *lt,
-				      struct chk *chk,
+				      struct emv_chk *chk,
 				      const struct termset *termsetting);
 
 typedef int (*emv_ep_wrapper_activate_t)(struct emv_ep_wrapper *wrapper,

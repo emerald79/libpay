@@ -35,8 +35,8 @@ static const struct tlv_id_to_fmt id_fmts[] = {
 
 struct emvco_ep_ta_tc_fixture {
 	struct emv_ep_wrapper	*ep;
+	struct emv_chk		*chk;
 	struct emv_hal		*lt;
-	struct chk		*chk;
 	struct emv_kernel	*tk[18];
 };
 
@@ -59,8 +59,8 @@ static void emvco_ep_ta_tc_fixture_teardown(
 }
 
 static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
-	struct chk *chk, enum termsetting termsetting, enum ltsetting ltsetting,
-								    int lt_mode)
+			      struct emv_chk *chk, enum termsetting termsetting,
+					  enum ltsetting ltsetting, int lt_mode)
 {
 	uint8_t app_ver_num[2] = TK_APPLICATION_VERSION_NUMBER;
 	struct tk_id tk_id[18] = {
@@ -138,7 +138,7 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 				      const struct emv_txn *txn, size_t num_txn)
 {
 	struct emvco_ep_ta_tc_fixture fixture;
-	struct chk *chk = NULL;
+	struct emv_chk *chk = NULL;
 	int rc = EMV_RC_OK, i_txn = 0;
 
 	chk = chk_pass_criteria_new(pc, log4c_category);
@@ -164,14 +164,12 @@ static int emvco_ep_ta_tc(enum termsetting termsetting,
 		}
 	}
 
-	if (!chk->ops->pass_criteria_met(chk))
+	if (!emv_chk_pass_criteria_met(chk))
 		rc = EMV_RC_FAIL;
 
 done:
 	emvco_ep_ta_tc_fixture_teardown(&fixture);
-
-	if (chk && chk->ops && chk->ops->free)
-		chk->ops->free(chk);
+	emv_chk_free(chk);
 
 	return rc;
 }
@@ -418,7 +416,7 @@ START_TEST(test_2EA_007_00)
 {
 	enum ltsetting ltset[3] = { ltsetting1_1, ltsetting1_2, ltsetting2_40 };
 	struct emvco_ep_ta_tc_fixture fixture;
-	struct chk *chk = NULL;
+	struct emv_chk *chk = NULL;
 	struct emv_txn txn;
 	int rc, i;
 
@@ -427,7 +425,6 @@ START_TEST(test_2EA_007_00)
 	txn.amount_authorized = 2;
 
 	chk = chk_pass_criteria_new(pc_2ea_007_00, log4c_category);
-	ck_assert(chk != NULL);
 
 	for (i = 0; i < 500; i++) {
 		rc = emvco_ep_ta_tc_fixture_setup(&fixture, chk,
@@ -451,10 +448,9 @@ START_TEST(test_2EA_007_00)
 		emvco_ep_ta_tc_fixture_teardown(&fixture);
 	}
 
-	ck_assert(chk->ops->pass_criteria_met(chk));
+	ck_assert(emv_chk_pass_criteria_met(chk));
 
-	if (chk && chk->ops && chk->ops->free)
-		chk->ops->free(chk);
+	emv_chk_free(chk);
 }
 END_TEST
 
@@ -2192,7 +2188,7 @@ static int emvco_ep_ta_tc_collision(enum termsetting termsetting,
 						     const struct emv_txn *txn)
 {
 	struct emvco_ep_ta_tc_fixture fixture;
-	struct chk *chk = NULL;
+	struct emv_chk *chk = NULL;
 	int rc;
 
 	chk = chk_pass_criteria_new(pc, log4c_category);
@@ -2212,11 +2208,10 @@ static int emvco_ep_ta_tc_collision(enum termsetting termsetting,
 
 	emvco_ep_ta_tc_fixture_teardown(&fixture);
 
-	if (!chk->ops->pass_criteria_met(chk))
+	if (!emv_chk_pass_criteria_met(chk))
 		rc = EMV_RC_FAIL;
 done:
-	if (chk && chk->ops && chk->ops->free)
-		chk->ops->free(chk);
+	emv_chk_free(chk);
 
 	return rc;
 }

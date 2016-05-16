@@ -24,7 +24,7 @@
 #include "emvco_ep_ta.h"
 
 struct checker {
-	const struct chk_ops *ops;
+	const struct emv_chk_ops *ops;
 
 	enum pass_criteria    pass_criteria;
 	bool		      pass_criteria_checked;
@@ -310,7 +310,8 @@ static bool check_unpredictable_numbers(struct checker *chk)
 	return true;
 }
 
-static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
+static void checker_select(struct emv_chk *checker, const uint8_t *data,
+								     size_t len)
 {
 	struct checker *chk = (struct checker *)checker;
 
@@ -1837,7 +1838,7 @@ static void checker_select(struct chk *checker, const uint8_t *data, size_t len)
 	}
 }
 
-static void checker_gpo_data(struct chk *checker, struct tlv *data)
+static void checker_gpo_data(struct emv_chk *checker, struct tlv *data)
 {
 	struct checker *chk = (struct checker *)checker;
 	uint8_t val[256];
@@ -3381,7 +3382,7 @@ static void checker_gpo_data(struct chk *checker, struct tlv *data)
 	}
 }
 
-static void checker_ep_start(struct chk *chk)
+static void checker_start(struct emv_chk *chk)
 {
 	struct checker *checker = (struct checker *)chk;
 
@@ -3420,7 +3421,7 @@ static void checker_ep_start(struct chk *chk)
 	}
 }
 
-static void checker_ep_restart(struct chk *chk)
+static void checker_restart(struct emv_chk *chk)
 {
 	struct checker *checker = (struct checker *)chk;
 
@@ -3467,21 +3468,21 @@ static void checker_ep_restart(struct chk *chk)
 	}
 }
 
-static void checker_field_on(struct chk *chk)
+static void checker_field_on(struct emv_chk *chk)
 {
 	struct checker *checker = (struct checker *)chk;
 
 	checker->field_is_on = true;
 }
 
-static void checker_field_off(struct chk *chk, int hold_time)
+static void checker_field_off(struct emv_chk *chk, int hold_time)
 {
 	struct checker *checker = (struct checker *)chk;
 
 	checker->field_is_on = false;
 }
 
-static void checker_ui_request(struct chk *checker,
+static void checker_ui_request(struct emv_chk *checker,
 					const struct emv_ui_request *ui_request)
 {
 	struct checker *chk = (struct checker *)checker;
@@ -3761,7 +3762,7 @@ static void checker_ui_request(struct chk *checker,
 						  (unsigned)ui_request->msg_id);
 }
 
-static void checker_outcome(struct chk *checker,
+static void checker_outcome(struct emv_chk *checker,
 					const struct emv_outcome_parms *outcome)
 {
 	struct checker *chk = (struct checker *)checker;
@@ -3829,7 +3830,7 @@ static void checker_outcome(struct chk *checker,
 				      "%s(): pass criteria not met!", __func__);
 }
 
-static void checker_ep_txn_end(struct chk *checker)
+static void checker_txn_end(struct emv_chk *checker)
 {
 	struct checker *chk = (struct checker *)checker;
 
@@ -3877,7 +3878,7 @@ static void checker_ep_txn_end(struct chk *checker)
 	}
 }
 
-static bool checker_pass_criteria_met(struct chk *chk)
+static bool checker_pass_criteria_met(struct emv_chk *chk)
 {
 	struct checker *checker = (struct checker *)chk;
 	bool ok = false;
@@ -3900,15 +3901,15 @@ static bool checker_pass_criteria_met(struct chk *chk)
 	return ok;
 }
 
-void checker_free(struct chk *chk)
+void checker_free(struct emv_chk *chk)
 {
 	free(chk);
 }
 
-static const struct chk_ops checker_ops = {
-	.ep_start	   = checker_ep_start,
-	.ep_restart	   = checker_ep_restart,
-	.ep_txn_end	   = checker_ep_txn_end,
+static const struct emv_chk_ops checker_ops = {
+	.start		   = checker_start,
+	.restart	   = checker_restart,
+	.txn_end	   = checker_txn_end,
 	.field_on	   = checker_field_on,
 	.field_off	   = checker_field_off,
 	.select		   = checker_select,
@@ -3919,7 +3920,7 @@ static const struct chk_ops checker_ops = {
 	.free		   = checker_free
 };
 
-struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
+struct emv_chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 						     const char *log4c_category)
 {
 	struct checker *checker = NULL;
@@ -3927,7 +3928,7 @@ struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 
 	checker = malloc(sizeof(struct checker));
 	if (!checker)
-		return (struct chk *)checker;
+		return (struct emv_chk *)checker;
 
 	memset(checker, 0, sizeof(*checker));
 	checker->ops			= &checker_ops;
@@ -3939,5 +3940,5 @@ struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 	checker->pass_criteria_checked	= false;
 	checker->pass_criteria_met	= true;
 
-	return (struct chk *)checker;
+	return (struct emv_chk *)checker;
 };

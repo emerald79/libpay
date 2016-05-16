@@ -788,7 +788,7 @@ enum pass_criteria {
 	pc_2ef_003_00_case04 = 339,
 };
 
-struct chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
+struct emv_chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 						    const char *log4c_category);
 
 /*-----------------------------------------------------------------------------+
@@ -1004,7 +1004,7 @@ enum ltsetting {
 #define LT_COLLISION_THEN_WITHDRAW_BOTH	1
 #define LT_COLLISION_THEN_WITHDRAW_ONE	2
 
-struct emv_hal *lt_new(enum ltsetting ltsetting, struct chk *checker,
+struct emv_hal *lt_new(enum ltsetting ltsetting, struct emv_chk *checker,
 					  const char *log4c_category, int mode);
 void lt_free(struct emv_hal *lt);
 
