@@ -15,6 +15,7 @@ AC_CONFIG_FILES([
 	Makefile
 	doc/Makefile
 	include/Makefile
+	include/libpay/Makefile
 	src/Makefile
 	src/include/Makefile
 	src/libtlv/Makefile
