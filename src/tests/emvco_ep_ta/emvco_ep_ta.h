@@ -1060,6 +1060,8 @@ struct tk_id {
 	size_t  kernel_id_len;
 };
 
+struct emv_kernel *tk_new(const char *log4c_category);
+
 void tk_free(struct emv_kernel *tk);
 
 
