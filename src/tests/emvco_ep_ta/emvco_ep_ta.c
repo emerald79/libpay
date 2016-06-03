@@ -92,7 +92,7 @@ static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
 	memset(fixture, 0, sizeof(*fixture));
 	fixture->chk = chk;
 
-	fixture->ep = emv_ep_wrapper_new();
+	fixture->ep = emv_ep_wrapper_new(log4c_category);
 	if (!fixture->ep) {
 		rc = EMV_RC_OUT_OF_MEMORY;
 		goto done;

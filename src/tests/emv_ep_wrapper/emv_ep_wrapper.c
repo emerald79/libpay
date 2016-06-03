@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -25,7 +26,6 @@
 #include <libpay/emv.h>
 #include <libpay/test.h>
 
-static const char log4c_category[] = "libemv_ep_wrapper";
 static uint32_t transaction_sequence_counter;
 
 /*-----------------------------------------------------------------------------+
@@ -477,15 +477,18 @@ static const struct emv_ep_wrapper_ops libemv_ep_wrapper_ops = {
 	.free		 = (emv_ep_wrapper_free_t)libemv_ep_wrapper_free
 };
 
-struct emv_ep_wrapper *emv_ep_wrapper_new(void)
+struct emv_ep_wrapper *emv_ep_wrapper_new(const char *log4c_category)
 {
 	struct libemv_ep_wrapper *self = NULL;
+	char cat[64];
+
+	snprintf(cat, sizeof(cat), "%s.libemv_ep_wrapper", log4c_category);
 
 	self = (struct libemv_ep_wrapper *)malloc(sizeof(*self));
 	memset(self, 0, sizeof(*self));
 	self->base.ops = &libemv_ep_wrapper_ops;
 
-	self->ep = emv_ep_new(log4c_category);
+	self->ep = emv_ep_new(cat);
 	if (!self->ep) {
 		emv_ep_wrapper_free(self);
 		return NULL;

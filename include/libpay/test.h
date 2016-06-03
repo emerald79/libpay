@@ -163,7 +163,8 @@ struct emv_ep_terminal_settings {
 
 struct emv_ep_wrapper;
 
-typedef struct emv_ep_wrapper *(*emv_ep_wrapper_new_t)(void);
+typedef struct emv_ep_wrapper *(*emv_ep_wrapper_new_t)(
+						    const char *log4c_category);
 
 typedef int (*emv_ep_wrapper_register_kernel_t)(struct emv_ep_wrapper *wrapper,
 						struct emv_kernel *kernel,
