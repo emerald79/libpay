@@ -213,15 +213,16 @@ static struct emv_kernel *get_kernel(struct emv_ep *ep,
 static bool is_currency_code_supported(const uint8_t *currency_code)
 {
 	if (!memcmp(ISO4217_USD, currency_code, sizeof(ISO4217_USD)) ||
-	    !memcmp(ISO4217_EUR, currency_code, sizeof(ISO4217_EUR)))
+	    !memcmp(ISO4217_EUR, currency_code, sizeof(ISO4217_EUR)) ||
+	    !memcmp(ISO4217_NUL, currency_code, sizeof(ISO4217_NUL)))
 		return true;
 
-	return true;
+	return false;
 }
 
 static uint64_t unit_of_currency(const uint8_t currency_code[2])
 {
-	if (!currency_code[0] && !(currency_code[1]))
+	if (!memcmp(ISO4217_NUL, currency_code, sizeof(ISO4217_NUL)))
 		return 1;
 
 	return 100;

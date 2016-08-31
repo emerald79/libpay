@@ -46,6 +46,7 @@
 #define EMV_MAX_DATA_RECORD_LEN		512
 #define	EMV_MAX_DISCRETIONARY_DATA_LEN	1024
 
+#define ISO4217_NUL	((const uint8_t []){ '\x00', '\x00' })
 #define ISO4217_GBP	((const uint8_t []){ '\x08', '\x26' })
 #define ISO4217_USD	((const uint8_t []){ '\x08', '\x40' })
 #define ISO4217_EUR	((const uint8_t []){ '\x09', '\x78' })
