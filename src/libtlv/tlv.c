@@ -725,9 +725,6 @@ struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child)
 	if (!parent || !child || child->parent)
 		return NULL;
 
-	if (tlv_is_constructed(parent))
-		return NULL;
-
 	if (parent->child) {
 		child->next = parent->child;
 		parent->child->prev = child;
@@ -956,12 +953,6 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 	uint8_t *out_data = (uint8_t *)del;
 	size_t out_data_sz = 0;
 	int rc = TLV_RC_OK;
-
-	char hex_dol[2 * dol_sz + 1];
-
-	log4c_category_log(log_cat, LOG4C_PRIORITY_TRACE,
-				  "%s(dol: '%s') -> start", __func__,
-				libtlv_bin_to_hex(dol, dol_sz, hex_dol));
 
 	while (i_dol - dol < dol_sz) {
 		size_t dol_sz_left = 0;
