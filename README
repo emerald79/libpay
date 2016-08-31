@@ -47,7 +47,7 @@ Combination         Application ID and a complex  'FF82E371'  'FF84E371' var.
 AID -- Terminal     Application (ISO-IEC b        'FF84E371'  '9F06'     5 - 16
                     7816-5)
                     Uniquely identifies
-Kernel ID           a Kernel installed   b        'FF84E371'  'FF86E371' 3 - 8
+Kernel ID           a Kernel installed   b        'FF84E371'  'DF86E371' 3 - 8
                     in the Reader
 Status Check        Flag: Reader is able
 Support             to perform a Status  b        'FF82E371'  'DF87E371' 1

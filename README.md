@@ -34,7 +34,7 @@ Transaction Types                     | Transaction Types the Set of Combination
 Transaction Type                      | Type of Transaction (ISO 8583:1987)                   | n 2      | 'FF83E371', 'FF8FE371' | '9C'       | 1
 Combination                           | A Combination of an Application ID and a Kernel ID    | complex  | 'FF82E371'             | 'FF84E371' | var.
 AID -- Terminal                       | Identifies the Application (ISO-IEC 7816-5)           | b        | 'FF84E371'             | '9F06'     | 5 - 16
-Kernel ID                             | Uniquely identifies a Kernel installed in the Reader  | b        | 'FF84E371'             | 'FF86E371' | 3 - 8
+Kernel ID                             | Uniquely identifies a Kernel installed in the Reader  | b        | 'FF84E371'             | 'DF86E371' | 3 - 8
 Status Check Support                  | Flag: Reader is able to perform a Status Check        | b        | 'FF82E371'             | 'DF87E371' | 1
 Zero Amount Allowed                   | Flag: Transaction with a zero amount is permitted     | b        | 'FF82E371'             | 'DF88E371' | 1
 Reader Contactless Transaction Limit  | Limit for contactless transactions                    | n 12     | 'FF82E371'             | 'DF8AE371' | 6
