@@ -7696,13 +7696,13 @@ int lt_transceive(struct emv_hal *hal, const void *capdu, size_t capdu_sz,
 	uint8_t *requ = (uint8_t *)capdu;
 	uint8_t resp[256];
 	uint8_t sw[2];
-	char hex[256 * 2 + 1];
+	char hex[256 * 2 + 1], capdu_hex[capdu_sz * 2 + 1];
 	size_t resp_sz = sizeof(resp);
 	int i = 0;
 	int rc = EMV_RC_OK;
 
 	log4c_category_log(lt->log_cat, LOG4C_PRIORITY_TRACE, "%s(capdu: '%s')",
-			     __func__, libtlv_bin_to_hex(capdu, capdu_sz, hex));
+		       __func__, libtlv_bin_to_hex(capdu, capdu_sz, capdu_hex));
 
 	memcpy(sw, EMV_SW_9000_OK, 2);
 
@@ -7738,10 +7738,8 @@ done:
 	memcpy(&resp[resp_sz], sw, 2);
 	resp_sz += 2;
 
-	if (*rapdu_sz < resp_sz) {
-		rc = EMV_RC_OVERFLOW;
-		goto done;
-	}
+	if (*rapdu_sz < resp_sz)
+		return EMV_RC_OVERFLOW;
 
 	memcpy(rapdu, resp, resp_sz);
 	*rapdu_sz = resp_sz;
