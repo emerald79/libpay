@@ -113,6 +113,32 @@ static int tlv_parse_identifier(const void **buf, size_t len, struct tlv *tlv)
 	return TLV_RC_OK;
 }
 
+static int tlv_parse_dol_length(const void **buffer, size_t length,
+								struct tlv *tlv)
+{
+	const uint8_t *p = NULL;
+
+	if (!buffer || !(*buffer) || !tlv)
+		return TLV_RC_INVALID_ARG;
+
+	if (!length) {
+		tlv_parse_error_info.rc = TLV_RC_UNEXPECTED_END_OF_STREAM;
+		tlv_parse_error_info.pos = *buffer;
+		return TLV_RC_UNEXPECTED_END_OF_STREAM;
+	}
+
+	/* Per EMV v4.3 Book 3, Section 5.4 "Rules for Using a Data Object List
+	 * (DOL)", the a data object lenght field is a "a one-byte length which
+	 * represents the number of bytes the field". Note that this is
+	 * different from a TLV length field and restricts the maximum length to
+	 * 255. */
+	p = (const uint8_t *)*buffer;
+	tlv->length = (size_t)p[0];
+	*buffer = (const void *)&p[1];
+
+	return TLV_RC_OK;
+}
+
 static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 {
 	const uint8_t *p = NULL;
@@ -127,7 +153,7 @@ static int tlv_parse_length(const void **buffer, size_t length, struct tlv *tlv)
 		return TLV_RC_UNEXPECTED_END_OF_STREAM;
 	}
 
-	p = (uint8_t *)*buffer;
+	p = (const uint8_t *)*buffer;
 
 	if (p[0] == 0x80u) {
 		tlv_parse_error_info.rc =
@@ -931,6 +957,12 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 	size_t out_data_sz = 0;
 	int rc = TLV_RC_OK;
 
+	char hex_dol[2 * dol_sz + 1];
+
+	log4c_category_log(log_cat, LOG4C_PRIORITY_TRACE,
+				  "%s(dol: '%s') -> start", __func__,
+				libtlv_bin_to_hex(dol, dol_sz, hex_dol));
+
 	while (i_dol - dol < dol_sz) {
 		size_t dol_sz_left = 0;
 		struct tlv tlv_do, *tlv_de;
@@ -947,10 +979,10 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 		}
 
 		dol_sz_left = dol_sz - (i_dol - dol);
-		rc = tlv_parse_length(&i_dol, dol_sz_left, &tlv_do);
+		rc = tlv_parse_dol_length(&i_dol, dol_sz_left, &tlv_do);
 		if (rc != TLV_RC_OK) {
 			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
-					"%s(): tlv_parse_length failed! rc: %d",
+				    "%s(): tlv_parse_dol_length failed! rc: %d",
 								  __func__, rc);
 			goto done;
 		}
@@ -1037,10 +1069,11 @@ const void *dol_tok(const void **dol, size_t *dol_sz)
 		goto done;
 	}
 
-	rc = tlv_parse_length(dol, *dol_sz - (*dol - tok), &tlv_do);
+	rc = tlv_parse_dol_length(dol, *dol_sz - (*dol - tok), &tlv_do);
 	if (rc != TLV_RC_OK) {
 		log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
-			"%s(): tlv_parse_length failed! rc %d\n", __func__, rc);
+			 "%s(): tlv_parse_dol_length failed! rc %d\n", __func__,
+									    rc);
 		tok = NULL;
 		*dol_sz = 0;
 		goto done;
@@ -1107,10 +1140,10 @@ int dol_and_del_to_tlv(const void *dol, size_t dol_sz,
 		}
 
 		dol_sz_left = dol_sz - (i_dol - dol);
-		rc = tlv_parse_length(&i_dol, dol_sz_left, &tlv_do);
+		rc = tlv_parse_dol_length(&i_dol, dol_sz_left, &tlv_do);
 		if (rc != TLV_RC_OK) {
 			log4c_category_log(log_cat, LOG4C_PRIORITY_NOTICE,
-					     "%s(): tlv_parse_length failed!\n",
+					 "%s(): tlv_parse_dol_length failed!\n",
 								      __func__);
 			goto done;
 		}

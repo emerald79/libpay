@@ -397,10 +397,10 @@
 #define PDOL_9F0206 .pdol = { 0x9F, 0x02, 0x06 }, .pdol_len = 3
 
 /* PDOL with FCI							      */
-#define PDOL_6F81FB .pdol = { 0x6F, 0x81, 0xFB }, .pdol_len = 3
+#define PDOL_6FFB .pdol = { 0x6F, 0xFB }, .pdol_len = 2
 
 /* PDOL with FCI and Select response Status Word			      */
-#define PDOL_D3026F81FB .pdol = { 0xD3, 0x02, 0x6F, 0x81, 0xFB }, .pdol_len = 5
+#define PDOL_D3026FFB .pdol = { 0xD3, 0x02, 0x6F, 0xFB }, .pdol_len = 4
 
 /* PDOL with Unpredictable Number, TTQ					      */
 #define PDOL_9F37049F6604 .pdol = "\x9F\x37\x04\x9F\x66\x04", .pdol_len = 6
