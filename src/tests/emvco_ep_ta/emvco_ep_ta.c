@@ -2127,14 +2127,6 @@ START_TEST(test_2EC_003_00)
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_26, pc_2ec_003_00_case02,
 								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
-
-	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_22, pc_2ec_003_00_case03,
-								       &txn, 1);
-	ck_assert(rc == EMV_RC_OK);
-
-	rc = emvco_ep_ta_tc(termsetting1, ltsetting1_29, pc_2ec_003_00_case04,
-								       &txn, 1);
-	ck_assert(rc == EMV_RC_OK);
 }
 END_TEST
 
