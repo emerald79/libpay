@@ -1159,6 +1159,7 @@ int emv_ep_combination_selection(struct emv_ep *ep)
 	 * return to Start B (Protocol Activation, section 3.2.1).	      */
 	if (rc != EMV_RC_OK) {
 		ep->state = eps_protocol_activation;
+		rc = EMV_RC_OK;
 		goto done;
 	}
 
