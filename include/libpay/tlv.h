@@ -67,6 +67,11 @@ int tlv_shallow_parse(const void *buffer, size_t size, struct tlv **tlv);
  * @param[out]   buffer  The buffer to store the encoded byte stream in.
  * @param[inout] size    Input: Size of buffer, Output Length of byte stream.
  *
+ * If buffer is NULL the output length of the byte stream will be put into size
+ * and tlv_encode will return with TLV_RC_OK. I.e for dynamically allocated
+ * buffers you would call tlv_encode twice: Once to determine the required size
+ * of the buffer and a second time to actually encode the TLV data structure.
+ *
  * @return TLV_RC_OK on success. TLV_RC_BUFFER_OVERFLOW is buffer is too small.
  *         size will hold the required buffer size in this case. Other TLV_RC_*
  *         codes on failure.
