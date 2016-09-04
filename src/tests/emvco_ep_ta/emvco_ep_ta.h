@@ -993,7 +993,6 @@ enum ltsetting {
 	ltsetting6_19,
 	ltsetting6_20,
 	ltsetting6_21,
-	ltsetting6_22,
 	ltsetting8_0,
 	ltsetting8_1,
 	num_ltsettings

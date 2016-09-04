@@ -7117,40 +7117,6 @@ static const struct lt_setting ltsetting[] = {
 		},
 		.gpo_resp_num = 1
 	},
-	/* LTsetting6.22 */
-	{
-		.ppse_entries = {
-			{
-				AID_A0000000030003,
-				APP_LABEL_APP3,
-				API_01,
-				KERNEL_ID_21,
-			}
-		},
-		.ppse_entries_num = 1,
-		.aid_fci = {
-			{
-				AID_A0000000030003,
-				APP_LABEL_APP3,
-				API_01,
-				PDOL_D102D201
-			},
-			{
-				.sw = EMV_SW_6A83_RECORD_NOT_FOUND
-			}
-		},
-		.aid_fci_num = 2,
-		.gpo_resp = {
-			{
-				.outcome_parms = {
-					.outcome = out_online_request,
-					.start = start_d,
-					.online_response_type = ort_any
-				}
-			}
-		},
-		.gpo_resp_num = 1
-	},
 	/* LTsetting8.0 */
 	{
 		.ppse_entries = {
