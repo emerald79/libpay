@@ -23,6 +23,16 @@
 
 #include "emvco_ep_ta.h"
 
+static struct tk_id tk_kernel_id[] = {
+	{ KERNEL_ID_TK1 },
+	{ KERNEL_ID_TK2 },
+	{ KERNEL_ID_TK3 },
+	{ KERNEL_ID_TK4 },
+	{ KERNEL_ID_TK5 },
+	{ KERNEL_ID_TK6 },
+	{ KERNEL_ID_TK7 }
+};
+
 struct checker {
 	const struct emv_chk_ops *ops;
 
@@ -3209,7 +3219,7 @@ static void checker_gpo_data(struct emv_chk *checker, struct tlv *data)
 		if (chk->state == 3) {
 			chk->state = 4;
 			if (!check_value(chk, data, EMV_ID_KERNEL_IDENTIFIER,
-								     "\x04", 1))
+						  tk_kernel_id[3].kernel_id, 1))
 				chk->pass_criteria_met = false;
 			chk->pass_criteria_checked = true;
 		}
@@ -3916,3 +3926,11 @@ struct emv_chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 
 	return (struct emv_chk *)checker;
 };
+
+void chk_init(void)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(tk_kernel_id); i++)
+		emvco_ep_ta_update_tk_kernel_id(&tk_kernel_id[i]);
+}

@@ -37,6 +37,76 @@ static const struct tlv_id_to_fmt id_fmts[] = {
 static emv_ep_wrapper_new_t emv_ep_wrapper_new;	  /* Plugin's new EP operator */
 static emv_ep_supports_t emv_ep_supports;	  /* Supported features of EP */
 
+void emvco_ep_ta_update_tk_kernel_id(struct tk_id *tk_id)
+{
+	const struct tk_id tk_id_proxy[] = {
+		{ KERNEL_ID_TK1 },
+		{ KERNEL_ID_TK2 },
+		{ KERNEL_ID_TK3 },
+		{ KERNEL_ID_TK4 },
+		{ KERNEL_ID_TK5 },
+		{ KERNEL_ID_TK6 },
+		{ KERNEL_ID_TK7 }
+	};
+	uint32_t supported_kernels;
+	size_t i = 0;
+
+	/* First check whether tk_id holds a TK proxy identifier.	      */
+	if (tk_id->kernel_id_len != 1)
+		return;
+
+	for (i = 0; i < ARRAY_SIZE(tk_id_proxy); i++)
+		if (tk_id->kernel_id[0] == tk_id_proxy[i].kernel_id[0])
+			break;
+
+	if (i >= ARRAY_SIZE(tk_id_proxy))
+		return;
+
+	/* If the respective C-X kernel is supported by the entry point under
+	 * test, the TK proxy identifier remains unmodified.		      */
+	supported_kernels = EMV_EP_FEATURE_C_1 | EMV_EP_FEATURE_C_2 |
+		  EMV_EP_FEATURE_C_3 | EMV_EP_FEATURE_C_4 | EMV_EP_FEATURE_C_5 |
+					EMV_EP_FEATURE_C_6 | EMV_EP_FEATURE_C_7;
+
+	supported_kernels = emv_ep_supports(supported_kernels);
+
+	switch (i) {
+	case 0:
+		if (supported_kernels & EMV_EP_FEATURE_C_1)
+			return;
+		break;
+	case 1:
+		if (supported_kernels & EMV_EP_FEATURE_C_2)
+			return;
+		break;
+	case 2:
+		if (supported_kernels & EMV_EP_FEATURE_C_3)
+			return;
+		break;
+	case 3:
+		if (supported_kernels & EMV_EP_FEATURE_C_4)
+			return;
+		break;
+	case 4:
+		if (supported_kernels & EMV_EP_FEATURE_C_5)
+			return;
+		break;
+	case 5:
+		if (supported_kernels & EMV_EP_FEATURE_C_6)
+			return;
+		break;
+	case 6:
+		if (supported_kernels & EMV_EP_FEATURE_C_7)
+			return;
+		break;
+	default:
+		break;
+	}
+
+	/* Otherwise its updated to equal the identifier of the C-X kernel.   */
+	tk_id->kernel_id[0] = (uint8_t)(i + 1);
+}
+
 struct emvco_ep_ta_tc_fixture {
 	struct emv_ep_wrapper	*ep;
 	struct emv_chk		*chk;
@@ -111,6 +181,8 @@ static int emvco_ep_ta_tc_fixture_setup(struct emvco_ep_ta_tc_fixture *fixture,
 		goto done;
 
 	for (i_tk = 0; i_tk < ARRAY_SIZE(fixture->tk); i_tk++) {
+
+		emvco_ep_ta_update_tk_kernel_id(&tk_id[i_tk]);
 
 		if (!term_is_kernel_supported(termsetting,
 			      tk_id[i_tk].kernel_id, tk_id[i_tk].kernel_id_len))
@@ -3210,6 +3282,9 @@ START_TEST(test_2ED_012_02)
 	if (!emv_ep_supports(EMV_EP_FEATURE_AUTORUN))
 		return;
 
+	if (emv_ep_supports(EMV_EP_FEATURE_C_2))
+		return;
+
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_6, pc_2ed_012_02, NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
 }
@@ -4131,9 +4206,14 @@ int main(int argc, char **argv)
 	}
 
 	log4c_init();
+
 	libtlv_init(log4c_category);
 	libtlv_register_fmts(id_fmts);
 	libtlv_register_fmts(libemv_get_id_fmts());
+
+	term_init();
+	lt_init();
+	chk_init();
 
 	suite = emvco_ep_ta_test_suite();
 	srunner = srunner_create(suite);

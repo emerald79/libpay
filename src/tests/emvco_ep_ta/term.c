@@ -836,7 +836,7 @@ struct emv_ep_combination termset6and7[] = {
 			txn_refund
 		},
 		.combinations = {
-			{ AID_A0000000031010, KERNEL_ID_TK3	},
+			{ AID_A0000000031010, KERNEL_ID_3	},
 			{ AID_A0000000031010, KERNEL_ID_2B	},
 		},
 		.config = {
@@ -946,7 +946,7 @@ struct emv_ep_combination termset6and7[] = {
 			txn_refund
 		},
 		.combinations = {
-			{ AID_A0000000251010, KERNEL_ID_TK3	},
+			{ AID_A0000000251010, KERNEL_ID_3	},
 		},
 		.config = {
 			.present = {
@@ -1234,4 +1234,36 @@ const struct emv_ep_terminal_settings *term_get_setting(
 		return NULL;
 
 	return &termsettings[termsetting];
+}
+
+void term_init(void)
+{
+	int i_ts;
+
+	for (i_ts = 0; i_ts < ARRAY_SIZE(termsettings); i_ts++) {
+		struct emv_ep_terminal_settings *ts = &termsettings[i_ts];
+		int i_cs;
+
+		for (i_cs = 0; i_cs < ts->num_combination_sets; i_cs++) {
+			struct emv_ep_aid_kernel *aid_kernel;
+			struct emv_ep_combination *cs =
+						    &ts->combination_sets[i_cs];
+
+			for (aid_kernel = cs->combinations;
+			     aid_kernel->aid_len;
+			     aid_kernel++) {
+				struct tk_id id;
+
+				id.kernel_id_len = aid_kernel->kernel_id_len;
+				memcpy(id.kernel_id, aid_kernel->kernel_id,
+							      id.kernel_id_len);
+
+				emvco_ep_ta_update_tk_kernel_id(&id);
+
+				aid_kernel->kernel_id_len = id.kernel_id_len;
+				memcpy(aid_kernel->kernel_id, id.kernel_id,
+							      id.kernel_id_len);
+			}
+		}
+	}
 }

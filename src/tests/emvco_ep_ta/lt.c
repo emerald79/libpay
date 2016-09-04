@@ -90,7 +90,7 @@ struct lt_setting {
 	size_t		  gpo_resp_num;
 };
 
-static const struct lt_setting ltsetting[] = {
+static struct lt_setting ltsetting[] = {
 	/* LTsetting1.1 */
 	{
 		.ppse_entries = {
@@ -7748,6 +7748,30 @@ void lt_free(struct emv_hal *hal)
 				lt->apps[i_aid]->ops->free(lt->apps[i_aid]);
 
 		free(lt);
+	}
+}
+
+void lt_init(void)
+{
+	int i_ltset;
+
+	for (i_ltset = 0; i_ltset < ARRAY_SIZE(ltsetting); i_ltset++) {
+		struct lt_setting *ltset = &ltsetting[i_ltset];
+		int i_ppse;
+
+		for (i_ppse = 0; i_ppse < ARRAY_SIZE(ltset->ppse_entries);
+								     i_ppse++) {
+			struct ppse_entry *ppse = &ltset->ppse_entries[i_ppse];
+			struct tk_id id;
+
+			id.kernel_id_len = ppse->kernel_id_len;
+			memcpy(id.kernel_id, ppse->kernel_id, id.kernel_id_len);
+
+			emvco_ep_ta_update_tk_kernel_id(&id);
+
+			ppse->kernel_id_len = id.kernel_id_len;
+			memcpy(ppse->kernel_id, id.kernel_id, id.kernel_id_len);
+		}
 	}
 }
 

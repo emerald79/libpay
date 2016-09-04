@@ -789,6 +789,8 @@ enum pass_criteria {
 struct emv_chk *chk_pass_criteria_new(enum pass_criteria pass_criteria,
 						    const char *log4c_category);
 
+void chk_init(void);
+
 /*-----------------------------------------------------------------------------+
 | Terminal Settings (term)						       |
 +-----------------------------------------------------------------------------*/
@@ -823,6 +825,8 @@ enum termsetting {
 	termsetting13	= 11,
 	num_termsettings
 };
+
+void term_init(void);
 
 const struct emv_ep_terminal_settings *term_get_setting(
 						  enum termsetting termsetting);
@@ -1006,18 +1010,26 @@ struct emv_hal *lt_new(enum ltsetting ltsetting, struct emv_chk *checker,
 					  const char *log4c_category, int mode);
 void lt_free(struct emv_hal *lt);
 
+void lt_init(void);
 
 /*-----------------------------------------------------------------------------+
 | Test Kernel (tk)							       |
 +-----------------------------------------------------------------------------*/
 
-#define KERNEL_ID_TK1	 .kernel_id = { 0x01 },		    .kernel_id_len = 1
-#define KERNEL_ID_TK2	 .kernel_id = { 0x02 },		    .kernel_id_len = 1
-#define KERNEL_ID_TK3	 .kernel_id = { 0x03 },		    .kernel_id_len = 1
-#define KERNEL_ID_TK4	 .kernel_id = { 0x04 },		    .kernel_id_len = 1
-#define KERNEL_ID_TK5	 .kernel_id = { 0x05 },		    .kernel_id_len = 1
-#define KERNEL_ID_TK6	 .kernel_id = { 0x06 },		    .kernel_id_len = 1
-#define KERNEL_ID_TK7	 .kernel_id = { 0x07 },		    .kernel_id_len = 1
+#define KERNEL_ID_TK1	 .kernel_id = { 0x3F },		    .kernel_id_len = 1
+#define KERNEL_ID_TK2	 .kernel_id = { 0x3E },		    .kernel_id_len = 1
+#define KERNEL_ID_TK3	 .kernel_id = { 0x3D },		    .kernel_id_len = 1
+#define KERNEL_ID_TK4	 .kernel_id = { 0x3C },		    .kernel_id_len = 1
+#define KERNEL_ID_TK5	 .kernel_id = { 0x3B },		    .kernel_id_len = 1
+#define KERNEL_ID_TK6	 .kernel_id = { 0x3A },		    .kernel_id_len = 1
+#define KERNEL_ID_TK7	 .kernel_id = { 0x39 },		    .kernel_id_len = 1
+#define KERNEL_ID_1	 .kernel_id = { 0x01 },		    .kernel_id_len = 1
+#define KERNEL_ID_2	 .kernel_id = { 0x02 },		    .kernel_id_len = 1
+#define KERNEL_ID_3	 .kernel_id = { 0x03 },		    .kernel_id_len = 1
+#define KERNEL_ID_4	 .kernel_id = { 0x04 },		    .kernel_id_len = 1
+#define KERNEL_ID_5	 .kernel_id = { 0x05 },		    .kernel_id_len = 1
+#define KERNEL_ID_6	 .kernel_id = { 0x06 },		    .kernel_id_len = 1
+#define KERNEL_ID_7	 .kernel_id = { 0x07 },		    .kernel_id_len = 1
 #define KERNEL_ID_00	 .kernel_id = { 0x00 },		    .kernel_id_len = 1
 #define KERNEL_ID_21	 .kernel_id = { 0x21 },		    .kernel_id_len = 1
 #define KERNEL_ID_2102030405060708					       \
@@ -1033,9 +1045,7 @@ void lt_free(struct emv_hal *lt);
 #define KERNEL_ID_24FFFF .kernel_id = { 0x24, 0xFF, 0xFF }, .kernel_id_len = 3
 #define KERNEL_ID_25	 .kernel_id = { 0x25 },		    .kernel_id_len = 1
 #define KERNEL_ID_2B	 .kernel_id = { 0x2B },		    .kernel_id_len = 1
-#define KERNEL_ID_3	 .kernel_id = { 0x03 },		    .kernel_id_len = 1
 #define KERNEL_ID_32	 .kernel_id = { 0x32 },		    .kernel_id_len = 1
-#define KERNEL_ID_6	 .kernel_id = { 0x06 },		    .kernel_id_len = 1
 #define KERNEL_ID_62	 .kernel_id = { 0x62 },		    .kernel_id_len = 1
 #define KERNEL_ID_80	 .kernel_id = { 0x80 },		    .kernel_id_len = 1
 #define KERNEL_ID_810977 .kernel_id = { 0x81, 0x09, 0x77 }, .kernel_id_len = 3
@@ -1061,6 +1071,7 @@ struct emv_kernel *tk_new(const char *log4c_category);
 
 void tk_free(struct emv_kernel *tk);
 
+void emvco_ep_ta_update_tk_kernel_id(struct tk_id *tk_id);
 
 /*-----------------------------------------------------------------------------+
 | Outcome data as provided by Lower Tester to Test Kernel in		       |
