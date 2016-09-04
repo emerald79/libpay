@@ -30,6 +30,11 @@ AC_CONFIG_FILES([
 	src/tests/emvco_ep_ta/Makefile
 ])
 
+AC_CONFIG_FILES(
+	[src/tests/emvco_ep_ta/emvco_ep_ta.sh],
+	[chmod +x src/tests/emvco_ep_ta/emvco_ep_ta.sh]
+)
+
 AC_ARG_ENABLE(gcov, AC_HELP_STRING([--enable-gcov],
 					[turn on code coverage analysis tools [default=no]]))
 AM_CONDITIONAL([ENABLE_GCOV], [test x${enable_gcov} = xyes])

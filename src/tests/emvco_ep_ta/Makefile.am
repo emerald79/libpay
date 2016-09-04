@@ -18,4 +18,4 @@ emvco_ep_ta_LDADD = -ldl $(top_builddir)/src/libtlv/libtlv.la		       \
 
 noinst_HEADERS = emvco_ep_ta.h
 
-EXTRA_DIST = emvco_ep_ta.sh
+EXTRA_DIST = emvco_ep_ta.sh.in

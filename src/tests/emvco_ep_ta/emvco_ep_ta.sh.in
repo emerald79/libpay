@@ -1,0 +1,2 @@
+#!/bin/sh
+$(dirname "$0")/@builddir@/emvco_ep_ta $(dirname "$0")/@top_builddir@/src/tests/emv_ep_wrapper/.libs/libemv_ep_wrapper.so
