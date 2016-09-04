@@ -2704,8 +2704,6 @@ static void checker_gpo_data(struct emv_chk *checker, struct tlv *data)
 	case pc_2ec_002_00_case04:
 	case pc_2ec_003_00_case01:
 	case pc_2ec_003_00_case02:
-	case pc_2ec_003_00_case03:
-	case pc_2ec_003_00_case04:
 		if (chk->state == 2) {
 			if (!check_value_under_mask(chk, data,
 				 EMV_ID_TEST_FLAGS, "\x00\x80", "\x00\x80", 2))
@@ -3423,8 +3421,6 @@ static void checker_restart(struct emv_chk *chk)
 	case pc_2ec_002_00_case04:
 	case pc_2ec_003_00_case01:
 	case pc_2ec_003_00_case02:
-	case pc_2ec_003_00_case03:
-	case pc_2ec_003_00_case04:
 	case pc_2ed_001_00_case01:
 	case pc_2ed_001_00_case02:
 	case pc_2ed_001_00_case03:
@@ -3673,8 +3669,6 @@ static void checker_ui_request(struct emv_chk *checker,
 
 	case pc_2ec_003_00_case01:
 	case pc_2ec_003_00_case02:
-	case pc_2ec_003_00_case03:
-	case pc_2ec_003_00_case04:
 		if ((chk->state == 1) &&
 		    (ui_request->msg_id == msg_present_card))
 			chk->state = 2;
