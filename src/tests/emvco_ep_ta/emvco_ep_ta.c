@@ -488,6 +488,27 @@ START_TEST(test_2EA_007_00)
 }
 END_TEST
 
+/* 2EA.010.00 Contactless interface powered down when contact interface
+ * activated								      */
+START_TEST(test_2EA_010_00)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_CONTACT))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
+/* 2EA.010.01 Contactless interface powered down during a contact transaction */
+START_TEST(test_2EA_010_01)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_CONTACT))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2EA.011.00 User Interface Request Hold Time */
 START_TEST(test_2EA_011_00)
 {
@@ -2743,6 +2764,17 @@ START_TEST(test_2ED_009_00)
 }
 END_TEST
 
+/* 2ED.009.01 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = Visa AID, TK3 Kernel ID not equal to '03' )	      */
+START_TEST(test_2ED_009_01)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_3))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.02 PPSE select response having a Directory Entry with Kernel ID not
  * present (Matching AID = MasterCard AID, TK2 Kernel ID = '02')	      */
 START_TEST(test_2ED_009_02)
@@ -2765,6 +2797,17 @@ START_TEST(test_2ED_009_02)
 }
 END_TEST
 
+/* 2ED.009.03 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = MasterCard AID, TK2 Kernel ID not equal to '02')   */
+START_TEST(test_2ED_009_03)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_2))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.04 PPSE select response having a Directory Entry with Kernel ID not
  * present (Matching AID = JCB AID, TK1 Kernel ID = '05'		      */
 START_TEST(test_2ED_009_04)
@@ -2779,6 +2822,17 @@ START_TEST(test_2ED_009_04)
 
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_3, pc_2ed_009_04, NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.05 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = JCB AID, TK1 Kernel ID not equal to '05')	      */
+START_TEST(test_2ED_009_05)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_5))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -2802,6 +2856,17 @@ START_TEST(test_2ED_009_06)
 }
 END_TEST
 
+/* 2ED.009.07 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = AMEX AID, TK4 Kernel ID not equal to '04')	      */
+START_TEST(test_2ED_009_07)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_4))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.10 PPSE select response having a Directory Entry with Kernel ID with
  * null length (Matching AID = Visa AID, TK3 Kernel ID = '03')		      */
 START_TEST(test_2ED_009_10)
@@ -2815,6 +2880,17 @@ START_TEST(test_2ED_009_10)
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_13, pc_2ed_009_10, &txn,
 									     1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.11 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = Visa AID, TK3 Kernel ID not equal to '03')     */
+START_TEST(test_2ED_009_11)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_3))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -2833,6 +2909,18 @@ START_TEST(test_2ED_009_12)
 }
 END_TEST
 
+/* 2ED.009.13 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = MasterCard AID, TK2 Kernel ID not equal to
+ * '02')								      */
+START_TEST(test_2ED_009_13)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_2))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.14 PPSE select response having a Directory Entry with Kernel ID with
 * null length (Matching AID = JCB AID, TK1 Kernel ID = '05')		      */
 START_TEST(test_2ED_009_14)
@@ -2845,6 +2933,17 @@ START_TEST(test_2ED_009_14)
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_15, pc_2ed_009_14, NULL,
 									     0);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.15 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = JCB AID, TK1 Kernel ID not equal to '05')      */
+START_TEST(test_2ED_009_15)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_5))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -2864,6 +2963,17 @@ START_TEST(test_2ED_009_16)
 }
 END_TEST
 
+/* 2ED.009.17 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = AMEX AID, TK4 Kernel ID not equal to '04')     */
+START_TEST(test_2ED_009_17)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_4))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.18 PPSE select response having a Directory Entry with Kernel ID not
  * present (Matching AID = DISCOVER AID, TK6 Kernel ID = '06')		      */
 START_TEST(test_2ED_009_18)
@@ -2877,6 +2987,17 @@ START_TEST(test_2ED_009_18)
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_17, pc_2ed_009_18, &txn,
 									     1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.19 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = DISCOVER AID, TK6 Kernel ID not equal to '06' )    */
+START_TEST(test_2ED_009_19)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_6))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -2896,6 +3017,17 @@ START_TEST(test_2ED_009_20)
 }
 END_TEST
 
+/* 2ED.009.19 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = DISCOVER AID, TK6 Kernel ID not equal to '06' )    */
+START_TEST(test_2ED_009_21)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_6))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.22 PPSE select response having a Directory Entry with Kernel ID not
  * present (Matching AID = CUP AID, TK7 Kernel ID = '07')		      */
 START_TEST(test_2ED_009_22)
@@ -2909,6 +3041,17 @@ START_TEST(test_2ED_009_22)
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_19, pc_2ed_009_22, &txn,
 									     1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.23 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = CUP AID, TK7 Kernel ID not equal to '07' )	      */
+START_TEST(test_2ED_009_23)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_7))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -2928,6 +3071,17 @@ START_TEST(test_2ED_009_24)
 }
 END_TEST
 
+/* 2ED.009.25 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = CUP AID, TK7 Kernel ID not equal to '07')      */
+START_TEST(test_2ED_009_25)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_7))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.26 PPSE select response having a Directory Entry with Kernel ID not
  * present (Matching AID = DISCOVER AID, TK6 Kernel ID = '06')		      */
 START_TEST(test_2ED_009_26)
@@ -2944,6 +3098,17 @@ START_TEST(test_2ED_009_26)
 }
 END_TEST
 
+/* 2ED.009.27 PPSE select response having a Directory Entry with Kernel ID not
+ * present (Matching AID = DISCOVER AID, TK6 Kernel ID not equal to '06')     */
+START_TEST(test_2ED_009_27)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_6))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.009.28 PPSE select response having a Directory Entry with Kernel ID with
  * null length (Matching AID = DISCOVER AID, TK6 Kernel ID = '06')	      */
 START_TEST(test_2ED_009_28)
@@ -2957,6 +3122,17 @@ START_TEST(test_2ED_009_28)
 	rc = emvco_ep_ta_tc(termsetting1, ltsetting5_24, pc_2ed_009_28, &txn,
 									     1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.009.29 PPSE select response having a Directory Entry with Kernel ID with
+ * null length (Matching AID = DISCOVER AID, TK6 Kernel ID not equal to '06') */
+START_TEST(test_2ED_009_29)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_6))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -3014,6 +3190,17 @@ START_TEST(test_2ED_012_00)
 }
 END_TEST
 
+/* 2ED.012.01 PPSE select response having a Directory Entry with null Kernel ID
+ * (Matching AID = Visa AID, TK3 Kernel ID not equal to '03')		      */
+START_TEST(test_2ED_012_01)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_3))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.012.02 PPSE select response having a Directory Entry with null Kernel ID
  * (Matching AID = MasterCard AID, TK2 Kernel ID = '02')		      */
 START_TEST(test_2ED_012_02)
@@ -3025,6 +3212,17 @@ START_TEST(test_2ED_012_02)
 
 	rc = emvco_ep_ta_tc(termsetting3, ltsetting5_6, pc_2ed_012_02, NULL, 0);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.012.03 PPSE select response having a Directory Entry with null Kernel ID
+* (Matching AID = MasterCard AID, TK2 Kernel ID not equal to '02')	      */
+START_TEST(test_2ED_012_03)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_2))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -3040,6 +3238,17 @@ START_TEST(test_2ED_012_04)
 
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting5_7, pc_2ed_012_04, &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.012.05 PPSE select response having a Directory Entry with null Kernel ID
+ * (Matching AID = JCB AID, TK5 Kernel ID not equal to '05')		      */
+START_TEST(test_2ED_012_05)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_5))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -3062,6 +3271,17 @@ START_TEST(test_2ED_012_06)
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting5_12, pc_2ed_012_06_case02,
 								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.012.07 PPSE select response having a Directory Entry with null Kernel ID
+ * (Matching AID = AMEX AID, TK4 Kernel ID not equal to '04')		      */
+START_TEST(test_2ED_012_07)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_4))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -3156,6 +3376,17 @@ START_TEST(test_2ED_012_11)
 }
 END_TEST
 
+/* 2ED.012.12 PPSE select response having a Directory Entry with null Kernel ID
+ * (Matching AID = DISCOVER AID, TK6 Kernel ID not equal to '06')	      */
+START_TEST(test_2ED_012_12)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_6))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.012.13 PPSE select response having a Directory Entry with null Kernel ID
  * (Matching AID = CUP AID, TK7 Kernel ID = '07')			      */
 START_TEST(test_2ED_012_13)
@@ -3172,6 +3403,17 @@ START_TEST(test_2ED_012_13)
 }
 END_TEST
 
+/* 2ED.012.14 PPSE select response having a Directory Entry with null Kernel ID
+ * (Matching AID = CUP AID, TK7 Kernel ID not equal to '07')		      */
+START_TEST(test_2ED_012_14)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_7))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
+}
+END_TEST
+
 /* 2ED.012.15 PPSE select response having a Directory Entry with null Kernel ID
  * (Matching AID = DISCOVER AID, TK6 Kernel ID = '06')			      */
 START_TEST(test_2ED_012_15)
@@ -3185,6 +3427,17 @@ START_TEST(test_2ED_012_15)
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting5_25, pc_2ed_012_15, &txn,
 									     1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.012.16 PPSE select response having a Directory Entry with null Kernel ID
+ * (Matching AID = DISCOVER AID, TK6 Kernel ID not equal to '06') */
+START_TEST(test_2ED_012_16)
+{
+	if (!emv_ep_supports(EMV_EP_FEATURE_C_6))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -3352,6 +3605,17 @@ START_TEST(test_2ED_017_00)
 	rc = emvco_ep_ta_tc(termsetting2, ltsetting3_5, pc_2ed_017_00_case02,
 								       &txn, 1);
 	ck_assert(rc == EMV_RC_OK);
+}
+END_TEST
+
+/* 2ED.017.01 Extended selection present in Directory Entry but Extended
+ * Selection not supported in ICS					      */
+START_TEST(test_2ED_017_01)
+{
+	if (emv_ep_supports(EMV_EP_FEATURE_EXTENDED_SELECTION))
+		return;
+
+	ck_abort_msg("%s not implemented", __func__);
 }
 END_TEST
 
@@ -3663,6 +3927,8 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_general_reqs, test_2EA_006_04);
 	tcase_add_test(tc_general_reqs, test_2EA_006_05);
 	tcase_add_test(tc_general_reqs, test_2EA_007_00);
+	tcase_add_test(tc_general_reqs, test_2EA_010_00);
+	tcase_add_test(tc_general_reqs, test_2EA_010_01);
 	tcase_add_test(tc_general_reqs, test_2EA_011_00);
 	tcase_add_test(tc_general_reqs, test_2EA_012_00);
 	tcase_add_test(tc_general_reqs, test_2EA_013_00);
@@ -3761,35 +4027,57 @@ Suite *emvco_ep_ta_test_suite(void)
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_007_01);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_008_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_01);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_02);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_03);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_04);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_05);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_06);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_07);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_10);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_11);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_12);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_13);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_14);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_15);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_16);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_17);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_18);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_19);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_20);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_21);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_22);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_23);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_24);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_25);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_26);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_27);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_28);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_009_29);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_010_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_011_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_01);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_02);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_03);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_04);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_05);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_06);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_07);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_08);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_10);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_11);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_12);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_13);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_14);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_15);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_012_16);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_013_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_014_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_015_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_016_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_017_00);
+	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_017_01);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_018_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_019_00);
 	tcase_add_test(tc_aid_and_kernel_selection, test_2ED_019_01);
