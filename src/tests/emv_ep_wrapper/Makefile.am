@@ -14,3 +14,5 @@ libemv_ep_wrapper_la_LIBADD = -ldl $(top_builddir)/src/libtlv/libtlv.la	       \
 libemv_ep_wrapper_la_LDFLAGS = $(AM_LDFLAGS)				       \
 	-export-symbols "$(srcdir)/libemv_ep_wrapper.exports"		       \
 	-shared -avoid-version -noundefined -pthread
+
+EXTRA_DIST = $(srcdir)/libemv_ep_wrapper.exports
