@@ -161,10 +161,34 @@ struct emv_ep_terminal_settings {
 | tested with the LibPAY entry point test suite.			       |
 +-----------------------------------------------------------------------------*/
 
+#define EMV_EP_FEATURE_C_1			0x00000001
+#define EMV_EP_FEATURE_C_2			0x00000002
+#define EMV_EP_FEATURE_C_3			0x00000004
+#define EMV_EP_FEATURE_C_4			0x00000008
+#define EMV_EP_FEATURE_C_5			0x00000010
+#define EMV_EP_FEATURE_C_6			0x00000020
+#define EMV_EP_FEATURE_C_7			0x00000040
+#define EMV_EP_FEATURE_PURCHASE			0x00000080
+#define EMV_EP_FEATURE_PURCHASE_WITH_CASHBACK	0x00000100
+#define EMV_EP_FEATURE_CASH_ADVANCE		0x00000200
+#define EMV_EP_FEATURE_REFUND			0x00000400
+#define EMV_EP_FEATURE_AUTORUN			0x00000800
+#define EMV_EP_FEATURE_CONTACT			0x00001000
+#define EMV_EP_FEATURE_AMOUNT_BALANCE_DISPLAY	0x00002000
+#define EMV_EP_FEATURE_VALUE_QUALIFIER		0x00004000
+#define EMV_EP_FEATURE_EXTENDED_SELECTION	0x00008000
+#define EMV_EP_FEATURE_LANGUAGE_PREFERENCE	0x00010000
+#define EMV_EP_FEATURE_STATUS_CHECK		0x00020000
+
+#define EMV_EP_WRAPPER_NEW_SYMBOL "emv_ep_wrapper_new"
+#define EMV_EP_SUPPORTS_SYMBOL "emv_ep_supports"
+
 struct emv_ep_wrapper;
 
 typedef struct emv_ep_wrapper *(*emv_ep_wrapper_new_t)(
 						    const char *log4c_category);
+
+typedef uint32_t (*emv_ep_supports_t)(uint32_t features);
 
 typedef int (*emv_ep_wrapper_register_kernel_t)(struct emv_ep_wrapper *wrapper,
 						struct emv_kernel *kernel,

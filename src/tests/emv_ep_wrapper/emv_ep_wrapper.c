@@ -496,3 +496,20 @@ struct emv_ep_wrapper *emv_ep_wrapper_new(const char *log4c_category)
 
 	return (struct emv_ep_wrapper *)self;
 }
+
+uint32_t emv_ep_supports(uint32_t features)
+{
+	const uint32_t supported_features =
+			EMV_EP_FEATURE_PURCHASE |
+			EMV_EP_FEATURE_PURCHASE_WITH_CASHBACK |
+			EMV_EP_FEATURE_CASH_ADVANCE |
+			EMV_EP_FEATURE_REFUND |
+			EMV_EP_FEATURE_AUTORUN |
+			EMV_EP_FEATURE_AMOUNT_BALANCE_DISPLAY |
+			EMV_EP_FEATURE_VALUE_QUALIFIER |
+			EMV_EP_FEATURE_EXTENDED_SELECTION |
+			EMV_EP_FEATURE_LANGUAGE_PREFERENCE |
+			EMV_EP_FEATURE_STATUS_CHECK;
+
+	return features & supported_features;
+}
