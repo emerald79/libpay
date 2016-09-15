@@ -308,9 +308,39 @@ done:
 	return rc;
 }
 
+void tlv_unlink(struct tlv *tlv)
+{
+	if (!tlv)
+		return;
+
+	if (tlv->parent && tlv->parent->child == tlv)
+		tlv->parent->child = tlv->next;
+
+	if (tlv->prev)
+		tlv->prev->next = tlv->next;
+
+	if (tlv->next)
+		tlv->next->prev = tlv->prev;
+
+	tlv->parent = NULL;
+	tlv->prev = NULL;
+	tlv->next = NULL;
+}
+
 void tlv_free(struct tlv *tlv)
 {
 	struct tlv *current, *next;
+
+	if (!tlv)
+		return;
+
+	/* Unlink from parent, if applicable.				      */
+	if (tlv->parent && tlv->parent->child == tlv)
+		tlv->parent->child = NULL;
+
+	/* Unlink from siblings 'to-the-left', if applicable.		      */
+	if (tlv->prev)
+		tlv->prev->next = NULL;
 
 	for (current = tlv; current; current = next) {
 		if (current->child)
@@ -463,58 +493,6 @@ static size_t libtlv_copy_tag(void *buffer, size_t size, const void *tag)
 
 	return tag_len;
 }
-
-#if 0
-static void __tlv_encode_identifier(uint8_t leading_octet,
-					     uint32_t tag_number, void **buffer)
-{
-	uint8_t *p = (uint8_t *)*buffer;
-
-	p[0] = leading_octet;
-
-	if ((leading_octet & TLV_TAG_NUMBER_MASK) != 0x1fu) {
-		*buffer = (void *)&p[1];
-		return;
-	}
-
-	if (tag_number & 0xf0000000u) {
-		p[1] = 0x80 | (uint8_t)(tag_number >> 28);
-		p[2] = 0x80 | (uint8_t)(tag_number >> 21);
-		p[3] = 0x80 | (uint8_t)(tag_number >> 14);
-		p[4] = 0x80 | (uint8_t)(tag_number >>  7);
-		p[5] = tag_number & 0x7fu;
-		*buffer = (void *)&p[6];
-		return;
-	}
-
-	if (tag_number & 0x0fe00000u) {
-		p[1] = 0x80 | (uint8_t)(tag_number >> 21);
-		p[2] = 0x80 | (uint8_t)(tag_number >> 14);
-		p[3] = 0x80 | (uint8_t)(tag_number >>  7);
-		p[4] = tag_number & 0x7fu;
-		*buffer = (void *)&p[5];
-		return;
-	}
-
-	if (tag_number & 0x001fc000u) {
-		p[1] = 0x80 | (uint8_t)(tag_number >> 14);
-		p[2] = 0x80 | (uint8_t)(tag_number >>  7);
-		p[3] = tag_number & 0x7fu;
-		*buffer = (void *)&p[4];
-		return;
-	}
-
-	if (tag_number & 0x00003f80u) {
-		p[1] = 0x80 | (uint8_t)(tag_number >>  7);
-		p[2] = tag_number & 0x7fu;
-		*buffer = (void *)&p[3];
-		return;
-	}
-
-	p[1] = tag_number & 0x7fu;
-	*buffer = (void *)&p[2];
-}
-#endif
 
 static void __tlv_encode_length(size_t length, void **buffer)
 {
@@ -707,8 +685,10 @@ struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
 	if (tlv2->prev)
 		return NULL;
 
-	for (tail_of_tlv2 = tlv2; tail_of_tlv2->next; )
+	for (tail_of_tlv2 = tlv2; tail_of_tlv2->next; ) {
+		tail_of_tlv2->parent = tlv1->parent;
 		tail_of_tlv2 = tail_of_tlv2->next;
+	}
 
 	tail_of_tlv2->next = tlv1->next;
 	if (tail_of_tlv2->next)
@@ -722,16 +702,22 @@ struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
 
 struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child)
 {
+	struct tlv *tail_of_child = NULL;
+
 	if (!parent || !child || child->parent)
 		return NULL;
 
+	for (tail_of_child = child; tail_of_child->next; ) {
+		tail_of_child->parent = parent;
+		tail_of_child = tail_of_child->next;
+	}
+
 	if (parent->child) {
-		child->next = parent->child;
-		parent->child->prev = child;
+		tail_of_child->next = parent->child;
+		parent->child->prev = tail_of_child;
 	}
 
 	parent->child = child;
-	child->parent = parent;
 
 	return child;
 }

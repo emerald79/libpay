@@ -58,6 +58,21 @@ struct tlv;
  * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
  */
 int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
+
+/**
+ * Parse DER-TLV encoded data into a TLV data structure, treating constructed
+ * tags as primitive.
+ *
+ * Think twice before you use this function.  It violates the EMV TLV parsing
+ * rules, but is required in some very special cases such as implementing test
+ * suites or card emulators which test broken cards.
+ *
+ * @param[in]  buffer  The DER-TLV encoded data to parse.
+ * @param[in]  size    Length of the DER-TLV encoded data.
+ * @param[out] tlv     The corresponding TLV data structure.
+ *
+ * @return TLV_RC_OK on success. Other TLV_RC_* codes on failure.
+ */
 int tlv_shallow_parse(const void *buffer, size_t size, struct tlv **tlv);
 
 /**
@@ -89,10 +104,37 @@ int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size);
  */
 struct tlv *tlv_new(const void *tag, size_t length, const void *value);
 
+/**
+ * Create a deep copy of a TLV data structure.
+ *
+ * @param[in]  tlv  The TLV data structure to create a deep copy from.
+ *
+ * @return A deep copy of the provided TLV data structure.
+ */
 struct tlv *tlv_copy(const struct tlv *tlv);
 
 /**
+ * Unlink a TLV data structure from its surrounding.
+ *
+ * If the provided TLV data stucture is a pure root node (I.e. it has neither a
+ * parent nor siblings) this is a no-op.  Otherwise the provided TLV data
+ * structure is unhinged from the larger TLV data structure it is embedded
+ * in and thus made a new pure root node.
+ *
+ * Do not forget to eventually call tlv_free on an unlink'ed TLV data structure,
+ * as naturally it wont be free'd when tlv_free is called on the previously
+ * embedding TLV data structure any more.
+ *
+ * @param[in]  tlv  The TLV data structure to segragate.
+ */
+void tlv_unlink(struct tlv *tlv);
+
+/**
  * Free resources allocated by a TLV data structure
+ *
+ * This is a deep free.  I.e. it recursively frees all next siblings (I.e. those
+ * returned by tlv_get_next) and all children (I.e. those returned by
+ * tlv_get_child).
  *
  * @param[in]  tlv  The corresponding TLV data structure to free.
  */
@@ -181,6 +223,14 @@ struct tlv *tlv_get_child(const struct tlv *tlv);
  */
 struct tlv *tlv_get_next(const struct tlv *tlv);
 
+/**
+ * Get the TLV node before the current TLV node. Elements of constructed TLV
+ * nodes skipped.
+ *
+ * @param[in]  tlv  The current TLV node.
+ *
+ * @returns The TLV node before the current TLV node or NULL if there is none.
+ */
 struct tlv *tlv_get_prev(const struct tlv *tlv);
 
 /**
