@@ -1,4 +1,7 @@
 TODOs:
+- TLV test cases to check consistency of all (next, prev, child, parent) links
+  between nodes.
+- TLV test case for new tlv_unlink API
 - Compile out logging at level trace and below when not building in debug mode.
 - Tag information (format, template, size, etc.) for all EMV and proprietary
   tags.
