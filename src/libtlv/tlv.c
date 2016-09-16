@@ -308,10 +308,23 @@ done:
 	return rc;
 }
 
-void tlv_unlink(struct tlv *tlv)
+struct tlv *tlv_set_identifier(struct tlv *tlv, const void *tag)
+{
+	int rc = TLV_RC_OK;
+
+	rc = tlv_parse_identifier(&tag, libtlv_get_tag_length(tag), tlv);
+	if (rc != TLV_RC_OK)
+		goto error;
+
+	return tlv;
+error:
+	return NULL;
+}
+
+struct tlv *tlv_unlink(struct tlv *tlv)
 {
 	if (!tlv)
-		return;
+		return tlv;
 
 	if (tlv->parent && tlv->parent->child == tlv)
 		tlv->parent->child = tlv->next;
@@ -325,6 +338,8 @@ void tlv_unlink(struct tlv *tlv)
 	tlv->parent = NULL;
 	tlv->prev = NULL;
 	tlv->next = NULL;
+
+	return tlv;
 }
 
 void tlv_free(struct tlv *tlv)

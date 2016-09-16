@@ -114,6 +114,16 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value);
 struct tlv *tlv_copy(const struct tlv *tlv);
 
 /**
+ * Overwrite the identifier (aka tag) of a TLV node.
+ *
+ * @param[in]  tlv  The TLV node whose identifier shall be set to a new value.
+ * @param[in]  tag  The value to set the TLV node's identifier to.
+ *
+ * @return The TLV node that was provided is passed through.
+ */
+struct tlv *tlv_set_identifier(struct tlv *tlv, const void *tag);
+
+/**
  * Unlink a TLV data structure from its surrounding.
  *
  * If the provided TLV data stucture is a pure root node (I.e. it has neither a
@@ -126,8 +136,10 @@ struct tlv *tlv_copy(const struct tlv *tlv);
  * embedding TLV data structure any more.
  *
  * @param[in]  tlv  The TLV data structure to segragate.
+ *
+ * @return The TLV node that was provided is passed through.
  */
-void tlv_unlink(struct tlv *tlv);
+struct tlv *tlv_unlink(struct tlv *tlv);
 
 /**
  * Free resources allocated by a TLV data structure
