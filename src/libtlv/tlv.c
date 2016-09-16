@@ -697,10 +697,10 @@ struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2)
 	if (!tlv2)
 		return tlv1;
 
-	if (tlv2->prev)
-		return NULL;
+	assert(!tlv2->prev);
 
 	for (tail_of_tlv2 = tlv2; tail_of_tlv2->next; ) {
+		assert(!tail_of_tlv2->parent);
 		tail_of_tlv2->parent = tlv1->parent;
 		tail_of_tlv2 = tail_of_tlv2->next;
 	}
@@ -719,10 +719,13 @@ struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child)
 {
 	struct tlv *tail_of_child = NULL;
 
-	if (!parent || !child || child->parent)
+	if (!parent || !child)
 		return NULL;
 
+	assert(!child->prev);
+
 	for (tail_of_child = child; tail_of_child->next; ) {
+		assert(!tail_of_child->parent);
 		tail_of_child->parent = parent;
 		tail_of_child = tail_of_child->next;
 	}
