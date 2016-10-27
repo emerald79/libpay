@@ -4,6 +4,7 @@ tlv_parse
 tlv_shallow_parse
 tlv_unlink
 tlv_free
+tlv_set_value
 tlv_set_identifier
 tlv_encode
 tlv_encode_identifier

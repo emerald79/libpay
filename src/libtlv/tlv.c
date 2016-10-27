@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <log4c.h>
 
@@ -319,6 +320,40 @@ struct tlv *tlv_set_identifier(struct tlv *tlv, const void *tag)
 	return tlv;
 error:
 	return NULL;
+}
+
+struct tlv *tlv_set_value(struct tlv *tlv, size_t length, const void *value)
+{
+	struct tlv *tlv_old = tlv;
+
+	if (!tlv)
+		return NULL;
+
+	if (tlv->tag[0] & TLV_TAG_P_C_MASK)	/* Constructed not supported. */
+		return NULL;
+
+	assert(!tlv->child);
+
+	if (!length) {
+		tlv->length = 0;
+		return tlv;
+	}
+
+	if (!value)
+		return NULL;
+
+	tlv = realloc(tlv, sizeof(*tlv) + length);
+	tlv->length = length;
+	memcpy(tlv->value, value, length);
+
+	if (tlv->next)
+		tlv->next->prev = tlv;
+	if (tlv->prev)
+		tlv->prev->next = tlv;
+	if (tlv->parent && tlv->parent->child == tlv_old)
+		tlv->parent->child = tlv;
+
+	return tlv;
 }
 
 struct tlv *tlv_unlink(struct tlv *tlv)

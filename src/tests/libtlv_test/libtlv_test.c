@@ -358,12 +358,69 @@ START_TEST(test_tlv_deep_find)
 }
 END_TEST
 
+START_TEST(test_tlv_set_value)
+{
+	const char *label = "SomeLongApplicationLabel";
+	const unsigned char ppse[] = {
+		0x6F, 0x2F,
+			0x84, 0x0E, 0x32, 0x50, 0x41, 0x59, 0x2E, 0x53, 0x59,
+				    0x53, 0x2E, 0x44, 0x44, 0x46, 0x30, 0x31,
+			0xA5, 0x1D,
+				0xBF, 0x0C, 0x1A,
+					0x61, 0x18,
+						0x4F, 0x07, 0xA0, 0x00, 0x00,
+						      0x00, 0x04, 0x10, 0x10,
+						0x50, 0x0A, 0x4D, 0x61, 0x73,
+						      0x74, 0x65, 0x72, 0x43,
+						      0x61, 0x72, 0x64,
+						0x87, 0x01, 0x01
+	};
+	const unsigned char modified_ppse[] = {
+		0x6F, 0x3D,
+			0x84, 0x0E, 0x32, 0x50, 0x41, 0x59, 0x2E, 0x53, 0x59,
+				    0x53, 0x2E, 0x44, 0x44, 0x46, 0x30, 0x31,
+			0xA5, 0x2B,
+				0xBF, 0x0C, 0x28,
+					0x61, 0x26,
+						0x4F, 0x07, 0xA0, 0x00, 0x00,
+						      0x00, 0x04, 0x10, 0x10,
+						0x50, 0x18, 0x53, 0x6F, 0x6D,
+						      0x65, 0x4C, 0x6F, 0x6E,
+						      0x67, 0x41, 0x70, 0x70,
+						      0x6C, 0x69, 0x63, 0x61,
+						      0x74, 0x69, 0x6F, 0x6E,
+						      0x4C, 0x61, 0x62, 0x65,
+						      0x6C,
+						0x87, 0x01, 0x01
+	};
+	unsigned char buffer[256];
+	size_t size = sizeof(buffer);
+	struct tlv *tlv_ppse = NULL, *tlv_app_label = NULL;
+	int rc;
+
+	rc = tlv_parse(ppse, sizeof(ppse), &tlv_ppse);
+	ck_assert(rc == TLV_RC_OK);
+
+	tlv_app_label = tlv_deep_find(tlv_ppse, "\x50");
+	ck_assert(tlv_app_label);
+
+	tlv_app_label = tlv_set_value(tlv_app_label, strlen(label), label);
+	ck_assert(tlv_app_label);
+
+	rc = tlv_encode(tlv_ppse, buffer, &size);
+	ck_assert(rc == TLV_RC_OK);
+	ck_assert(size == sizeof(modified_ppse));
+	ck_assert(!memcmp(buffer, modified_ppse, size));
+}
+END_TEST
+
 Suite *tlv_test_suite(void)
 {
 	Suite *suite = NULL;
 	TCase *tc_tlv_malformed_input = NULL, *tc_tlv_primitive_encoding = NULL;
 	TCase *tc_tlv_constructed_encoding = NULL, *tc_tlv_verisign_x509 = NULL;
 	TCase *tc_tlv_construct = NULL, *tc_tlv_deep_find = NULL;
+	TCase *tc_tlv_set_value = NULL;
 
 	suite = suite_create("tlv_test");
 
@@ -391,6 +448,10 @@ Suite *tlv_test_suite(void)
 	tc_tlv_deep_find = tcase_create("tlv-deep-find");
 	tcase_add_test(tc_tlv_deep_find, test_tlv_deep_find);
 	suite_add_tcase(suite, tc_tlv_deep_find);
+
+	tc_tlv_set_value = tcase_create("tlv-set-value");
+	tcase_add_test(tc_tlv_set_value, test_tlv_set_value);
+	suite_add_tcase(suite, tc_tlv_set_value);
 
 	return suite;
 }

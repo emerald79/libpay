@@ -18,16 +18,34 @@
  */
 
 /**
+ * @defgroup LIBTLV libTLV
+ *
+ * @brief TLV Parser library
+
+ * @code
+ * #include <libpay/tlv.h>
+ * @endcode
+ */
+
+/**
+ * @addtogroup LIBTLV
+ * @{
+ */
+
+/**
  * @file
- * TLV Parser Library
  */
 
 #ifndef __LIBPAY__TLV_H__
 #define __LIBPAY__TLV_H__
 
 #include <stdint.h>
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define TLV_MAX_TAG_LENGTH			8
 
@@ -49,7 +67,7 @@
 struct tlv;
 
 /**
- * Parse DER-TLV encoded data into a TLV data structure
+ * @brief Parse DER-TLV encoded data into a TLV data structure
  *
  * @param[in]  buffer  The DER-TLV encoded data to parse.
  * @param[in]  size    Length of the DER-TLV encoded data.
@@ -60,7 +78,7 @@ struct tlv;
 int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
 
 /**
- * Parse DER-TLV encoded data into a TLV data structure, treating constructed
+ * @brief Parse DER-TLV encoded data into a TLV data structure, treating constructed
  * tags as primitive.
  *
  * Think twice before you use this function.  It violates the EMV TLV parsing
@@ -76,7 +94,7 @@ int tlv_parse(const void *buffer, size_t size, struct tlv **tlv);
 int tlv_shallow_parse(const void *buffer, size_t size, struct tlv **tlv);
 
 /**
- * Encode a TLV data structure into a DER-TLV byte stream
+ * @brief Encode a TLV data structure into a DER-TLV byte stream
  *
  * @param[in]    tlv     The corresponding TLV data structure to encode.
  * @param[out]   buffer  The buffer to store the encoded byte stream in.
@@ -94,7 +112,7 @@ int tlv_shallow_parse(const void *buffer, size_t size, struct tlv **tlv);
 int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
- * Create a new TLV node.
+ * @brief Create a new TLV node.
  *
  * @param[in]  tag     The tag of the new TLV node.
  * @param[in]  length  The length of the value of the new TLV node.
@@ -105,7 +123,7 @@ int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size);
 struct tlv *tlv_new(const void *tag, size_t length, const void *value);
 
 /**
- * Create a deep copy of a TLV data structure.
+ * @brief Create a deep copy of a TLV data structure.
  *
  * @param[in]  tlv  The TLV data structure to create a deep copy from.
  *
@@ -114,7 +132,7 @@ struct tlv *tlv_new(const void *tag, size_t length, const void *value);
 struct tlv *tlv_copy(const struct tlv *tlv);
 
 /**
- * Overwrite the identifier (aka tag) of a TLV node.
+ * @brief Overwrite the identifier (aka tag) of a TLV node.
  *
  * @param[in]  tlv  The TLV node whose identifier shall be set to a new value.
  * @param[in]  tag  The value to set the TLV node's identifier to.
@@ -124,7 +142,32 @@ struct tlv *tlv_copy(const struct tlv *tlv);
 struct tlv *tlv_set_identifier(struct tlv *tlv, const void *tag);
 
 /**
- * Unlink a TLV data structure from its surrounding.
+ * @brief Overwrite the value of a primitive type TLV node.
+ *
+ * @attention This function might free the TLV node that is passed to it and
+ *		return a newly created TLV node.  Take care to not use dangling
+ *		pointers to the old TLV node after having called this function.
+ *		The pointers in all the neighbor, child and parent nodes will be
+ *		updated automatically in this case, though.
+ *
+ * @note This function only works for primitive type TLV nodes. If called on a
+ *	   constructed TLV node, this function will fail and return a NULL
+ *	   pointer.
+ *
+ * @param[in]  tlv     The TLV node whose value shall be set.  Note that his TLV
+ *			 node might get de-allocated.
+ * @param[in]  length  The length of the new value of the TLV node.
+ * @param[in]  value   The new value of the TLV node.
+ *
+ * @return Success: A pointer to a TLV node with the new value. This might
+ *	     either be the TLV node that was passed, or it might be a newly
+ *	     created TLV node.
+ * @return Failure: NULL (if called on a constructed TLV node).
+ */
+struct tlv *tlv_set_value(struct tlv *tlv, size_t length, const void *value);
+
+/**
+ * @brief Unlink a TLV data structure from its surrounding.
  *
  * If the provided TLV data stucture is a pure root node (I.e. it has neither a
  * parent nor siblings) this is a no-op.  Otherwise the provided TLV data
@@ -142,7 +185,7 @@ struct tlv *tlv_set_identifier(struct tlv *tlv, const void *tag);
 struct tlv *tlv_unlink(struct tlv *tlv);
 
 /**
- * Free resources allocated by a TLV data structure
+ * @brief Free resources allocated by a TLV data structure
  *
  * This is a deep free.  I.e. it recursively frees all next siblings (I.e. those
  * returned by tlv_get_next) and all children (I.e. those returned by
@@ -153,7 +196,7 @@ struct tlv *tlv_unlink(struct tlv *tlv);
 void tlv_free(struct tlv *tlv);
 
 /**
- * Returns the DER encoded identifier (tag) octets of the TLV node.
+ * @brief Returns the DER encoded identifier (tag) octets of the TLV node.
  *
  * If the buffer parameter is NULL then only the size of the encoded tag will
  * be computed and returned in the size output parameter.
@@ -167,7 +210,7 @@ void tlv_free(struct tlv *tlv);
 int tlv_encode_identifier(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
- * Returns the DER encoded length octets of the TLV node.
+ * @brief Returns the DER encoded length octets of the TLV node.
  *
  * If the buffer parameter is NULL then only the size of the encoded length will
  * be computed and returned in the size output parameter.
@@ -181,7 +224,7 @@ int tlv_encode_identifier(const struct tlv *tlv, void *buffer, size_t *size);
 int tlv_encode_length(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
- * Returns the value octets of the TLV node.
+ * @brief Returns the value octets of the TLV node.
  *
  * For constructed TLV nodes no value is returned (I.e. the value of the size
  * paramter will be set to zero).
@@ -198,7 +241,7 @@ int tlv_encode_length(const struct tlv *tlv, void *buffer, size_t *size);
 int tlv_encode_value(const struct tlv *tlv, void *buffer, size_t *size);
 
 /**
- * Returns whether a TLV node is constructed or primitive.
+ * @brief Returns whether a TLV node is constructed or primitive.
  *
  * @param[in]  tlv  TLV node to determine whether its constructed or primitive.
  *
@@ -207,7 +250,7 @@ int tlv_encode_value(const struct tlv *tlv, void *buffer, size_t *size);
 bool tlv_is_constructed(const struct tlv *tlv);
 
 /**
- * Get the constructed TLV node which the current TLV node is an element of.
+ * @brief Get the constructed TLV node which the current TLV node is an element of.
  *
  * @param[in]  tlv  The current TLV node.
  *
@@ -216,7 +259,7 @@ bool tlv_is_constructed(const struct tlv *tlv);
 struct tlv *tlv_get_parent(const struct tlv *tlv);
 
 /**
- * Get the first element of a constructed TLV node.
+ * @brief Get the first element of a constructed TLV node.
  *
  * @param[in]  tlv  The constructed TLV node.
  *
@@ -226,7 +269,7 @@ struct tlv *tlv_get_parent(const struct tlv *tlv);
 struct tlv *tlv_get_child(const struct tlv *tlv);
 
 /**
- * Get the TLV node after the current TLV node. Elements of constructed TLV
+ * @brief Get the TLV node after the current TLV node. Elements of constructed TLV
  * nodes skipped.
  *
  * @param[in]  tlv  The current TLV node.
@@ -236,7 +279,7 @@ struct tlv *tlv_get_child(const struct tlv *tlv);
 struct tlv *tlv_get_next(const struct tlv *tlv);
 
 /**
- * Get the TLV node before the current TLV node. Elements of constructed TLV
+ * @brief Get the TLV node before the current TLV node. Elements of constructed TLV
  * nodes skipped.
  *
  * @param[in]  tlv  The current TLV node.
@@ -246,7 +289,7 @@ struct tlv *tlv_get_next(const struct tlv *tlv);
 struct tlv *tlv_get_prev(const struct tlv *tlv);
 
 /**
- * Shallow search for a TLV node with a given specific tag.
+ * @brief Shallow search for a TLV node with a given specific tag.
  *
  * Note that the descendant nodes of constructed TLV nodes will not be searched.
  *
@@ -259,7 +302,7 @@ struct tlv *tlv_get_prev(const struct tlv *tlv);
 struct tlv *tlv_find(struct tlv *tlv, const void *tag);
 
 /**
- * Iterate through all TLV nodes in depth first order.
+ * @brief Iterate through all TLV nodes in depth first order.
  *
  * @param[in]  tlv  The current TLV node.
  *
@@ -268,7 +311,7 @@ struct tlv *tlv_find(struct tlv *tlv, const void *tag);
 struct tlv *tlv_iterate(struct tlv *tlv);
 
 /**
- * Deep search for a TLV node with a given specific tag.
+ * @brief Deep search for a TLV node with a given specific tag.
  *
  * Note that descendant nodes will be searched order.
  *
@@ -281,7 +324,7 @@ struct tlv *tlv_iterate(struct tlv *tlv);
 struct tlv *tlv_deep_find(struct tlv *tlv, const void *tag);
 
 /**
- * Get the number of ancestors a given TLV node has. I.e. the number of parent
+ * @brief Get the number of ancestors a given TLV node has. I.e. the number of parent
  * nodes until the root node is found.
  *
  * @param[in]  tlv  The TLV node whose depth is to be queried.
@@ -291,7 +334,7 @@ struct tlv *tlv_deep_find(struct tlv *tlv, const void *tag);
 int tlv_get_depth(struct tlv *tlv);
 
 /**
- * Insert one TLV structure after a TLV node
+ * @brief Insert one TLV structure after a TLV node
  *
  * Note: If tlv1 is part of a TLV node list, and if tlv1 is not the last element
  * of this list, then tlv2 will be inserted between tlv1 and the remainder of
@@ -305,7 +348,7 @@ int tlv_get_depth(struct tlv *tlv);
 struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
 
 /**
- * Insert a TLV structure as a child of another constructed TLV node.
+ * @brief Insert a TLV structure as a child of another constructed TLV node.
  *
  * Note: If parent already has childs, then the new child will be added as the
  * head of the list of childs.
@@ -319,7 +362,7 @@ struct tlv *tlv_insert_after(struct tlv *tlv1, struct tlv *tlv2);
 struct tlv *tlv_insert_below(struct tlv *parent, struct tlv *child);
 
 /**
- * Construct a Data Element List (DEL) from a Data Object List (DOL) and a
+ * @brief Construct a Data Element List (DEL) from a Data Object List (DOL) and a
  * corresponding TLV list.
  *
  * See section 'Rules for Using a Data Object List (DOL)' in EMV v4.3 Book 3.
@@ -337,7 +380,7 @@ int tlv_and_dol_to_del(struct tlv *tlv, const void *dol,
 				      size_t dol_sz, void *del, size_t *del_sz);
 
 /**
- * Construct a list of TLV node from a Data Object List (DOL) and a Data Element
+ * @brief Construct a list of TLV node from a Data Object List (DOL) and a Data Element
  * list.
  *
  * See section 'Rules for Using a Data Object List (DOL)' in EMV v4.3 Book 3.
@@ -354,17 +397,17 @@ const void *dol_tok(const void **dol, size_t *dol_sz);
 const void *dol_find_tag(const void *dol, size_t dol_sz, const void *tag);
 
 /**
- * Convert a BCD encoded value into a 64 bit wide unsigned integer.
+ * @brief Convert a BCD encoded value into a 64 bit wide unsigned integer.
  */
 int libtlv_bcd_to_u64(const void *bcd, size_t len, uint64_t *u64);
 
 /**
- * Convert a 64 bit wide unsigned integer into a BCD encoded value.
+ * @brief Convert a 64 bit wide unsigned integer into a BCD encoded value.
  */
 int libtlv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
 
 /**
- * Format a binary string into a hexdecimal (ASCII coded) string.
+ * @brief Format a binary string into a hexdecimal (ASCII coded) string.
  *
  * @param[in]  bin     Pointer to the binary string to encode in hex.
  * @param[in]  bin_sz  Size of the binary string in bytes.
@@ -397,5 +440,14 @@ void libtlv_free_fmts(void);
 enum tlv_fmt libtlv_id_to_fmt(const void *id);
 
 void libtlv_init(const char *log4c_category);
+
+/**
+ * @}
+ */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif						    /* ndef __LIBPAY__TLV_H__ */
