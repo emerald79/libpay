@@ -1281,6 +1281,50 @@ char *libtlv_bin_to_hex(const void *blob, size_t blob_sz, char *buffer)
 	return buffer;
 }
 
+static uint8_t nibble_from_hex(char hex)
+{
+	uint8_t byte;
+	byte = (hex <= '9') ? (hex - '0') :
+		(10 + ((hex <= 'F') ? (hex - 'A') : (hex - 'a')));
+	if (byte & 0xf0)
+		return 0xff;
+	return byte;
+}
+
+void * libtlv_hex_to_bin(const char *hex, void * bin_buffer,
+							size_t * bin_buffer_len)
+{
+	const char * ptr;
+	uint8_t * bin_ptr = bin_buffer;
+	const uint8_t * bin_buffer_end = bin_ptr + *bin_buffer_len;
+	int nibble_idx = 1; /* 1 upper, 0 lower */
+	uint8_t byte = 0;
+
+	for (ptr = hex; *ptr != 0; ++ptr) {
+		uint8_t nibble;
+
+		if (bin_ptr >= bin_buffer_end) /* bin buffer too small */
+			return NULL;
+		if (*ptr == ' ' || *ptr == '\n' || *ptr == '\r')
+			continue;
+		nibble = nibble_from_hex(*ptr);
+		if (nibble &0xf0)
+			return NULL;
+		if (nibble_idx) {
+			byte = nibble << 4;
+			nibble_idx = 0;
+		}
+		else {
+			byte |= nibble;
+			nibble_idx++;
+			*bin_ptr++ = byte;
+		}
+	}
+
+	*bin_buffer_len = bin_ptr - (const uint8_t *)bin_buffer;
+	return bin_buffer;
+}
+
 static struct tlv_id_to_fmt *known_formats;
 static size_t num_known_formats;
 

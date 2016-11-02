@@ -418,6 +418,22 @@ int libtlv_u64_to_bcd(uint64_t u64, void *bcd, size_t len);
  */
 char *libtlv_bin_to_hex(const void *bin, size_t bin_sz, char *hex);
 
+/**
+ * @brief Convert a hexadecimal (ASCII coded) string into its binary
+ *	representation.
+ *
+ * @param[in]    hex	Pointer to the hex (ASCII) string to decode in binary.
+ * @param[out]   bin	Buffer to hold the binary representation of the decoded
+ *			 ASCII string. NOTE: This buffer must be at least
+ * 			 0.5 times the length of the ascii string large.
+ * @param[inout] bin_sz	Pointer to the size of the binary buffer, contains the
+ *			 size of the binary representation on return.
+ *
+ * @returns The binary representation of the ASCII encoded hex string
+ * 			or NULL on conversion error.
+ */
+void *libtlv_hex_to_bin(const char *hex, void *bin, size_t *bin_sz);
+
 enum tlv_fmt {
 	fmt_a,
 	fmt_an,
