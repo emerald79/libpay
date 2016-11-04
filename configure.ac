@@ -56,7 +56,7 @@ fi
 
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 PKG_CHECK_MODULES([JSON_C], [json-c >= 0.11.0])
-PKG_CHECK_MODULES([LOG4C], [log4c >= 1.2.4])
+AM_PATH_LOG4C(1.2.1)
 PKG_CHECK_MODULES([LIBWEBSOCKETS], [libwebsockets >= 1.7])
 
 AC_OUTPUT
