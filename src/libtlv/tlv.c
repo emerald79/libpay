@@ -618,9 +618,14 @@ int tlv_encode(const struct tlv *tlv, void *buffer, size_t *size)
 
 	encoded_size = tlv_get_encoded_length(tlv);
 
+	if (!buffer) {
+		*size = encoded_size;
+		return TLV_RC_OK;
+	}
+
 	if (encoded_size > *size) {
 		*size = encoded_size;
-		return buffer ? TLV_RC_BUFFER_OVERFLOW : TLV_RC_OK;
+		return TLV_RC_BUFFER_OVERFLOW;
 	}
 
 	*size = encoded_size;
